@@ -318,7 +318,11 @@
                     currentSource = sources[0];
                     selector.value = currentSource.filename;
                     updatePDFTitle();
-                    loadPDF(currentSource.local_path);
+                    // Use URL for remote loading, local_path for local development
+                    const pdfPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                        ? currentSource.local_path 
+                        : currentSource.url;
+                    loadPDF(pdfPath);
                 }
                 
             } catch (error) {
@@ -351,7 +355,11 @@
             currentSource = sources.find(s => s.filename === selectedFilename);
             if (currentSource) {
                 updatePDFTitle();
-                loadPDF(currentSource.local_path);
+                // Use URL for remote loading, local_path for local development
+                const pdfPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                    ? currentSource.local_path 
+                    : currentSource.url;
+                loadPDF(pdfPath);
                 filterDataByPDF();
             }
         }
