@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kassaflödessammanfattning - Sjötungan Analytics</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -196,6 +198,120 @@
             padding: 40px;
             color: #6c757d;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .pdf-viewer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pdf-controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pdf-controls button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .pdf-controls button:hover {
+            background: #764ba2;
+        }
+
+        .pdf-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pdf-controls span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Clickable cell styles */
+        .clickable-amount {
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .clickable-amount:hover {
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -252,7 +368,64 @@
         </div>
     </div>
 
+    <!-- PDF Modal -->
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Källdokument</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="pdf-viewer">
+                <div class="pdf-controls">
+                    <button id="prev-page" onclick="changePage(-1)">← Föregående</button>
+                    <span>Sida <span id="page-num">1</span> av <span id="page-count">-</span></span>
+                    <button id="next-page" onclick="changePage(1)">Nästa →</button>
+                </div>
+                <canvas id="pdf-canvas"></canvas>
+                <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
+                    <a href="#" target="_blank" id="pdf-url" style="color: #667eea; text-decoration: none; font-size: 12px; word-wrap: break-word;">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let highlightBox = null;
+        let pdfSources = {}; // Map filename to URL
+
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Load PDF sources from YAML
+        async function loadPDFSources() {
+            try {
+                const response = await fetch('sources.yaml');
+                const yamlText = await response.text();
+                const data = jsyaml.load(yamlText);
+                
+                // Create a map from filename to URL
+                if (data.annual_reports) {
+                    data.annual_reports.forEach(source => {
+                        const filename = source.local_path.split('/').pop();
+                        pdfSources[filename] = source.url;
+                    });
+                }
+                
+                console.log('Loaded PDF sources:', pdfSources);
+            } catch (error) {
+                console.error('Error loading PDF sources:', error);
+            }
+        }
+
         async function loadCSV(url) {
             // Add timestamp to prevent caching
             const timestamp = new Date().getTime();
@@ -341,7 +514,12 @@
                     .map(e => ({
                         ...e,
                         categoryName: categoryMap[e.category_id].name,
-                        amount: parseInt(e.amount)
+                        amount: parseInt(e.amount),
+                        page: parseInt(e.page),
+                        x: parseFloat(e.x),
+                        y: parseFloat(e.y),
+                        width: parseFloat(e.width),
+                        height: parseFloat(e.height)
                     }))
                     .sort((a, b) => {
                         // Positive amounts first
@@ -447,10 +625,16 @@
                 
                 waterfallData.forEach((data) => {
                     const row = document.createElement('tr');
+                    
+                    // Make amount clickable if source data exists
+                    const amountHtml = data.file && data.page 
+                        ? `<span class="clickable-amount" onclick="showPDF('${data.file}', ${data.page}, ${data.x}, ${data.y}, ${data.width}, ${data.height}, '${data.categoryName}')">${formatNumber(data.amount)} SEK</span>`
+                        : `${formatNumber(data.amount)} SEK`;
+                    
                     row.innerHTML = `
                         <td>${data.categoryName}</td>
                         <td style="text-align: right;" class="${getAmountClass(data.amount)}">
-                            ${formatNumber(data.amount)} SEK
+                            ${amountHtml}
                         </td>
                         <td>${getCategoryType(data.amount)}</td>
                     `;
@@ -464,8 +648,142 @@
             }
         }
 
+        // PDF Modal Functions
+        function showPDF(file, page, x, y, width, height, categoryName) {
+            const modal = document.getElementById('pdfModal');
+            const title = document.getElementById('modal-title');
+            const urlLink = document.getElementById('pdf-url');
+            
+            title.textContent = `Källdokument: ${file} - ${categoryName}`;
+            
+            // Update the source URL link
+            if (pdfSources[file]) {
+                urlLink.href = pdfSources[file];
+                urlLink.textContent = pdfSources[file];
+                document.getElementById('pdf-source-link').style.display = 'block';
+            } else {
+                document.getElementById('pdf-source-link').style.display = 'none';
+            }
+            
+            // Set highlight box
+            highlightBox = {
+                pageNum: page,
+                x: x,
+                y: y,
+                width: width,
+                height: height
+            };
+            
+            // Show modal
+            modal.style.display = 'block';
+            
+            // Load the PDF
+            loadPDF('data/annual_reports/' + file, page);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('pdfModal');
+            modal.style.display = 'none';
+            highlightBox = null;
+            pdfDoc = null;
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('pdfModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        async function loadPDF(pdfPath, targetPage) {
+            try {
+                pageNum = targetPage || 1;
+                
+                const loadingTask = pdfjsLib.getDocument(pdfPath);
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Kunde inte ladda PDF: ' + pdfPath);
+            }
+        }
+
+        async function renderPage(num) {
+            pageRendering = true;
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: scale });
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+            
+            // Draw highlight box if we have one for this page
+            if (highlightBox && highlightBox.pageNum === num) {
+                drawHighlight(highlightBox, viewport);
+            }
+            
+            pageRendering = false;
+
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+
+            document.getElementById('page-num').textContent = num;
+            updateButtons();
+        }
+
+        function drawHighlight(box, viewport) {
+            ctx.save();
+            
+            // Create a semi-transparent yellow highlight
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+            ctx.strokeStyle = 'rgb(255, 152, 0)';
+            ctx.lineWidth = 3;
+            
+            // Draw rectangle
+            ctx.fillRect(box.x, box.y, box.width, box.height);
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            
+            // Add a pulsing animation effect
+            ctx.strokeStyle = 'rgba(102, 126, 234, 0.8)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
+            
+            ctx.restore();
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('prev-page').disabled = (pageNum <= 1);
+            document.getElementById('next-page').disabled = (pageNum >= pdfDoc.numPages);
+        }
+
+        function changePage(offset) {
+            pageNum += offset;
+            if (pageNum < 1) pageNum = 1;
+            if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+            queueRenderPage(pageNum);
+        }
+
         // Initialize page
         async function init() {
+            await loadPDFSources(); // Load PDF sources first
             await populateYearSelector();
             await loadData();
         }
