@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Skuldanalys - Sjötungan Analytics</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -80,15 +82,15 @@
         }
 
         .stat-card.short-term {
-            border-left-color: #f5576c;
+            border-left-color: #ff9800;
         }
 
         .stat-card.long-term {
-            border-left-color: #4facfe;
+            border-left-color: #2196f3;
         }
 
         .stat-card.total {
-            border-left-color: #43e97b;
+            border-left-color: #f44336;
         }
 
         .stat-card.interest {
@@ -299,6 +301,121 @@
                 padding: 8px 6px;
             }
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .pdf-viewer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pdf-controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pdf-controls button {
+            background: #f093fb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .pdf-controls button:hover {
+            background: #f5576c;
+        }
+
+        .pdf-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pdf-controls span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Clickable cell styles */
+        .clickable-cell {
+            cursor: pointer;
+            color: #f093fb;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .clickable-cell:hover {
+            color: #f5576c;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -348,7 +465,64 @@
         </footer>
     </div>
 
+    <!-- PDF Modal -->
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Källdokument</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="pdf-viewer">
+                <div class="pdf-controls">
+                    <button id="prev-page" onclick="changePage(-1)">← Föregående</button>
+                    <span>Sida <span id="page-num">1</span> av <span id="page-count">-</span></span>
+                    <button id="next-page" onclick="changePage(1)">Nästa →</button>
+                </div>
+                <canvas id="pdf-canvas"></canvas>
+                <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
+                    <a href="#" target="_blank" id="pdf-url" style="color: #f093fb; text-decoration: none; font-size: 12px; word-wrap: break-word;">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let highlightBox = null;
+        let pdfSources = {}; // Map filename to URL
+
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Load PDF sources from YAML
+        async function loadPDFSources() {
+            try {
+                const response = await fetch('sources.yaml');
+                const yamlText = await response.text();
+                const data = jsyaml.load(yamlText);
+                
+                // Create a map from filename to URL
+                if (data.annual_reports) {
+                    data.annual_reports.forEach(source => {
+                        const filename = source.local_path.split('/').pop();
+                        pdfSources[filename] = source.url;
+                    });
+                }
+                
+                console.log('Loaded PDF sources:', pdfSources);
+            } catch (error) {
+                console.error('Error loading PDF sources:', error);
+            }
+        }
+
         // Load and parse CSV data
         async function loadDebtData() {
             const response = await fetch('data/financial_states.csv');
@@ -358,12 +532,19 @@
             const headers = lines[0].split(',');
             
             const data = {};
+            const sourceData = {}; // Store source metadata for each year/category
             
             for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',');
                 const year = values[0];
                 const categoryId = parseInt(values[1]);
                 const amount = parseInt(values[2]);
+                const file = values[3];
+                const page = parseInt(values[4]);
+                const x = parseFloat(values[5]);
+                const y = parseFloat(values[6]);
+                const width = parseFloat(values[7]);
+                const height = parseFloat(values[8]);
                 
                 if (!data[year]) {
                     data[year] = {
@@ -372,12 +553,15 @@
                         longTerm: 0,   // category_id 1: Skulder till kreditinstitut
                         total: 0
                     };
+                    sourceData[year] = {};
                 }
                 
                 if (categoryId === 0) {
                     data[year].shortTerm = amount;
+                    sourceData[year].shortTerm = { file, page, x, y, width, height };
                 } else if (categoryId === 1) {
                     data[year].longTerm = amount;
+                    sourceData[year].longTerm = { file, page, x, y, width, height };
                 }
             }
             
@@ -385,7 +569,8 @@
             const debtData = Object.values(data)
                 .map(item => ({
                     ...item,
-                    total: item.shortTerm + item.longTerm
+                    total: item.shortTerm + item.longTerm,
+                    source: sourceData[item.year]
                 }))
                 .sort((a, b) => a.year.localeCompare(b.year));
             
@@ -649,11 +834,21 @@
                 const interest = interestData[item.year];
                 const interestText = interest ? formatCurrency(interest) : 'N/A';
                 
+                // Make shortTerm clickable if source data exists
+                const shortTermHtml = item.source && item.source.shortTerm 
+                    ? `<span class="clickable-cell" onclick="showPDF('${item.source.shortTerm.file}', ${item.source.shortTerm.page}, ${item.source.shortTerm.x}, ${item.source.shortTerm.y}, ${item.source.shortTerm.width}, ${item.source.shortTerm.height}, '${item.year}')">${formatCurrency(item.shortTerm)}</span>`
+                    : formatCurrency(item.shortTerm);
+                
+                // Make longTerm clickable if source data exists
+                const longTermHtml = item.source && item.source.longTerm 
+                    ? `<span class="clickable-cell" onclick="showPDF('${item.source.longTerm.file}', ${item.source.longTerm.page}, ${item.source.longTerm.x}, ${item.source.longTerm.y}, ${item.source.longTerm.width}, ${item.source.longTerm.height}, '${item.year}')">${formatCurrency(item.longTerm)}</span>`
+                    : formatCurrency(item.longTerm);
+                
                 return `
                     <tr>
                         <td><strong>${item.year}</strong></td>
-                        <td class="number">${formatCurrency(item.shortTerm)}</td>
-                        <td class="number">${formatCurrency(item.longTerm)}</td>
+                        <td class="number">${shortTermHtml}</td>
+                        <td class="number">${longTermHtml}</td>
                         <td class="number"><strong>${formatCurrency(item.total)}</strong></td>
                         <td class="number">${interestText}</td>
                         <td class="number">${changeText}</td>
@@ -667,6 +862,7 @@
         // Initialize the page
         async function init() {
             try {
+                await loadPDFSources(); // Load PDF sources first
                 const debtData = await loadDebtData();
                 const interestData = await loadInterestData();
                 renderStatsCards(debtData, interestData);
@@ -681,6 +877,139 @@
         }
 
         init();
+
+        // PDF Modal Functions
+        function showPDF(file, page, x, y, width, height, year) {
+            const modal = document.getElementById('pdfModal');
+            const title = document.getElementById('modal-title');
+            const urlLink = document.getElementById('pdf-url');
+            
+            title.textContent = `Källdokument: ${file} - År ${year}`;
+            
+            // Update the source URL link
+            if (pdfSources[file]) {
+                urlLink.href = pdfSources[file];
+                urlLink.textContent = pdfSources[file];
+                document.getElementById('pdf-source-link').style.display = 'block';
+            } else {
+                document.getElementById('pdf-source-link').style.display = 'none';
+            }
+            
+            // Set highlight box
+            highlightBox = {
+                pageNum: page,
+                x: x,
+                y: y,
+                width: width,
+                height: height
+            };
+            
+            // Show modal
+            modal.style.display = 'block';
+            
+            // Load the PDF
+            loadPDF('data/annual_reports/' + file, page);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('pdfModal');
+            modal.style.display = 'none';
+            highlightBox = null;
+            pdfDoc = null;
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('pdfModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        async function loadPDF(pdfPath, targetPage) {
+            try {
+                pageNum = targetPage || 1;
+                
+                const loadingTask = pdfjsLib.getDocument(pdfPath);
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Kunde inte ladda PDF: ' + pdfPath);
+            }
+        }
+
+        async function renderPage(num) {
+            pageRendering = true;
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: scale });
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+            
+            // Draw highlight box if we have one for this page
+            if (highlightBox && highlightBox.pageNum === num) {
+                drawHighlight(highlightBox, viewport);
+            }
+            
+            pageRendering = false;
+
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+
+            document.getElementById('page-num').textContent = num;
+            updateButtons();
+        }
+
+        function drawHighlight(box, viewport) {
+            ctx.save();
+            
+            // Create a semi-transparent yellow highlight
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+            ctx.strokeStyle = 'rgb(255, 152, 0)';
+            ctx.lineWidth = 3;
+            
+            // Draw rectangle
+            ctx.fillRect(box.x, box.y, box.width, box.height);
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            
+            // Add a pulsing animation effect
+            ctx.strokeStyle = 'rgba(240, 147, 251, 0.8)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
+            
+            ctx.restore();
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('prev-page').disabled = (pageNum <= 1);
+            document.getElementById('next-page').disabled = (pageNum >= pdfDoc.numPages);
+        }
+
+        function changePage(offset) {
+            pageNum += offset;
+            if (pageNum < 1) pageNum = 1;
+            if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+            queueRenderPage(pageNum);
+        }
     </script>
 </body>
 </html>
