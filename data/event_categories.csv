@@ -1,0 +1,17 @@
+id,name,parent
+0,Nettoomsättning,
+1,Driftkostnader,
+2,Fastighetsskötsel,1
+3,Kassaflöde från finansieringsverksamheten,
+4,Övriga intäkter,
+5,Övriga externa kostnader,
+6,Personalkostnader,
+7,Räntekostnader,
+8,Investeringar,
+9,Rörelsekapital - ej insamlade intäkter,
+10,Rörelsekapital - ej betalda kostnader,
+11,Leverantörsskulder,
+12,Övriga kortfristiga skulder,
+13,Kundfordringar,
+14,Övriga fordringar,
+15,Erhållen ränta,

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kassaflödessammanfattning - Sjötungan Analytics</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .year-selector {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .year-selector label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .year-selector select {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            min-width: 100px;
+        }
+
+        .year-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .events-table thead {
+            background: #f8f9fa;
+        }
+
+        .events-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .events-table td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        .events-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .events-table tfoot {
+            background: #f8f9fa;
+            border-top: 3px solid #495057;
+        }
+
+        .events-table tfoot td {
+            font-weight: bold;
+            font-size: 16px;
+            padding: 20px 15px;
+        }
+
+        .events-table tfoot tr:hover {
+            background: #f8f9fa;
+        }
+
+        .amount-positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .amount-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .amount-neutral {
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .waterfall-chart {
+            margin: 30px 0;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .waterfall-chart h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #waterfall-container {
+            width: 100%;
+            height: 500px;
+        }
+
+        .bar-positive {
+            background: linear-gradient(180deg, #34ce57 0%, #28a745 100%);
+        }
+
+        .bar-negative {
+            background: linear-gradient(180deg, #fa5252 0%, #dc3545 100%);
+        }
+
+        .waterfall-bar:hover {
+            opacity: 0.8;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 22px;
+            color: #333;
+        }
+
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kassaflödessammanfattning</h1>
+            <p>Verkliga kassaflöden för BRF Sjötungan</p>
+        </header>
+
+        <div class="content">
+            <div id="loading" class="loading">
+                Laddar finansiell data...
+            </div>
+
+            <div id="main-content" style="display: none;">
+                <div class="year-selector">
+                    <label for="year-select">År:</label>
+                    <select id="year-select">
+                        <!-- Years will be populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="section-header">
+                    <h2>Kassaflödesdetaljer</h2>
+                    <span class="badge" id="event-count">-</span>
+                </div>
+
+                <div class="waterfall-chart">
+                    <h3>Kassaflöde - Vattenfall</h3>
+                    <div class="chart-container" id="waterfall-container">
+                    </div>
+                </div>
+
+                <table class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th style="text-align: right;">Belopp (SEK)</th>
+                            <th>Typ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-body">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Nettokassaförändring</td>
+                            <td style="text-align: right;" id="net-cash" class="amount-positive">-</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadCSV(url) {
+            // Add timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            const cacheBustedUrl = url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
+            const response = await fetch(cacheBustedUrl);
+            const text = await response.text();
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',');
+            
+            return lines.slice(1).map(line => {
+                const values = line.split(',');
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header] = values[i];
+                });
+                return obj;
+            });
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('sv-SE').format(num);
+        }
+
+        function getCategoryType(amount) {
+            if (amount > 0) return 'Inflöde';
+            if (amount < 0) return 'Utflöde';
+            return 'Neutral';
+        }
+
+        function getAmountClass(amount) {
+            if (amount > 0) return 'amount-positive';
+            if (amount < 0) return 'amount-negative';
+            return 'amount-neutral';
+        }
+
+        async function populateYearSelector() {
+            try {
+                const events = await loadCSV('data/financial_events.csv');
+                
+                // Get distinct years and sort descending
+                const years = [...new Set(events.map(e => e.year))].sort((a, b) => b - a);
+                
+                const yearSelect = document.getElementById('year-select');
+                yearSelect.innerHTML = ''; // Clear existing options
+                
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                });
+                
+                // Select the most recent year by default
+                if (years.length > 0) {
+                    yearSelect.value = years[0];
+                }
+            } catch (error) {
+                console.error('Error populating year selector:', error);
+            }
+        }
+
+        async function loadData() {
+            try {
+                // Get selected year
+                const selectedYear = document.getElementById('year-select').value;
+
+                // Load both CSV files
+                const [events, categories] = await Promise.all([
+                    loadCSV('data/financial_events.csv'),
+                    loadCSV('data/event_categories.csv')
+                ]);
+
+                // Create category lookup
+                const categoryMap = {};
+                categories.forEach(cat => {
+                    categoryMap[cat.id] = cat;
+                });
+
+                // Filter to selected year parentless events
+                const parentlessEvents = events
+                    .filter(e => e.year === selectedYear)
+                    .filter(e => {
+                        const cat = categoryMap[e.category_id];
+                        return cat && !cat.parent;
+                    })
+                    .map(e => ({
+                        ...e,
+                        categoryName: categoryMap[e.category_id].name,
+                        amount: parseInt(e.amount)
+                    }))
+                    .sort((a, b) => {
+                        // Positive amounts first
+                        if (a.amount > 0 && b.amount <= 0) return -1;
+                        if (a.amount <= 0 && b.amount > 0) return 1;
+                        // Within positive, sort descending
+                        if (a.amount > 0 && b.amount > 0) return b.amount - a.amount;
+                        // Within negative, sort by absolute value descending (bigger magnitude first)
+                        return Math.abs(b.amount) - Math.abs(a.amount);
+                    });
+
+                // Calculate waterfall data
+                let netTotal = 0;
+                let runningTotal = 0;
+                const waterfallData = [];
+
+                parentlessEvents.forEach(event => {
+                    const startValue = runningTotal;
+                    runningTotal += event.amount;
+                    netTotal += event.amount;
+                    
+                    waterfallData.push({
+                        ...event,
+                        startValue,
+                        endValue: runningTotal
+                    });
+                });
+
+                // Update total in table footer
+                const netCashCell = document.getElementById('net-cash');
+                netCashCell.textContent = formatNumber(netTotal) + ' SEK';
+                netCashCell.className = getAmountClass(netTotal);
+                document.getElementById('event-count').textContent = `${parentlessEvents.length} kategorier`;
+
+                // Create Plotly waterfall chart
+                const x = waterfallData.map(d => d.amount);
+                const y = waterfallData.map(d => d.categoryName);
+                const text = x.map(val => formatNumber(val) + ' SEK');
+                
+                // Add total at the end
+                x.push(netTotal);
+                y.push('Nettokassaförändring');
+                text.push(formatNumber(netTotal) + ' SEK');
+                
+                // All bars are relative except the last one which is the total
+                const measure = x.map((val, idx) => idx === x.length - 1 ? 'total' : 'relative');
+
+                const data = [{
+                    type: 'waterfall',
+                    x: x,
+                    y: y,
+                    text: text,
+                    textposition: 'outside',
+                    measure: measure,
+                    orientation: 'h',
+                    connector: {
+                        line: {
+                            color: 'rgb(220, 53, 69)',
+                            width: 2
+                        }
+                    },
+                    increasing: { marker: { color: 'rgb(40, 167, 69)' } },
+                    decreasing: { marker: { color: 'rgb(220, 53, 69)' } },
+                    totals: { marker: { color: 'rgb(102, 126, 234)' } },
+                    hovertemplate: '<b>%{y}</b><br>Belopp: %{text}<extra></extra>'
+                }];
+
+                const layout = {
+                    title: '',
+                    showlegend: false,
+                    xaxis: {
+                        title: 'SEK',
+                        tickformat: ',.0f',
+                        separatethousands: true
+                    },
+                    yaxis: {
+                        autorange: 'reversed',
+                        tickfont: { size: 11 }
+                    },
+                    margin: { l: 250, r: 100, t: 40, b: 80 },
+                    paper_bgcolor: 'white',
+                    plot_bgcolor: 'rgba(0,0,0,0.02)'
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                };
+
+                Plotly.newPlot('waterfall-container', data, layout, config);
+
+                // Populate table (without visualization column)
+                const tbody = document.getElementById('events-body');
+                tbody.innerHTML = '';
+                
+                waterfallData.forEach((data) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.categoryName}</td>
+                        <td style="text-align: right;" class="${getAmountClass(data.amount)}">
+                            ${formatNumber(data.amount)} SEK
+                        </td>
+                        <td>${getCategoryType(data.amount)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Hide loading, show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #dc3545;">Fel vid laddning av finansiell data. Kontrollera konsolen.</p>';
+            }
+        }
+
+        // Initialize page
+        async function init() {
+            await populateYearSelector();
+            await loadData();
+        }
+
+        // Load data when page loads
+        init();
+
+        // Reload data when year changes
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('year-select').addEventListener('change', loadData);
+        });
+    </script>
+</body>
+</html>
