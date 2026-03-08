@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scraping from PDF - Sjötungan Analytics</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -297,26 +298,29 @@
         const ctx = canvas.getContext('2d');
 
         /**
-         * Load PDF sources from JSON
+         * Load PDF sources from YAML
          */
         async function loadSources() {
             try {
-                const response = await fetch('data/sources.json');
-                const data = await response.json();
+                const response = await fetch('sources.yaml');
+                const yamlText = await response.text();
+                const data = jsyaml.load(yamlText);
+                
                 sources = data.annual_reports;
                 
                 console.log('Loaded sources:', sources);
                 
                 // Populate the dropdown
                 const selector = document.getElementById('pdf-selector');
-                selector.innerHTML = sources.map(source => 
-                    `<option value="${source.filename}">${source.filename} (${source.finance_period})</option>`
-                ).join('');
+                selector.innerHTML = sources.map(source => {
+                    const filename = source.local_path.split('/').pop();
+                    return `<option value="${filename}">${filename} (${source.finance_period})</option>`;
+                }).join('');
                 
                 // Select the first PDF by default
                 if (sources.length > 0) {
                     currentSource = sources[0];
-                    selector.value = currentSource.filename;
+                    selector.value = currentSource.local_path.split('/').pop();
                     updatePDFTitle();
                     // Use URL for remote loading, local_path for local development
                     const pdfPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
@@ -335,8 +339,9 @@
          */
         function updatePDFTitle() {
             if (currentSource) {
+                const filename = currentSource.local_path.split('/').pop();
                 document.getElementById('pdf-title').textContent = 
-                    `Source Document: ${currentSource.filename} (Year ${currentSource.finance_period})`;
+                    `Source Document: ${filename} (Year ${currentSource.finance_period})`;
                 
                 // Update the source link
                 const linkElement = document.getElementById('pdf-url');
@@ -352,7 +357,7 @@
             const selector = document.getElementById('pdf-selector');
             const selectedFilename = selector.value;
             
-            currentSource = sources.find(s => s.filename === selectedFilename);
+            currentSource = sources.find(s => s.local_path.split('/').pop() === selectedFilename);
             if (currentSource) {
                 updatePDFTitle();
                 // Use URL for remote loading, local_path for local development
@@ -371,9 +376,10 @@
             if (!currentSource) {
                 financialData = allFinancialData;
             } else {
-                // Filter by filename
+                // Filter by filename extracted from local_path
+                const filename = currentSource.local_path.split('/').pop();
                 financialData = allFinancialData.filter(row => 
-                    row.file === currentSource.filename
+                    row.file === filename
                 );
             }
             renderDataTable();
