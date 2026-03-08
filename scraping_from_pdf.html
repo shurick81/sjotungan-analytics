@@ -322,11 +322,7 @@
                     currentSource = sources[0];
                     selector.value = currentSource.local_path.split('/').pop();
                     updatePDFTitle();
-                    // Use URL for remote loading, local_path for local development
-                    const pdfPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-                        ? currentSource.local_path 
-                        : currentSource.url;
-                    loadPDF(pdfPath);
+                    loadPDF(currentSource.local_path);
                 }
                 
             } catch (error) {
@@ -360,11 +356,7 @@
             currentSource = sources.find(s => s.local_path.split('/').pop() === selectedFilename);
             if (currentSource) {
                 updatePDFTitle();
-                // Use URL for remote loading, local_path for local development
-                const pdfPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-                    ? currentSource.local_path 
-                    : currentSource.url;
-                loadPDF(pdfPath);
+                loadPDF(currentSource.local_path);
                 filterDataByPDF();
             }
         }
