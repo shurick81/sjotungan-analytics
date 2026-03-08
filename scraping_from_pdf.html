@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraping from PDF - Sjötungan Analytics</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 700px 1fr;
+            gap: 0;
+            min-height: 800px;
+        }
+
+        .data-panel {
+            border-right: 1px solid #e0e0e0;
+            padding: 30px;
+            background: #fafafa;
+        }
+
+        .pdf-panel {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .data-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            font-size: 14px;
+        }
+
+        .data-table tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .amount {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .highlight-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .highlight-btn:hover {
+            background: #5568d3;
+        }
+
+        .highlight-btn:active {
+            transform: scale(0.98);
+        }
+
+        .pdf-controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .pdf-controls button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .pdf-controls button:hover {
+            background: #5568d3;
+        }
+
+        .pdf-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pdf-controls span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .search-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .search-status.found {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .search-status.searching {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .search-status.not-found {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .data-panel {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Scraping from PDF - Financial Data Visualization</h1>
+            <p>Interactive visualization showing the exact source of extracted financial figures</p>
+        </header>
+
+        <div class="content">
+            <div class="data-panel">
+                <h2>Extracted Financial Data</h2>
+                
+                <div class="info-box">
+                    <strong>How it works:</strong>
+                    Click any row below to see the exact location where that figure was extracted from in the PDF document.
+                </div>
+
+                <div id="data-container">
+                    <p style="text-align: center; color: #999; padding: 20px;">Loading data...</p>
+                </div>
+
+                <div id="search-status"></div>
+
+                <h2 style="margin-top: 30px;">About This Demo</h2>
+                <p style="font-size: 13px; color: #666; line-height: 1.6;">
+                    This page demonstrates how to link extracted data back to its source in PDF documents. 
+                    The PDF viewer on the right will automatically scroll to and highlight the figure when you click "Show in PDF".
+                </p>
+            </div>
+
+            <div class="pdf-panel">
+                <div style="margin-bottom: 20px;">
+                    <label for="pdf-selector" style="font-weight: 600; margin-right: 10px;">Select PDF:</label>
+                    <select id="pdf-selector" onchange="switchPDF()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <h2 id="pdf-title">Source Document</h2>
+                
+                <div class="pdf-controls">
+                    <button id="prev-page" onclick="changePage(-1)">← Previous</button>
+                    <span>Page <span id="page-num">1</span> of <span id="page-count">-</span></span>
+                    <button id="next-page" onclick="changePage(1)">Next →</button>
+                    <button id="find-btn" onclick="showFirstEntry()" style="margin-left: 20px;">🔍 Find Figure</button>
+                </div>
+
+                <canvas id="pdf-canvas"></canvas>
+                
+                <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
+                    <a href="#" target="_blank" id="pdf-url" style="color: #667eea; text-decoration: none; font-size: 12px; word-wrap: break-word;">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let highlightBox = null; // Store highlight coordinates
+        let financialData = []; // Store loaded CSV data
+        let allFinancialData = []; // Store all data before filtering
+        let categories = {}; // Store categories lookup
+        let sources = []; // Store PDF sources
+        let currentSource = null; // Currently selected PDF source
+
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        /**
+         * Load PDF sources from JSON
+         */
+        async function loadSources() {
+            try {
+                const response = await fetch('data/sources.json');
+                const data = await response.json();
+                sources = data.annual_reports;
+                
+                console.log('Loaded sources:', sources);
+                
+                // Populate the dropdown
+                const selector = document.getElementById('pdf-selector');
+                selector.innerHTML = sources.map(source => 
+                    `<option value="${source.filename}">${source.filename} (${source.finance_period})</option>`
+                ).join('');
+                
+                // Select the first PDF by default
+                if (sources.length > 0) {
+                    currentSource = sources[0];
+                    selector.value = currentSource.filename;
+                    updatePDFTitle();
+                    loadPDF(currentSource.local_path);
+                }
+                
+            } catch (error) {
+                console.error('Error loading sources:', error);
+            }
+        }
+
+        /**
+         * Update PDF title display
+         */
+        function updatePDFTitle() {
+            if (currentSource) {
+                document.getElementById('pdf-title').textContent = 
+                    `Source Document: ${currentSource.filename} (Year ${currentSource.finance_period})`;
+                
+                // Update the source link
+                const linkElement = document.getElementById('pdf-url');
+                linkElement.href = currentSource.url;
+                linkElement.textContent = currentSource.url;
+            }
+        }
+
+        /**
+         * Switch to a different PDF
+         */
+        function switchPDF() {
+            const selector = document.getElementById('pdf-selector');
+            const selectedFilename = selector.value;
+            
+            currentSource = sources.find(s => s.filename === selectedFilename);
+            if (currentSource) {
+                updatePDFTitle();
+                loadPDF(currentSource.local_path);
+                filterDataByPDF();
+            }
+        }
+
+        /**
+         * Filter financial data to show only events from current PDF
+         */
+        function filterDataByPDF() {
+            if (!currentSource) {
+                financialData = allFinancialData;
+            } else {
+                // Filter by filename
+                financialData = allFinancialData.filter(row => 
+                    row.file === currentSource.filename
+                );
+            }
+            renderDataTable();
+        }
+
+        /**
+         * Load event categories from CSV
+         */
+        async function loadCategories() {
+            try {
+                const response = await fetch('data/event_categories.csv');
+                const csvText = await response.text();
+                
+                // Parse CSV
+                const lines = csvText.trim().split('\n');
+                const headers = lines[0].split(',');
+                
+                lines.slice(1).forEach(line => {
+                    const values = line.split(',');
+                    const id = values[0];
+                    const name = values[1];
+                    categories[id] = name;
+                });
+                
+                console.log('Loaded categories:', categories);
+                
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        /**
+         * Load financial events from CSV
+         */
+        async function loadFinancialData() {
+            try {
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                const response = await fetch(`data/financial_events.csv?t=${timestamp}`);
+                const csvText = await response.text();
+                
+                // Parse CSV
+                const lines = csvText.trim().split('\n');
+                const headers = lines[0].split(',');
+                
+                allFinancialData = lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index];
+                    });
+                    return row;
+                });
+                
+                console.log('Loaded financial data:', allFinancialData);
+                filterDataByPDF();
+                
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                document.getElementById('data-container').innerHTML = 
+                    '<p style="color: red;">Error loading data. Make sure the file exists.</p>';
+            }
+        }
+
+        /**
+         * Render the data table from loaded CSV
+         */
+        function renderDataTable() {
+            const container = document.getElementById('data-container');
+            
+            if (financialData.length === 0) {
+                container.innerHTML = '<p>No data found.</p>';
+                return;
+            }
+            
+            let html = '<table class="data-table"><thead><tr>';
+            html += '<th>Year</th><th>Category</th><th>Amount (SEK)</th><th>Source</th><th>Action</th>';
+            html += '</tr></thead><tbody>';
+            
+            financialData.forEach((row, index) => {
+                const amount = formatNumber(row.amount);
+                const categoryName = categories[row.category_id] || `Category ${row.category_id}`;
+                
+                html += `<tr>
+                    <td>${row.year}</td>
+                    <td>${categoryName}</td>
+                    <td class="amount">${amount}</td>
+                    <td>${row.file} (p. ${row.page})</td>
+                    <td>
+                        <button class="highlight-btn" 
+                                onclick="showHighlight(${row.page}, ${row.x}, ${row.y}, ${row.width}, ${row.height})">
+                            Show in PDF
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        /**
+         * Format number with spaces
+         */
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        /**
+         * Load and render the PDF
+         */
+        async function loadPDF(pdfPath) {
+            try {
+                // Reset page number and highlight
+                pageNum = 1;
+                highlightBox = null;
+                
+                const loadingTask = pdfjsLib.getDocument(pdfPath);
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                showSearchStatus(`Error loading PDF. Make sure the file exists at ${pdfPath}`, 'not-found');
+            }
+        }
+
+        /**
+         * Render a specific page
+         */
+        async function renderPage(num) {
+            pageRendering = true;
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: scale });
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+            
+            // Draw highlight box if we have one for this page
+            if (highlightBox && highlightBox.pageNum === num) {
+                drawHighlight(highlightBox, viewport);
+            }
+            
+            pageRendering = false;
+
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+
+            document.getElementById('page-num').textContent = num;
+            updateButtons();
+        }
+
+        /**
+         * Draw a highlight rectangle on the canvas
+         */
+        function drawHighlight(box, viewport) {
+            console.log('Drawing highlight box:', box);
+            ctx.save();
+            
+            // Create a semi-transparent yellow highlight
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+            ctx.strokeStyle = 'rgb(255, 152, 0)';
+            ctx.lineWidth = 3;
+            
+            // Draw rectangle
+            ctx.fillRect(box.x, box.y, box.width, box.height);
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            
+            // Add a pulsing animation effect
+            ctx.strokeStyle = 'rgba(255, 87, 34, 0.6)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
+            
+            ctx.restore();
+        }
+
+        /**
+         * Queue page rendering
+         */
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        /**
+         * Update button states
+         */
+        function updateButtons() {
+            document.getElementById('prev-page').disabled = (pageNum <= 1);
+            document.getElementById('next-page').disabled = (pageNum >= pdfDoc.numPages);
+        }
+
+        /**
+         * Show highlight at specific coordinates
+         * @param {number} page - Page number (1-indexed)
+         * @param {number} x - X coordinate from left
+         * @param {number} y - Y coordinate from top
+         * @param {number} width - Width of highlight box
+         * @param {number} height - Height of highlight box
+         */
+        function showHighlight(page, x, y, width, height) {
+            if (!pdfDoc) {
+                showSearchStatus('PDF not loaded yet', 'not-found');
+                return;
+            }
+
+            // Set the highlight box
+            highlightBox = {
+                pageNum: parseInt(page),
+                x: parseFloat(x),
+                y: parseFloat(y),
+                width: parseFloat(width),
+                height: parseFloat(height)
+            };
+
+            // Navigate to the page
+            pageNum = parseInt(page);
+            queueRenderPage(pageNum);
+            
+            showSearchStatus(`Found on page ${page}!`, 'found');
+        }
+
+        /**
+         * Show first entry from CSV
+         */
+        function showFirstEntry() {
+            if (financialData.length > 0) {
+                const first = financialData[0];
+                showHighlight(first.page, first.x, first.y, first.width, first.height);
+            }
+        }
+
+        /**
+         * Search for text in PDF and navigate to it
+         */
+        async function searchAndHighlight(searchText) {
+            if (!pdfDoc) {
+                showSearchStatus('PDF not loaded yet', 'not-found');
+                return;
+            }
+
+            showSearchStatus('Searching for "' + searchText + '" in PDF...', 'searching');
+            
+            // Clear previous highlight
+            highlightBox = null;
+
+            // Try different variations of the search text
+            const variations = [
+                searchText,
+                searchText.replace(/(\d{2})(\d{3})(\d{3})/, '$1 $2 $3'), // 49 194 715
+                searchText.replace(/(\d{2})(\d{3})(\d{3})/, '$1.$2.$3'), // 49.194.715
+                searchText.replace(/(\d{2})(\d{3})(\d{3})/, '$1,$2,$3'), // 49,194,715
+                searchText.replace(/(\d{2})(\d{3})(\d{3})/, '$1  $2  $3'), // double spaces
+            ];
+
+            let found = false;
+
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                const page = await pdfDoc.getPage(i);
+                const textContent = await page.getTextContent();
+                const viewport = page.getViewport({ scale: scale });
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                const exactText = textContent.items.map(item => item.str).join('');
+                
+                // Remove all spaces and non-digit characters for comparison
+                const digitsOnly = pageText.replace(/\s/g, '');
+                const searchDigits = searchText.replace(/\s/g, '');
+
+                // Log for page 27 to debug
+                if (i === 27) {
+                    console.log('Page 27 text sample:', pageText.substring(0, 500));
+                    console.log('Searching for:', searchDigits);
+                    console.log('Digits in page:', digitsOnly.includes(searchDigits));
+                }
+
+                // Check all variations
+                for (const variant of variations) {
+                    if (pageText.includes(variant) || exactText.includes(variant.replace(/\s/g, ''))) {
+                        found = true;
+                        pageNum = i;
+                        
+                        // Find the coordinates of the text
+                        const coords = findTextCoordinates(textContent, variant, viewport);
+                        if (coords) {
+                            highlightBox = { pageNum: i, ...coords };
+                        }
+                        
+                        queueRenderPage(pageNum);
+                        showSearchStatus(`Found on page ${i}! Net revenue (Nettoomsättning): 49 194 715 SEK`, 'found');
+                        break;
+                    }
+                }
+                
+                // Also check digits-only comparison
+                if (!found && digitsOnly.includes(searchDigits)) {
+                    found = true;
+                    pageNum = i;
+                    
+                    // Find approximate coordinates
+                    const coords = findTextCoordinatesApproximate(textContent, searchDigits, viewport);
+                    if (coords) {
+                        highlightBox = { pageNum: i, ...coords };
+                    }
+                    
+                    queueRenderPage(pageNum);
+                    showSearchStatus(`Found on page ${i}! Net revenue (Nettoomsättning): 49 194 715 SEK`, 'found');
+                }
+
+                if (found) break;
+            }
+
+            if (!found) {
+                showSearchStatus('Figure not found in PDF. It may be in an image or table.', 'not-found');
+            }
+        }
+
+        /**
+         * Find coordinates of text in the page
+         */
+        function findTextCoordinates(textContent, searchText, viewport) {
+            console.log('Searching for coordinates of:', searchText);
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            let foundItems = [];
+            
+            const searchDigits = searchText.replace(/\D/g, '');
+            console.log('Search digits:', searchDigits);
+            
+            // Build a string of all text with positions
+            let fullText = '';
+            textContent.items.forEach((item, idx) => {
+                fullText += item.str;
+                const itemDigits = item.str.replace(/\D/g, '');
+                
+                // Check if this item contains part of our number
+                if (itemDigits.length > 0 && searchDigits.includes(itemDigits)) {
+                    console.log(`Item ${idx}: "${item.str}" (digits: ${itemDigits})`, item.transform);
+                    foundItems.push(item);
+                }
+            });
+            
+            console.log('Found items:', foundItems.length);
+            
+            if (foundItems.length === 0) {
+                // Fallback: search for "49" "194" "715" separately
+                ['49', '194', '715'].forEach(part => {
+                    textContent.items.forEach(item => {
+                        if (item.str.includes(part)) {
+                            foundItems.push(item);
+                        }
+                    });
+                });
+            }
+            
+            if (foundItems.length === 0) {
+                console.log('No items found for highlighting');
+                return null;
+            }
+            
+            // Calculate bounding box
+            foundItems.forEach(item => {
+                const transform = item.transform;
+                const x = transform[4];
+                const y = transform[5];
+                const fontSize = transform[0]; // Font size from transform matrix
+                const height = item.height || fontSize || 12;
+                const width = item.width || (item.str.length * fontSize * 0.5) || 50;
+                
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x + width);
+                maxY = Math.max(maxY, y + height);
+            });
+            
+            console.log('Bounding box:', { minX, minY, maxX, maxY });
+            
+            // Convert coordinates to canvas space and add padding
+            const padding = 10;
+            const result = {
+                x: minX - padding,
+                y: viewport.height - maxY - padding,
+                width: (maxX - minX) + (padding * 2),
+                height: (maxY - minY) + (padding * 2)
+            };
+            
+            console.log('Final highlight box:', result);
+            return result;
+        }
+
+        /**
+         * Find approximate coordinates when exact match isn't found
+         */
+        function findTextCoordinatesApproximate(textContent, searchDigits, viewport) {
+            console.log('Using approximate search for:', searchDigits);
+            
+            // Look for items containing significant portions of our number
+            for (let i = 0; i < textContent.items.length; i++) {
+                const item = textContent.items[i];
+                const itemText = item.str.replace(/\s/g, '');
+                
+                // Check if this item contains a good chunk of our search digits
+                if (itemText.includes(searchDigits.substring(0, 5)) || 
+                    itemText.includes(searchDigits.substring(0, 4))) {
+                    
+                    console.log('Found approximate match:', item.str);
+                    const transform = item.transform;
+                    const x = transform[4];
+                    const y = transform[5];
+                    const fontSize = transform[0];
+                    const height = item.height || fontSize || 14;
+                    const width = item.width || (item.str.length * fontSize * 0.5) || 120;
+                    
+                    const result = {
+                        x: x - 10,
+                        y: viewport.height - y - height - 10,
+                        width: width + 20,
+                        height: height + 20
+                    };
+                    
+                    console.log('Approximate highlight box:', result);
+                    return result;
+                }
+            }
+            
+            console.log('No approximate match found');
+            return null;
+        }
+
+        /**
+         * Change page
+         */
+        function changePage(offset) {
+            // Clear highlight when manually navigating
+            highlightBox = null;
+            
+            pageNum += offset;
+            if (pageNum < 1) pageNum = 1;
+            if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+            queueRenderPage(pageNum);
+        }
+
+        /**
+         * Show search status message
+         */
+        function showSearchStatus(message, type) {
+            const statusDiv = document.getElementById('search-status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'search-status ' + type;
+        }
+
+        // Load PDF and data when page loads
+        window.addEventListener('load', async () => {
+            await loadCategories(); // Load categories first
+            await loadSources(); // Load PDF sources and load first PDF
+            await loadFinancialData(); // Then load financial data
+        });
+    </script>
+</body>
+</html>
