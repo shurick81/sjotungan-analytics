@@ -181,6 +181,124 @@
             font-size: 13px;
             text-align: center;
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            header {
+                padding: 20px 15px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            header p {
+                font-size: 13px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .chart-container {
+                margin-bottom: 20px;
+                padding: 15px;
+                border-radius: 4px;
+            }
+
+            .chart-title {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+
+            .data-table th {
+                font-size: 11px;
+            }
+
+            .data-table td.number {
+                font-size: 12px;
+            }
+
+            footer {
+                padding: 15px;
+                font-size: 12px;
+            }
+        }
+
+        /* Extra small mobile devices */
+        @media (max-width: 480px) {
+            header {
+                padding: 15px 10px;
+            }
+
+            header h1 {
+                font-size: 20px;
+            }
+
+            .content {
+                padding: 10px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .stat-value {
+                font-size: 22px;
+            }
+
+            .stat-change {
+                font-size: 12px;
+            }
+
+            .chart-container {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+
+            .chart-title {
+                font-size: 16px;
+                margin-bottom: 12px;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 8px 6px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -421,28 +539,32 @@
                 }
             };
             
+            const isMobile = window.innerWidth <= 768;
+            
             const layout = {
-                height: 500,
-                margin: { t: 20, r: 20, b: 60, l: 80 },
+                height: isMobile ? 350 : 500,
+                margin: isMobile 
+                    ? { t: 10, r: 10, b: 80, l: 60 } 
+                    : { t: 20, r: 20, b: 60, l: 80 },
                 xaxis: {
                     title: 'År',
-                    tickfont: { size: 12 },
+                    tickfont: { size: isMobile ? 10 : 12 },
                     showgrid: true,
                     gridcolor: '#e9ecef'
                 },
                 yaxis: {
-                    title: 'Belopp (SEK)',
-                    tickfont: { size: 12 },
+                    title: isMobile ? '' : 'Belopp (SEK)',
+                    tickfont: { size: isMobile ? 10 : 12 },
                     tickformat: ',.0f',
                     showgrid: true,
                     gridcolor: '#e9ecef'
                 },
                 legend: {
                     orientation: 'h',
-                    y: -0.15,
+                    y: -0.2,
                     x: 0.5,
                     xanchor: 'center',
-                    font: { size: 13 }
+                    font: { size: isMobile ? 11 : 13 }
                 },
                 hovermode: 'x unified',
                 plot_bgcolor: 'white',
@@ -460,6 +582,8 @@
         function renderInterestChart(debtData, interestData) {
             const years = debtData.map(d => d.year);
             const interestCosts = years.map(year => interestData[year] || null);
+            
+            const isMobile = window.innerWidth <= 768;
             
             const trace = {
                 x: years,
@@ -480,17 +604,19 @@
             };
             
             const layout = {
-                height: 400,
-                margin: { t: 20, r: 20, b: 60, l: 80 },
+                height: isMobile ? 300 : 400,
+                margin: isMobile 
+                    ? { t: 10, r: 10, b: 80, l: 60 } 
+                    : { t: 20, r: 20, b: 60, l: 80 },
                 xaxis: {
                     title: 'År',
-                    tickfont: { size: 12 },
+                    tickfont: { size: isMobile ? 10 : 12 },
                     showgrid: true,
                     gridcolor: '#e9ecef'
                 },
                 yaxis: {
-                    title: 'Räntekostnader (SEK)',
-                    tickfont: { size: 12 },
+                    title: isMobile ? '' : 'Räntekostnader (SEK)',
+                    tickfont: { size: isMobile ? 10 : 12 },
                     tickformat: ',.0f',
                     showgrid: true,
                     gridcolor: '#e9ecef'
