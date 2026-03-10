@@ -312,9 +312,245 @@
         .clickable-amount:hover {
             opacity: 0.7;
         }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-bg: #d9dbe1;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: var(--vm-bg);
+            color: var(--vm-text);
+            padding: 0;
+        }
+
+        .site-nav {
+            background: var(--vm-blue);
+            color: white;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+        }
+
+        .site-nav ul {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 34px;
+        }
+
+        .site-nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 22px;
+            line-height: 1;
+            opacity: 0.95;
+        }
+
+        .site-nav a:hover {
+            opacity: 1;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .page-shell {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 34px 18px 42px;
+        }
+
+        .container {
+            background: var(--vm-card);
+            border-radius: 12px;
+            box-shadow: none;
+            border: 1px solid rgba(31, 63, 149, 0.08);
+        }
+
+        header {
+            background: transparent;
+            color: var(--vm-blue);
+            padding: 28px 30px 14px;
+            border-bottom: 3px solid var(--vm-blue-light);
+        }
+
+        header h1 {
+            font-size: 42px;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            opacity: 1;
+            font-size: 18px;
+            color: var(--vm-muted);
+        }
+
+        .content {
+            padding: 26px 30px 32px;
+        }
+
+        .year-selector label,
+        .section-header h2,
+        .waterfall-chart h3 {
+            color: var(--vm-blue);
+        }
+
+        .year-selector select {
+            border: 1px solid var(--vm-border);
+            border-radius: 8px;
+            background: #f6f9ff;
+            color: var(--vm-text);
+        }
+
+        .year-selector select:focus {
+            border-color: var(--vm-blue-light);
+            box-shadow: 0 0 0 3px rgba(125, 174, 242, 0.2);
+        }
+
+        .badge {
+            background: var(--vm-blue);
+        }
+
+        .events-table,
+        .states-table,
+        .waterfall-chart {
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            box-shadow: none;
+        }
+
+        .events-table thead,
+        .states-table thead,
+        .events-table tr:hover,
+        .states-table tr:hover,
+        .events-table tfoot {
+            background: #eef3fb;
+        }
+
+        .events-table th,
+        .events-table td,
+        .states-table th,
+        .states-table td {
+            border-bottom: 1px solid #dde6f4;
+            color: var(--vm-text);
+        }
+
+        .events-table th,
+        .states-table th {
+            color: #33486f;
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .events-table tfoot {
+            border-top: 2px solid var(--vm-blue-light);
+        }
+
+        .states-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .states-table tfoot {
+            background: #eef3fb;
+            border-top: 2px solid var(--vm-blue-light);
+        }
+
+        .states-table tfoot td {
+            font-weight: 700;
+            font-size: 15px;
+            padding: 16px 15px;
+        }
+
+        .loading {
+            color: var(--vm-muted);
+        }
+
+        .pdf-controls button {
+            background: var(--vm-blue);
+            border-radius: 8px;
+        }
+
+        .pdf-controls button:hover {
+            background: #2c54bf;
+        }
+
+        #pdf-url {
+            color: var(--vm-blue) !important;
+        }
+
+        @media (max-width: 900px) {
+            .site-nav {
+                height: 56px;
+            }
+
+            .site-nav ul {
+                gap: 18px;
+            }
+
+            .site-nav a {
+                font-size: 18px;
+            }
+
+            .page-shell {
+                padding: 20px 10px 24px;
+            }
+
+            header h1 {
+                font-size: 32px;
+            }
+        }
+
+        body.embedded-mode {
+            background: transparent;
+            padding: 0;
+        }
+
+        body.embedded-mode .site-nav {
+            display: none;
+        }
+
+        body.embedded-mode .page-shell {
+            max-width: none;
+            padding: 0;
+        }
+
+        body.embedded-mode .container {
+            border: 0;
+            border-radius: 0;
+        }
+
+        body.embedded-mode .container > header {
+            display: none;
+        }
+
+        body.embedded-mode .content {
+            padding-top: 20px;
+        }
     </style>
 </head>
 <body>
+    <nav class="site-nav" aria-label="Huvudnavigation">
+        <ul>
+            <li><a href="https://visionmyggan.se">Start</a></li>
+            <li><a href="https://visionmyggan.se/#vision">Vision</a></li>
+            <li><a href="https://visionmyggan.se/#motioner">Motioner</a></li>
+            <li><a href="https://visionmyggan.se/#forum">Forum</a></li>
+        </ul>
+    </nav>
+
+    <main class="page-shell">
     <div class="container">
         <header>
             <h1>Kassaflödessammanfattning</h1>
@@ -392,6 +628,7 @@
             </div>
         </div>
     </div>
+    </main>
 
     <!-- PDF Modal -->
     <div id="pdfModal" class="modal">
@@ -416,6 +653,11 @@
     </div>
 
     <script>
+        const isEmbedded = new URLSearchParams(window.location.search).get('embedded') === '1';
+        if (isEmbedded) {
+            document.body.classList.add('embedded-mode');
+        }
+
         // Configure PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -531,16 +773,13 @@
                     categoryMap[cat.id] = cat;
                 });
 
-                // Filter to selected year parentless events
+                // Filter to selected year events (only parentless categories contribute to cash flow total)
                 const parentlessEvents = events
                     .filter(e => e.year === selectedYear)
-                    .filter(e => {
-                        const cat = categoryMap[e.category_id];
-                        return cat && !cat.parent;
-                    })
+                    .filter(e => !categoryMap[e.category_id] || !categoryMap[e.category_id].parent)
                     .map(e => ({
                         ...e,
-                        categoryName: categoryMap[e.category_id].name,
+                        categoryName: categoryMap[e.category_id] ? categoryMap[e.category_id].name : 'Okänd',
                         amount: parseInt(e.amount),
                         page: parseInt(e.page),
                         x: parseFloat(e.x),
@@ -702,8 +941,8 @@
                 const stateCatMap = {};
                 stateCategories.forEach(sc => { stateCatMap[sc.id] = sc; });
 
-                // Liquidity state category IDs (Kassa och bank, Avräkningskonto, Placeringskonto)
-                const liquidityCats = ['2', '3', '4'];
+                // Liquidity state category IDs (Kassa och bank, Avräkningskonto, Placeringskonto, Kortfristiga placeringar)
+                const liquidityCats = ['2', '3', '4', '5'];
                 const prevYear = String(parseInt(selectedYear) - 1);
 
                 const statesStart = {};

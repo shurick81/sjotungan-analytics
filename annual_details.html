@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vision Myggan</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-size: 1rem; }
+@media (max-width: 640px) {
+body { font-size: 0.875rem; }
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.25rem; }
+p { font-size: 0.875rem; }
+}
+h1 { font-size: 2.25rem; }
+h2 { font-size: 1.5rem; }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+<button onclick="showSection('start')" class="hover:text-yellow-400 font-semibold">Start</button>
+<button onclick="showSection('vision')" class="hover:text-yellow-400 font-semibold">Vision</button>
+<button onclick="showSection('motioner')" class="hover:text-yellow-400 font-semibold">Motioner</button>
+<button onclick="showSection('forum')" class="hover:text-yellow-400 font-semibold">Forum</button>
+</nav>
+</header>
+
+<main class="container mx-auto mt-8 p-4">
+<section id="start" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Kassaflödessammanfattning</h1>
+  <div class="w-full rounded-xl overflow-hidden border border-blue-100 bg-white" style="height: 85vh; min-height: 700px;">
+    <iframe
+      src="cash_flow_summary.html?embedded=1"
+      title="Kassaflöde"
+      class="w-full h-full"
+      style="border: 0;"
+      loading="lazy">
+    </iframe>
+  </div>
+</section>
+
+<section id="vision" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Kassaflödessammanfattning</h1>
+  <p class="text-gray-700">Samma innehåll visas under Start.</p>
+</section>
+
+<section id="motioner" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Kassaflödessammanfattning</h1>
+  <p class="text-gray-700">Samma innehåll visas under Start.</p>
+</section>
+
+<section id="forum" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Kassaflödessammanfattning</h1>
+  <p class="text-gray-700">Samma innehåll visas under Start.</p>
+</section>
+</main>
+
+<footer class="text-center text-gray-500 text-sm py-4 mt-8">
+&copy; 2025 Vision Myggan – En medlemsrörelse i BRF Sjötungan
+</footer>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('main section').forEach(sec => sec.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  history.replaceState(null, null, '#' + id);
+}
+
+function loadFromHash() {
+  const hash = window.location.hash.substring(1);
+  if (hash && document.getElementById(hash)) {
+    showSection(hash);
+  } else {
+    showSection('start');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', loadFromHash);
+window.addEventListener('hashchange', loadFromHash);
+</script>
+</body>
+</html>

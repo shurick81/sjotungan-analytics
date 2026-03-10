@@ -26,7 +26,7 @@ year,category_id,amount,file,page,x,y,width,height
 2022,0,42734661,stamma-2023.pdf,8,595,260,80,20
 2022,1,-26523147,stamma-2023.pdf,8,589,332,85,20
 2022,5,-851109,stamma-2023.pdf,8,609,347,65,20
-2022,1,-1321779,stamma-2023.pdf,8,597,363,77,20
+2022,16,-1321779,stamma-2023.pdf,8,597,363,77,20
 2022,6,-712815,stamma-2023.pdf,8,609,382,65,20
 2022,15,10571,stamma-2023.pdf,8,623,501,53,20
 2022,7,-3255022,stamma-2023.pdf,8,597,519,77,20
@@ -37,7 +37,7 @@ year,category_id,amount,file,page,x,y,width,height
 2021,0,40905710,stamma_kallelse_2022.pdf,13,604,182,95,15
 2021,4,669176,stamma_kallelse_2022.pdf,13,626,200,73,15
 2021,1,-24845023,stamma_kallelse_2022.pdf,13,599,256,100,15
-2021,2,-2527274,stamma_kallelse_2022.pdf,13,607,292,93,15
+2021,16,-2527274,stamma_kallelse_2022.pdf,13,607,292,93,15
 2021,3,41842676,stamma_kallelse_2022.pdf,16,592,485,98,16
 2021,5,-637783,stamma_kallelse_2022.pdf,13,620,274,79,15
 2021,6,-768322,stamma_kallelse_2022.pdf,13,620,311,79,15
@@ -49,7 +49,7 @@ year,category_id,amount,file,page,x,y,width,height
 2020,0,39034206,stamma_kallelse-2021.pdf,12,602,194,89,15
 2020,4,3212740,stamma_kallelse-2021.pdf,12,610,212,80,15
 2020,1,-21778133,stamma_kallelse-2021.pdf,12,596,266,93,15
-2020,2,-2368625,stamma_kallelse-2021.pdf,12,605,302,86,15
+2020,16,-2368625,stamma_kallelse-2021.pdf,12,605,302,86,15
 2020,3,-3157324,stamma_kallelse-2021.pdf,15,595,493,89,15
 2020,5,-1772950,stamma_kallelse-2021.pdf,12,605,284,86,15
 2020,6,-811891,stamma_kallelse-2021.pdf,12,617,320,73,15
@@ -60,7 +60,7 @@ year,category_id,amount,file,page,x,y,width,height
 2020,10,4934896,stamma_kallelse-2021.pdf,15,601,345,83,15
 2019,0,37496193,BRF_Sjotungan_arsredovisning_2019.pdf,7,524,189,140,20
 2019,1,-23110580,BRF_Sjotungan_arsredovisning_2019.pdf,7,528,253,140,20
-2019,1,-2148091,BRF_Sjotungan_arsredovisning_2019.pdf,7,539,290,140,20
+2019,16,-2148091,BRF_Sjotungan_arsredovisning_2019.pdf,7,539,290,140,20
 2019,5,-647103,BRF_Sjotungan_arsredovisning_2019.pdf,7,547,270,140,20
 2019,6,-867610,BRF_Sjotungan_arsredovisning_2019.pdf,7,547,306,140,20
 2019,15,14567,BRF_Sjotungan_arsredovisning_2019.pdf,7,527,430,140,20
@@ -71,7 +71,7 @@ year,category_id,amount,file,page,x,y,width,height
 2019,10,-4087016,BRF_Sjotungan_arsredovisning_2019.pdf,10,529,350,140,20
 2018,0,36385447,kallelse_stamma_2019.pdf,6,554,237,140,24
 2018,1,-22639077,kallelse_stamma_2019.pdf,6,549,286,140,24
-2018,1,-2301462,kallelse_stamma_2019.pdf,6,556,322,140,24
+2018,16,-2301462,kallelse_stamma_2019.pdf,6,556,322,140,24
 2018,5,-811140,kallelse_stamma_2019.pdf,6,567,310,140,24
 2018,6,-1002748,kallelse_stamma_2019.pdf,6,556,343,140,24
 2018,15,7481,kallelse_stamma_2019.pdf,6,587,460,100,24
@@ -82,7 +82,7 @@ year,category_id,amount,file,page,x,y,width,height
 2018,10,2233068,kallelse_stamma_2019.pdf,9,554,380,140,24
 2017,0,36540349,kallelse_stamma2018.pdf,6,567,250,140,24
 2017,1,-21900501,kallelse_stamma2018.pdf,6,561,300,140,24
-2017,1,-4662487,kallelse_stamma2018.pdf,6,568,335,140,24
+2017,16,-4662487,kallelse_stamma2018.pdf,6,568,335,140,24
 2017,5,-493682,kallelse_stamma2018.pdf,6,580,315,140,24
 2017,6,-916656,kallelse_stamma2018.pdf,6,580,350,140,24
 2017,15,-14467,kallelse_stamma2018.pdf,6,587,467,140,24
