@@ -502,10 +502,12 @@
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
 
+        const cacheBust = `?t=${Date.now()}`;
+
         // Load PDF sources from YAML
         async function loadPDFSources() {
             try {
-                const response = await fetch('sources.yaml');
+                const response = await fetch('sources.yaml' + cacheBust);
                 const yamlText = await response.text();
                 const data = jsyaml.load(yamlText);
                 
@@ -525,7 +527,7 @@
 
         // Load and parse CSV data
         async function loadDebtData() {
-            const response = await fetch('data/financial_states.csv');
+            const response = await fetch('data/financial_states.csv' + cacheBust);
             const csvText = await response.text();
             
             const lines = csvText.trim().split('\n');
@@ -579,7 +581,7 @@
 
         // Load interest data
         async function loadInterestData() {
-            const response = await fetch('data/financial_events.csv');
+            const response = await fetch('data/financial_events.csv' + cacheBust);
             const csvText = await response.text();
             
             const lines = csvText.trim().split('\n');
