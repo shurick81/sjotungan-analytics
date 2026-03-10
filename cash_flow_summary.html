@@ -157,7 +157,7 @@
 
         #waterfall-container {
             width: 100%;
-            height: 500px;
+            height: 650px;
         }
 
         .bar-positive {
@@ -364,6 +364,31 @@
                         </tr>
                     </tfoot>
                 </table>
+
+                <div class="section-header" style="margin-top: 30px;">
+                    <h2>Likviditetsstatus</h2>
+                </div>
+
+                <table class="states-table">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th style="text-align: right;">Årets början (SEK)</th>
+                            <th style="text-align: right;">Årets slut (SEK)</th>
+                            <th style="text-align: right;">Förändring (SEK)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="states-body">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Totalt likvida medel</td>
+                            <td style="text-align: right;" id="states-start-total">-</td>
+                            <td style="text-align: right;" id="states-end-total">-</td>
+                            <td style="text-align: right;" id="states-diff-total">-</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
     </div>
@@ -433,10 +458,10 @@
             const response = await fetch(cacheBustedUrl);
             const text = await response.text();
             const lines = text.trim().split('\n');
-            const headers = lines[0].split(',');
+            const headers = lines[0].split(',').map(h => h.trim());
             
             return lines.slice(1).map(line => {
-                const values = line.split(',');
+                const values = line.split(',').map(v => v.trim());
                 const obj = {};
                 headers.forEach((header, i) => {
                     obj[header] = values[i];
@@ -493,9 +518,11 @@
                 const selectedYear = document.getElementById('year-select').value;
 
                 // Load both CSV files
-                const [events, categories] = await Promise.all([
+                const [events, categories, states, stateCategories] = await Promise.all([
                     loadCSV('data/financial_events.csv'),
-                    loadCSV('data/event_categories.csv')
+                    loadCSV('data/event_categories.csv'),
+                    loadCSV('data/financial_states.csv'),
+                    loadCSV('data/state_categories.csv')
                 ]);
 
                 // Create category lookup
@@ -567,12 +594,41 @@
                 // All bars are relative except the last one which is the total
                 const measure = x.map((val, idx) => idx === x.length - 1 ? 'total' : 'relative');
 
+                // Build annotations to place value labels to the right of each bar
+                const annotations = [];
+                // For each waterfall segment, compute the right edge (max of start/end)
+                waterfallData.forEach((d, idx) => {
+                    const rightEdge = Math.max(d.startValue, d.endValue);
+                    annotations.push({
+                        x: rightEdge,
+                        y: d.categoryName,
+                        text: formatNumber(d.amount) + ' SEK',
+                        xanchor: 'left',
+                        yanchor: 'middle',
+                        xshift: 8,
+                        showarrow: false,
+                        font: { size: 12 }
+                    });
+                });
+                // Total bar annotation
+                const totalRight = Math.max(0, netTotal);
+                annotations.push({
+                    x: totalRight,
+                    y: 'Nettokassaförändring',
+                    text: formatNumber(netTotal) + ' SEK',
+                    xanchor: 'left',
+                    yanchor: 'middle',
+                    xshift: 8,
+                    showarrow: false,
+                    font: { size: 12, color: 'rgb(102, 126, 234)' }
+                });
+
                 const data = [{
                     type: 'waterfall',
                     x: x,
                     y: y,
                     text: text,
-                    textposition: 'auto',
+                    textposition: 'none',
                     measure: measure,
                     orientation: 'h',
                     cliponaxis: false,
@@ -592,6 +648,7 @@
                     title: '',
                     autosize: true,
                     showlegend: false,
+                    annotations: annotations,
                     xaxis: {
                         title: 'SEK',
                         tickformat: ',.0f',
@@ -640,6 +697,66 @@
                     `;
                     tbody.appendChild(row);
                 });
+
+                // Populate states table
+                const stateCatMap = {};
+                stateCategories.forEach(sc => { stateCatMap[sc.id] = sc; });
+
+                // Liquidity state category IDs (Kassa och bank, Avräkningskonto, Placeringskonto)
+                const liquidityCats = ['2', '3', '4'];
+                const prevYear = String(parseInt(selectedYear) - 1);
+
+                const statesStart = {};
+                const statesEnd = {};
+                states.forEach(s => {
+                    if (liquidityCats.includes(s.category_id)) {
+                        if (s.year === prevYear) statesStart[s.category_id] = s;
+                        if (s.year === selectedYear) statesEnd[s.category_id] = s;
+                    }
+                });
+
+                const statesBody = document.getElementById('states-body');
+                statesBody.innerHTML = '';
+                let totalStart = 0, totalEnd = 0;
+
+                liquidityCats.forEach(catId => {
+                    const startVal = statesStart[catId] ? parseInt(statesStart[catId].amount) : 0;
+                    const endVal = statesEnd[catId] ? parseInt(statesEnd[catId].amount) : 0;
+                    const diff = endVal - startVal;
+                    const catName = stateCatMap[catId] ? stateCatMap[catId].name : 'Kategori ' + catId;
+
+                    // Skip if both are zero (category doesn't exist for these years)
+                    if (startVal === 0 && endVal === 0) return;
+
+                    totalStart += startVal;
+                    totalEnd += endVal;
+
+                    const row = document.createElement('tr');
+
+                    const startState = statesStart[catId];
+                    const endState = statesEnd[catId];
+                    const startHtml = startState && startState.file
+                        ? `<span class="clickable-amount" onclick="showPDF('${startState.file}', ${startState.page}, ${startState.x}, ${startState.y}, ${startState.width}, ${startState.height}, '${catName} (${prevYear})')">${formatNumber(startVal)} SEK</span>`
+                        : `${formatNumber(startVal)} SEK`;
+                    const endHtml = endState && endState.file
+                        ? `<span class="clickable-amount" onclick="showPDF('${endState.file}', ${endState.page}, ${endState.x}, ${endState.y}, ${endState.width}, ${endState.height}, '${catName} (${selectedYear})')">${formatNumber(endVal)} SEK</span>`
+                        : `${formatNumber(endVal)} SEK`;
+
+                    row.innerHTML = `
+                        <td>${catName}</td>
+                        <td style="text-align: right;">${startHtml}</td>
+                        <td style="text-align: right;">${endHtml}</td>
+                        <td style="text-align: right;" class="${getAmountClass(diff)}">${formatNumber(diff)} SEK</td>
+                    `;
+                    statesBody.appendChild(row);
+                });
+
+                const totalDiff = totalEnd - totalStart;
+                document.getElementById('states-start-total').textContent = formatNumber(totalStart) + ' SEK';
+                document.getElementById('states-end-total').textContent = formatNumber(totalEnd) + ' SEK';
+                const diffCell = document.getElementById('states-diff-total');
+                diffCell.textContent = formatNumber(totalDiff) + ' SEK';
+                diffCell.className = getAmountClass(totalDiff);
 
             } catch (error) {
                 console.error('Error loading data:', error);
