@@ -416,9 +416,223 @@
             color: #f5576c;
             text-decoration: underline;
         }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-bg: #d9dbe1;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: var(--vm-bg);
+            color: var(--vm-text);
+            padding: 0;
+        }
+
+        .site-nav {
+            background: var(--vm-blue);
+            color: white;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+        }
+
+        .site-nav ul {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 34px;
+        }
+
+        .site-nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 22px;
+            line-height: 1;
+            opacity: 0.95;
+        }
+
+        .site-nav a:hover {
+            opacity: 1;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .page-shell {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 34px 18px 42px;
+        }
+
+        .container {
+            background: var(--vm-card);
+            border-radius: 12px;
+            box-shadow: none;
+            border: 1px solid rgba(31, 63, 149, 0.08);
+        }
+
+        header {
+            background: transparent;
+            color: var(--vm-blue);
+            padding: 28px 30px 14px;
+            border-bottom: 3px solid var(--vm-blue-light);
+        }
+
+        header h1 {
+            font-size: 42px;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            opacity: 1;
+            font-size: 18px;
+            color: var(--vm-muted);
+        }
+
+        .content {
+            padding: 26px 30px 32px;
+        }
+
+        .chart-title {
+            color: var(--vm-blue);
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .chart-container,
+        .stat-card,
+        .data-table {
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            box-shadow: none;
+        }
+
+        .stat-card {
+            border-left-width: 4px;
+        }
+
+        .stat-label {
+            color: #5a6f90;
+        }
+
+        .stat-value {
+            color: var(--vm-blue);
+        }
+
+        .data-table thead,
+        .data-table tbody tr:hover {
+            background: #eef3fb;
+        }
+
+        .data-table th {
+            color: #33486f;
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .data-table td {
+            border-bottom: 1px solid #dde6f4;
+            color: var(--vm-text);
+        }
+
+        .clickable-cell {
+            color: var(--vm-blue);
+        }
+
+        .clickable-cell:hover {
+            color: #2c54bf;
+        }
+
+        footer {
+            padding: 20px 30px;
+            background: #eef3fb;
+            color: var(--vm-muted);
+            border-top: 1px solid var(--vm-border);
+        }
+
+        .pdf-controls button {
+            background: var(--vm-blue);
+            border-radius: 8px;
+        }
+
+        .pdf-controls button:hover {
+            background: #2c54bf;
+        }
+
+        #pdf-url {
+            color: var(--vm-blue) !important;
+        }
+
+        @media (max-width: 900px) {
+            .site-nav {
+                height: 56px;
+            }
+
+            .site-nav ul {
+                gap: 18px;
+            }
+
+            .site-nav a {
+                font-size: 18px;
+            }
+
+            .page-shell {
+                padding: 20px 10px 24px;
+            }
+
+            header h1 {
+                font-size: 32px;
+            }
+        }
+
+        body.embedded-mode {
+            background: transparent;
+            padding: 0;
+        }
+
+        body.embedded-mode .site-nav {
+            display: none;
+        }
+
+        body.embedded-mode .page-shell {
+            max-width: none;
+            padding: 0;
+        }
+
+        body.embedded-mode .container {
+            border: 0;
+            border-radius: 0;
+        }
+
+        body.embedded-mode .container > header,
+        body.embedded-mode .container > footer {
+            display: none;
+        }
+
+        body.embedded-mode .content {
+            padding-top: 20px;
+        }
     </style>
 </head>
 <body>
+    <nav class="site-nav" aria-label="Huvudnavigation">
+        <ul>
+            <li><a href="https://visionmyggan.se">Start</a></li>
+            <li><a href="https://visionmyggan.se/#vision">Vision</a></li>
+            <li><a href="https://visionmyggan.se/#motioner">Motioner</a></li>
+            <li><a href="https://visionmyggan.se/#forum">Forum</a></li>
+        </ul>
+    </nav>
+
+    <main class="page-shell">
     <div class="container">
         <header>
             <h1>Skuldanalys</h1>
@@ -464,6 +678,7 @@
             <p>Data från årsredovisningar • Sjötungan Analytics</p>
         </footer>
     </div>
+    </main>
 
     <!-- PDF Modal -->
     <div id="pdfModal" class="modal">
@@ -488,6 +703,11 @@
     </div>
 
     <script>
+        const isEmbedded = new URLSearchParams(window.location.search).get('embedded') === '1';
+        if (isEmbedded) {
+            document.body.classList.add('embedded-mode');
+        }
+
         // Configure PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
