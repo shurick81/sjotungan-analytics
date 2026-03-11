@@ -507,6 +507,13 @@
             border-bottom: 2px solid var(--vm-border);
         }
 
+        .chart-conclusion {
+            margin: 0 0 16px;
+            color: var(--vm-text);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
         .chart-container,
         .stat-card,
         .data-table {
@@ -610,6 +617,7 @@
         body.embedded-mode .container {
             border: 0;
             border-radius: 0;
+            background: white;
         }
 
         body.embedded-mode .container > header,
@@ -619,6 +627,10 @@
 
         body.embedded-mode .content {
             padding-top: 20px;
+        }
+
+        body.embedded-mode #statsGrid {
+            display: none;
         }
     </style>
 </head>
@@ -633,6 +645,9 @@
     </nav>
 
     <main class="page-shell">
+    <div style="max-width:1200px;margin:20px auto;padding:16px 24px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;color:#856404;font-size:15px;">
+        ⚠️ Denna sida är föråldrad. Använd <a href="changing_over_time.html" style="color:#856404;font-weight:600;">changing_over_time.html</a> istället.
+    </div>
     <div class="container">
         <header>
             <h1>Skuldanalys</h1>
@@ -645,19 +660,22 @@
 
             <!-- Main Chart -->
             <div class="chart-container">
-                <h2 class="chart-title">Skuldutveckling över tid</h2>
+                <h2 class="chart-title">Skuldutveckling</h2>
+                <p class="chart-conclusion">Under de senaste sju åren har våra skulder till kreditinstitut nästan fördubblats, från 119 miljoner till 234 miljoner kronor.</p>
                 <div id="debtChart"></div>
             </div>
 
             <!-- Interest Chart -->
             <div class="chart-container">
-                <h2 class="chart-title">Räntekostnader över tid</h2>
+                <h2 class="chart-title">Räntekostnader</h2>
+                <p class="chart-conclusion">Kostnaden vi betalar för ränta på banklån varierar beroende på marknadsräntan och storleken på våra lån. I dagsläget betalar vi mer än 4 miljoner kronor i ränta varje år.</p>
                 <div id="interestChart"></div>
             </div>
 
             <!-- Data Table -->
             <div class="chart-container">
                 <h2 class="chart-title">Detaljerad data</h2>
+                <p class="chart-conclusion">Klicka på siffrorna för att hitta den exakta källan i årsredovisningen.</p>
                 <table class="data-table" id="dataTable">
                     <thead>
                         <tr>

@@ -1,21 +1,313 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vision Myggan</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-body { font-size: 1rem; }
-@media (max-width: 640px) {
-body { font-size: 0.875rem; }
-h1 { font-size: 1.5rem; }
-h2 { font-size: 1.25rem; }
-p { font-size: 0.875rem; }
-}
-h1 { font-size: 2.25rem; }
-h2 { font-size: 1.5rem; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Myggan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <style>
+        body { font-size: 1rem; }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        /* ── Content area ──────────────────────────────── */
+        .content {
+            padding: 0;
+        }
+
+        /* ── Year selector ─────────────────────────────── */
+        .year-selector {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .year-selector label {
+            font-weight: 600;
+            color: var(--vm-blue);
+        }
+
+        .year-selector select {
+            padding: 8px 12px;
+            border: 1px solid var(--vm-border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: #f6f9ff;
+            color: var(--vm-text);
+            cursor: pointer;
+            min-width: 100px;
+        }
+
+        .year-selector select:focus {
+            outline: none;
+            border-color: var(--vm-blue-light);
+            box-shadow: 0 0 0 3px rgba(125, 174, 242, 0.2);
+        }
+
+        /* ── Section header ────────────────────────────── */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            background: var(--vm-blue);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ── Waterfall chart ───────────────────────────── */
+        .waterfall-chart {
+            margin: 0;
+            padding: 20px 24px;
+            background: #eff6ff;
+            border-left: 4px solid #93c5fd;
+            border-radius: 8px;
+        }
+
+        .waterfall-chart h3 {
+            font-size: 18px;
+            color: var(--vm-blue);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        #waterfall-container {
+            width: 100%;
+            height: 650px;
+        }
+
+        /* ── Tables ────────────────────────────────────── */
+        .events-table,
+        .states-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: none;
+        }
+
+        .events-table thead,
+        .states-table thead,
+        .events-table tr:hover,
+        .states-table tr:hover,
+        .events-table tfoot {
+            background: #eef3fb;
+        }
+
+        .events-table th,
+        .events-table td,
+        .states-table th,
+        .states-table td {
+            padding: 15px;
+            border-bottom: 1px solid #dde6f4;
+            color: var(--vm-text);
+            font-size: 14px;
+        }
+
+        .events-table th,
+        .states-table th {
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #33486f;
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .events-table tfoot {
+            border-top: 2px solid var(--vm-blue-light);
+        }
+
+        .events-table tfoot td {
+            font-weight: bold;
+            font-size: 16px;
+            padding: 20px 15px;
+        }
+
+        .events-table tfoot tr:hover {
+            background: #eef3fb;
+        }
+
+        .states-table tfoot {
+            background: #eef3fb;
+            border-top: 2px solid var(--vm-blue-light);
+        }
+
+        .states-table tfoot td {
+            font-weight: 700;
+            font-size: 15px;
+            padding: 16px 15px;
+        }
+
+        /* ── Amount colours ────────────────────────────── */
+        .amount-positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .amount-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .amount-neutral {
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        /* ── Clickable amounts ─────────────────────────── */
+        .clickable-amount {
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .clickable-amount:hover {
+            opacity: 0.7;
+        }
+
+        /* ── Loading ───────────────────────────────────── */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--vm-muted);
+        }
+
+        /* ── Modal ─────────────────────────────────────── */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .pdf-viewer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pdf-controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pdf-controls button {
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .pdf-controls button:hover {
+            background: #2c54bf;
+        }
+
+        .pdf-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pdf-controls span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+
+        #pdf-url {
+            color: var(--vm-blue) !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 <header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
@@ -27,19 +319,85 @@ h2 { font-size: 1.5rem; }
 </nav>
 </header>
 
+<div class="md:hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-center text-sm py-2 px-4">
+  Sidan visas bäst på en större skärm, t.ex. dator eller surfplatta.
+</div>
+
 <main class="container mx-auto mt-8 p-4">
-<section id="start" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
-  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Kassaflödessammanfattning</h1>
-  <div class="w-full rounded-xl overflow-hidden border border-blue-100 bg-white" style="height: 85vh; min-height: 700px;">
-    <iframe
-      src="cash_flow_summary.html?embedded=1"
-      title="Kassaflöde"
-      class="w-full h-full"
-      style="border: 0;"
-      loading="lazy">
-    </iframe>
-  </div>
-</section>
+        <!-- ── Start: Kassaflödessammanfattning ───────── -->
+        <section id="start" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+                <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Kassaflödessammanfattning</h1>
+                <p class="text-gray-600 mb-4">Verkliga kassaflöden för BRF Sjötungan</p>
+
+                <div class="content">
+                    <div id="loading" class="loading">
+                        Laddar finansiell data...
+                    </div>
+
+                    <div id="main-content" style="display: none;">
+                        <div class="year-selector">
+                            <label for="year-select">År:</label>
+                            <select id="year-select">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                        </div>
+
+                        <div class="section-header">
+                            <h2 class="text-blue-700 font-semibold text-2xl">Kassaflödesdetaljer</h2>
+                            <span class="badge" id="event-count">-</span>
+                        </div>
+
+                        <div class="waterfall-chart">
+                            <h3>Kassaflöde - Vattenfall</h3>
+                            <p style="color: #666; font-size: 0.9em; margin: 0 0 10px 0;"><strong>Kassaflöde från finansieringsverksamheten</strong> visar hur mycket vi behövde låna från banken under året för att ha tillräckligt med pengar till den löpande verksamheten.</p>
+                            <div class="chart-container" id="waterfall-container"></div>
+                        </div>
+
+                        <table class="events-table">
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th style="text-align: right;">Belopp (SEK)</th>
+                                    <th>Typ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="events-body"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Nettokassaförändring</td>
+                                    <td style="text-align: right;" id="net-cash" class="amount-positive">-</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="section-header" style="margin-top: 30px;">
+                            <h2 class="text-blue-700 font-semibold text-2xl">Likviditetsstatus</h2>
+                        </div>
+
+                        <table class="states-table">
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th style="text-align: right;">Årets början (SEK)</th>
+                                    <th style="text-align: right;">Årets slut (SEK)</th>
+                                    <th style="text-align: right;">Förändring (SEK)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="states-body"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Totalt likvida medel</td>
+                                    <td style="text-align: right;" id="states-start-total">-</td>
+                                    <td style="text-align: right;" id="states-end-total">-</td>
+                                    <td style="text-align: right;" id="states-diff-total">-</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+        </section>
 
 <section id="vision" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
   <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Kassaflödessammanfattning</h1>
@@ -61,25 +419,490 @@ h2 { font-size: 1.5rem; }
 &copy; 2025 Vision Myggan – En medlemsrörelse i BRF Sjötungan
 </footer>
 
-<script>
-function showSection(id) {
-  document.querySelectorAll('main section').forEach(sec => sec.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-  history.replaceState(null, null, '#' + id);
-}
+    <!-- PDF Modal -->
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Källdokument</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="pdf-viewer">
+                <div class="pdf-controls">
+                    <button id="prev-page" onclick="changePage(-1)">← Föregående</button>
+                    <span>Sida <span id="page-num">1</span> av <span id="page-count">-</span></span>
+                    <button id="next-page" onclick="changePage(1)">Nästa →</button>
+                </div>
+                <canvas id="pdf-canvas"></canvas>
+                <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
+                    <a href="#" target="_blank" id="pdf-url" style="color: var(--vm-blue); text-decoration: none; font-size: 12px; word-wrap: break-word;"></a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-function loadFromHash() {
-  const hash = window.location.hash.substring(1);
-  if (hash && document.getElementById(hash)) {
-    showSection(hash);
-  } else {
-    showSection('start');
-  }
-}
+    <script>
+        /* ── Section switching ─────────────────────────── */
+        function showSection(id) {
+            document.querySelectorAll('main section').forEach(sec => sec.classList.add('hidden'));
+            const target = document.getElementById(id);
+            if (target) {
+                target.classList.remove('hidden');
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
+            history.replaceState(null, null, '#' + id);
+        }
 
-window.addEventListener('DOMContentLoaded', loadFromHash);
-window.addEventListener('hashchange', loadFromHash);
-</script>
+        function loadFromHash() {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById(hash)) {
+                showSection(hash);
+            } else {
+                showSection('start');
+            }
+        }
+
+        window.addEventListener('hashchange', loadFromHash);
+
+        /* ── PDF.js setup ──────────────────────────────── */
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let highlightBox = null;
+        let pdfSources = {};
+
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        /* ── Load PDF sources from YAML ────────────────── */
+        async function loadPDFSources() {
+            try {
+                const response = await fetch('sources.yaml');
+                const yamlText = await response.text();
+                const data = jsyaml.load(yamlText);
+
+                if (data.annual_reports) {
+                    data.annual_reports.forEach(source => {
+                        const filename = source.local_path.split('/').pop();
+                        pdfSources[filename] = source.url;
+                    });
+                }
+
+                console.log('Loaded PDF sources:', pdfSources);
+            } catch (error) {
+                console.error('Error loading PDF sources:', error);
+            }
+        }
+
+        /* ── CSV loader ────────────────────────────────── */
+        async function loadCSV(url) {
+            const timestamp = new Date().getTime();
+            const cacheBustedUrl = url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
+            const response = await fetch(cacheBustedUrl);
+            const text = await response.text();
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+
+            return lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim());
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header] = values[i];
+                });
+                return obj;
+            });
+        }
+
+        /* ── Helpers ───────────────────────────────────── */
+        function formatNumber(num) {
+            return new Intl.NumberFormat('sv-SE').format(num);
+        }
+
+        function getCategoryType(amount) {
+            if (amount > 0) return 'Inflöde';
+            if (amount < 0) return 'Utflöde';
+            return 'Neutral';
+        }
+
+        function getAmountClass(amount) {
+            if (amount > 0) return 'amount-positive';
+            if (amount < 0) return 'amount-negative';
+            return 'amount-neutral';
+        }
+
+        /* ── Year selector ─────────────────────────────── */
+        async function populateYearSelector() {
+            try {
+                const events = await loadCSV('data/financial_events.csv');
+                const years = [...new Set(events.map(e => e.year))].sort((a, b) => b - a);
+
+                const yearSelect = document.getElementById('year-select');
+                yearSelect.innerHTML = '';
+
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                });
+
+                if (years.length > 0) {
+                    yearSelect.value = years[0];
+                }
+            } catch (error) {
+                console.error('Error populating year selector:', error);
+            }
+        }
+
+        /* ── Main data loader ──────────────────────────── */
+        async function loadData() {
+            try {
+                const selectedYear = document.getElementById('year-select').value;
+
+                const [events, categories, states, stateCategories] = await Promise.all([
+                    loadCSV('data/financial_events.csv'),
+                    loadCSV('data/event_categories.csv'),
+                    loadCSV('data/financial_states.csv'),
+                    loadCSV('data/state_categories.csv')
+                ]);
+
+                const categoryMap = {};
+                categories.forEach(cat => {
+                    categoryMap[cat.id] = cat;
+                });
+
+                const parentlessEvents = events
+                    .filter(e => e.year === selectedYear)
+                    .filter(e => !categoryMap[e.category_id] || !categoryMap[e.category_id].parent)
+                    .map(e => ({
+                        ...e,
+                        categoryName: categoryMap[e.category_id] ? categoryMap[e.category_id].name : 'Okänd',
+                        amount: parseInt(e.amount),
+                        page: parseInt(e.page),
+                        x: parseFloat(e.x),
+                        y: parseFloat(e.y),
+                        width: parseFloat(e.width),
+                        height: parseFloat(e.height)
+                    }))
+                    .sort((a, b) => {
+                        if (a.amount > 0 && b.amount <= 0) return -1;
+                        if (a.amount <= 0 && b.amount > 0) return 1;
+                        if (a.amount > 0 && b.amount > 0) return b.amount - a.amount;
+                        return Math.abs(b.amount) - Math.abs(a.amount);
+                    });
+
+                let netTotal = 0;
+                let runningTotal = 0;
+                const waterfallData = [];
+
+                parentlessEvents.forEach(event => {
+                    const startValue = runningTotal;
+                    runningTotal += event.amount;
+                    netTotal += event.amount;
+
+                    waterfallData.push({
+                        ...event,
+                        startValue,
+                        endValue: runningTotal
+                    });
+                });
+
+                const netCashCell = document.getElementById('net-cash');
+                netCashCell.textContent = formatNumber(netTotal) + ' SEK';
+                netCashCell.className = getAmountClass(netTotal);
+                document.getElementById('event-count').textContent = `${parentlessEvents.length} kategorier`;
+
+                /* ── Plotly waterfall ──────────────────── */
+                const x = waterfallData.map(d => d.amount);
+                const y = waterfallData.map(d => d.categoryName);
+                const text = x.map(val => formatNumber(val) + ' SEK');
+
+                x.push(netTotal);
+                y.push('Nettokassaförändring');
+                text.push(formatNumber(netTotal) + ' SEK');
+
+                const measure = x.map((val, idx) => idx === x.length - 1 ? 'total' : 'relative');
+
+                const annotations = [];
+                waterfallData.forEach((d, idx) => {
+                    const rightEdge = Math.max(d.startValue, d.endValue);
+                    annotations.push({
+                        x: rightEdge,
+                        y: d.categoryName,
+                        text: formatNumber(d.amount) + ' SEK',
+                        xanchor: 'left',
+                        yanchor: 'middle',
+                        xshift: 8,
+                        showarrow: false,
+                        font: { size: 12 }
+                    });
+                });
+                const totalRight = Math.max(0, netTotal);
+                annotations.push({
+                    x: totalRight,
+                    y: 'Nettokassaförändring',
+                    text: formatNumber(netTotal) + ' SEK',
+                    xanchor: 'left',
+                    yanchor: 'middle',
+                    xshift: 8,
+                    showarrow: false,
+                    font: { size: 12, color: 'rgb(102, 126, 234)' }
+                });
+
+                const plotData = [{
+                    type: 'waterfall',
+                    x: x,
+                    y: y,
+                    text: text,
+                    textposition: 'none',
+                    measure: measure,
+                    orientation: 'h',
+                    cliponaxis: false,
+                    connector: {
+                        line: { color: 'rgb(220, 53, 69)', width: 2 }
+                    },
+                    increasing: { marker: { color: 'rgb(40, 167, 69)' } },
+                    decreasing: { marker: { color: 'rgb(220, 53, 69)' } },
+                    totals: { marker: { color: 'rgb(102, 126, 234)' } },
+                    hovertemplate: '<b>%{y}</b><br>Belopp: %{text}<extra></extra>'
+                }];
+
+                const layout = {
+                    title: '',
+                    autosize: true,
+                    showlegend: false,
+                    annotations: annotations,
+                    xaxis: {
+                        title: 'SEK',
+                        tickformat: ',.0f',
+                        separatethousands: true
+                    },
+                    yaxis: {
+                        autorange: 'reversed',
+                        tickfont: { size: 11 }
+                    },
+                    margin: { l: 250, r: 180, t: 40, b: 80 },
+                    paper_bgcolor: 'white',
+                    plot_bgcolor: 'rgba(0,0,0,0.02)'
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                };
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+
+                Plotly.newPlot('waterfall-container', plotData, layout, config);
+
+                /* ── Events table ──────────────────────── */
+                const tbody = document.getElementById('events-body');
+                tbody.innerHTML = '';
+
+                waterfallData.forEach((data) => {
+                    const row = document.createElement('tr');
+                    const amountHtml = data.file && data.page
+                        ? `<span class="clickable-amount" onclick="showPDF('${data.file}', ${data.page}, ${data.x}, ${data.y}, ${data.width}, ${data.height}, '${data.categoryName}')">${formatNumber(data.amount)} SEK</span>`
+                        : `${formatNumber(data.amount)} SEK`;
+
+                    row.innerHTML = `
+                        <td>${data.categoryName}</td>
+                        <td style="text-align: right;" class="${getAmountClass(data.amount)}">
+                            ${amountHtml}
+                        </td>
+                        <td>${getCategoryType(data.amount)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                /* ── States table ──────────────────────── */
+                const stateCatMap = {};
+                stateCategories.forEach(sc => { stateCatMap[sc.id] = sc; });
+
+                const liquidityCats = ['2', '3', '4', '5'];
+                const prevYear = String(parseInt(selectedYear) - 1);
+
+                const statesStart = {};
+                const statesEnd = {};
+                states.forEach(s => {
+                    if (liquidityCats.includes(s.category_id)) {
+                        if (s.year === prevYear) statesStart[s.category_id] = s;
+                        if (s.year === selectedYear) statesEnd[s.category_id] = s;
+                    }
+                });
+
+                const statesBody = document.getElementById('states-body');
+                statesBody.innerHTML = '';
+                let totalStart = 0, totalEnd = 0;
+
+                liquidityCats.forEach(catId => {
+                    const startVal = statesStart[catId] ? parseInt(statesStart[catId].amount) : 0;
+                    const endVal = statesEnd[catId] ? parseInt(statesEnd[catId].amount) : 0;
+                    const diff = endVal - startVal;
+                    const catName = stateCatMap[catId] ? stateCatMap[catId].name : 'Kategori ' + catId;
+
+                    if (startVal === 0 && endVal === 0) return;
+
+                    totalStart += startVal;
+                    totalEnd += endVal;
+
+                    const row = document.createElement('tr');
+
+                    const startState = statesStart[catId];
+                    const endState = statesEnd[catId];
+                    const startHtml = startState && startState.file
+                        ? `<span class="clickable-amount" onclick="showPDF('${startState.file}', ${startState.page}, ${startState.x}, ${startState.y}, ${startState.width}, ${startState.height}, '${catName} (${prevYear})')">${formatNumber(startVal)} SEK</span>`
+                        : `${formatNumber(startVal)} SEK`;
+                    const endHtml = endState && endState.file
+                        ? `<span class="clickable-amount" onclick="showPDF('${endState.file}', ${endState.page}, ${endState.x}, ${endState.y}, ${endState.width}, ${endState.height}, '${catName} (${selectedYear})')">${formatNumber(endVal)} SEK</span>`
+                        : `${formatNumber(endVal)} SEK`;
+
+                    row.innerHTML = `
+                        <td>${catName}</td>
+                        <td style="text-align: right;">${startHtml}</td>
+                        <td style="text-align: right;">${endHtml}</td>
+                        <td style="text-align: right;" class="${getAmountClass(diff)}">${formatNumber(diff)} SEK</td>
+                    `;
+                    statesBody.appendChild(row);
+                });
+
+                const totalDiff = totalEnd - totalStart;
+                document.getElementById('states-start-total').textContent = formatNumber(totalStart) + ' SEK';
+                document.getElementById('states-end-total').textContent = formatNumber(totalEnd) + ' SEK';
+                const diffCell = document.getElementById('states-diff-total');
+                diffCell.textContent = formatNumber(totalDiff) + ' SEK';
+                diffCell.className = getAmountClass(totalDiff);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loading').innerHTML =
+                    '<p style="color: #dc3545;">Fel vid laddning av finansiell data. Kontrollera konsolen.</p>';
+            }
+        }
+
+        /* ── PDF Modal ─────────────────────────────────── */
+        function showPDF(file, page, x, y, width, height, categoryName) {
+            const modal = document.getElementById('pdfModal');
+            const title = document.getElementById('modal-title');
+            const urlLink = document.getElementById('pdf-url');
+
+            title.textContent = `Källdokument: ${file} - ${categoryName}`;
+
+            if (pdfSources[file]) {
+                urlLink.href = pdfSources[file];
+                urlLink.textContent = pdfSources[file];
+                document.getElementById('pdf-source-link').style.display = 'block';
+            } else {
+                document.getElementById('pdf-source-link').style.display = 'none';
+            }
+
+            highlightBox = { pageNum: page, x: x, y: y, width: width, height: height };
+            modal.style.display = 'block';
+            loadPDF('data/annual_reports/' + file, page);
+        }
+
+        function closeModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+            highlightBox = null;
+            pdfDoc = null;
+        }
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('pdfModal')) {
+                closeModal();
+            }
+        };
+
+        async function loadPDF(pdfPath, targetPage) {
+            try {
+                pageNum = targetPage || 1;
+                const loadingTask = pdfjsLib.getDocument(pdfPath);
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Kunde inte ladda PDF: ' + pdfPath);
+            }
+        }
+
+        async function renderPage(num) {
+            pageRendering = true;
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: scale });
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+            if (highlightBox && highlightBox.pageNum === num) {
+                drawHighlight(highlightBox, viewport);
+            }
+
+            pageRendering = false;
+
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+
+            document.getElementById('page-num').textContent = num;
+            updateButtons();
+        }
+
+        function drawHighlight(box, viewport) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+            ctx.strokeStyle = 'rgb(255, 152, 0)';
+            ctx.lineWidth = 3;
+            ctx.fillRect(box.x, box.y, box.width, box.height);
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.strokeStyle = 'rgba(102, 126, 234, 0.8)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
+            ctx.restore();
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('prev-page').disabled = (pageNum <= 1);
+            document.getElementById('next-page').disabled = (pageNum >= pdfDoc.numPages);
+        }
+
+        function changePage(offset) {
+            pageNum += offset;
+            if (pageNum < 1) pageNum = 1;
+            if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+            queueRenderPage(pageNum);
+        }
+
+        /* ── Initialise ───────────────────────────────── */
+        async function init() {
+            await loadPDFSources();
+            await populateYearSelector();
+            await loadData();
+        }
+
+        init();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('year-select').addEventListener('change', loadData);
+            loadFromHash();
+        });
+    </script>
 </body>
 </html>

@@ -142,16 +142,18 @@
         }
 
         .waterfall-chart {
-            margin: 30px 0;
-            padding: 30px;
-            background: white;
+            margin: 0;
+            padding: 20px 24px;
+            background: #eff6ff;
+            border-left: 4px solid #93c5fd;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: none;
         }
 
         .waterfall-chart h3 {
             font-size: 18px;
-            color: #333;
+            color: #1e3a8a;
+            font-weight: 600;
             margin-bottom: 20px;
         }
 
@@ -421,12 +423,21 @@
         }
 
         .events-table,
-        .states-table,
-        .waterfall-chart {
+        .states-table {
             background: #f7f9fd;
             border: 1px solid var(--vm-border);
             border-radius: 10px;
             box-shadow: none;
+        }
+
+        .waterfall-chart {
+            background: #eff6ff;
+            border: none;
+            border-left: 4px solid #93c5fd;
+            border-radius: 8px;
+            box-shadow: none;
+            margin: 0;
+            padding: 20px 24px;
         }
 
         .events-table thead,
@@ -529,6 +540,7 @@
         body.embedded-mode .container {
             border: 0;
             border-radius: 0;
+            background: white;
         }
 
         body.embedded-mode .container > header {
@@ -551,6 +563,9 @@
     </nav>
 
     <main class="page-shell">
+    <div style="max-width:1200px;margin:20px auto;padding:16px 24px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;color:#856404;font-size:15px;">
+        ⚠️ Denna sida är föråldrad. Använd <a href="annual_details.html" style="color:#856404;font-weight:600;">annual_details.html</a> istället.
+    </div>
     <div class="container">
         <header>
             <h1>Kassaflödessammanfattning</h1>
@@ -577,6 +592,7 @@
 
                 <div class="waterfall-chart">
                     <h3>Kassaflöde - Vattenfall</h3>
+                    <p style="color: #666; font-size: 0.9em; margin: 0 0 10px 0;"><strong>Kassaflöde från finansieringsverksamheten</strong> visar hur mycket vi behövde låna från banken under året för att ha tillräckligt med pengar till den löpande verksamheten.</p>
                     <div class="chart-container" id="waterfall-container">
                     </div>
                 </div>
