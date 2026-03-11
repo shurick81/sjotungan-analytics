@@ -218,11 +218,25 @@
         <div id="debtChart"></div>
     </div>
 
+    <!-- Debt per m² Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Skuld per kvadratmeter</h2>
+        <p class="chart-conclusion">Total skuld till kreditinstitut dividerat med föreningens totala yta (51 666 m²). Ett mått på hur mycket av skulden varje kvadratmeter "bär".</p>
+        <div id="debtPerSqmChart"></div>
+    </div>
+
     <!-- Interest Chart -->
     <div class="chart-container">
         <h2 class="chart-title">Räntekostnader</h2>
         <p class="chart-conclusion">Kostnaden vi betalar för ränta på banklån varierar beroende på marknadsäntan och storleken på våra lån. I dagsläget betalar vi mer än 4 miljoner kronor i ränta varje år.</p>
         <div id="interestChart"></div>
+    </div>
+
+    <!-- Interest-to-Revenue Ratio Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Räntekvot (räntekostnader / intäkter)</h2>
+        <p class="chart-conclusion">Andelen av föreningens intäkter som går till att betala ränta på banklån. Ju högre andel, desto mindre utrymme finns för drift, underhåll och investeringar.</p>
+        <div id="interestRatioChart"></div>
     </div>
 
     <!-- Data Table -->
@@ -242,6 +256,13 @@
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
+    </div>
+
+    <!-- Flows Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Intäkter, driftkostnader och investeringar</h2>
+        <p class="chart-conclusion">De största posterna i kassaflödet är intäkter, driftkostnader och investeringar. Insättningar (medlemsavgifter) har ökat stadigt, men driftkostnader och investeringar har vuxit ännu snabbare — särskilt under åren med stora stambytesprojekt.</p>
+        <div id="flowsChart"></div>
     </div>
 </section>
 
@@ -427,6 +448,50 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             return interestData;
         }
 
+        // Load flows data (insättning, driftkostnad, investeringar)
+        async function loadFlowsData() {
+            const response = await fetch('data/financial_events.csv' + cacheBust);
+            const csvText = await response.text();
+
+            const lines = csvText.trim().split('\n');
+            const flowsData = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                const year = values[0];
+                const categoryId = parseInt(values[1]);
+                const amount = parseInt(values[2]);
+                const file = values[3];
+                const page = parseInt(values[4]);
+                const x = parseFloat(values[5]);
+                const y = parseFloat(values[6]);
+                const width = parseFloat(values[7]);
+                const height = parseFloat(values[8]);
+
+                if (!flowsData[year]) {
+                    flowsData[year] = { year };
+                }
+
+                // Category 0: Nettoomsättning (insättning / member fees)
+                if (categoryId === 0) {
+                    flowsData[year].revenue = amount;
+                    flowsData[year].revenueSource = { file, page, x, y, width, height };
+                }
+                // Category 1: Driftkostnader (operating costs)
+                if (categoryId === 1) {
+                    flowsData[year].opex = amount;
+                    flowsData[year].opexSource = { file, page, x, y, width, height };
+                }
+                // Category 8: Investeringar
+                if (categoryId === 8) {
+                    flowsData[year].capex = amount;
+                    flowsData[year].capexSource = { file, page, x, y, width, height };
+                }
+            }
+
+            return Object.values(flowsData).sort((a, b) => a.year.localeCompare(b.year));
+        }
+
         function formatCurrency(value) {
             return new Intl.NumberFormat('sv-SE', {
                 minimumFractionDigits: 0,
@@ -435,6 +500,8 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         }
 
 
+
+        const TOTAL_AREA_SQM = 51666;
 
         function renderChart(debtData) {
             const years = debtData.map(d => d.year);
@@ -532,6 +599,61 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             Plotly.newPlot('debtChart', [trace1, trace2, trace3], layout, config);
         }
 
+        function renderDebtPerSqmChart(debtData) {
+            const years = debtData.map(d => d.year);
+            const debtPerSqm = debtData.map(d => Math.round(d.total / TOTAL_AREA_SQM));
+
+            const trace = {
+                x: years,
+                y: debtPerSqm,
+                name: 'Skuld per m²',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {
+                    color: '#9c27b0',
+                    width: 3
+                },
+                marker: {
+                    size: 10,
+                    symbol: 'diamond',
+                    color: '#9c27b0'
+                },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(156, 39, 176, 0.08)',
+                hovertemplate: '%{x}: %{y:,.0f} SEK/m²<extra></extra>'
+            };
+
+            const isMobile = window.innerWidth <= 768;
+
+            const layout = {
+                height: isMobile ? 300 : 400,
+                margin: isMobile
+                    ? { t: 10, r: 10, b: 80, l: 80 }
+                    : { t: 20, r: 20, b: 60, l: 80 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: true,
+                    gridcolor: '#e9ecef'
+                },
+                yaxis: {
+                    title: isMobile ? '' : 'SEK / m²',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    tickformat: ',.0f',
+                    showgrid: true,
+                    gridcolor: '#e9ecef'
+                },
+                showlegend: false,
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+
+            Plotly.newPlot('debtPerSqmChart', [trace], layout, config);
+        }
+
         function renderInterestChart(debtData, interestData) {
             const years = debtData.map(d => d.year);
             const interestCosts = years.map(year => interestData[year] || null);
@@ -588,6 +710,111 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             Plotly.newPlot('interestChart', [trace], layout, config);
         }
 
+        function renderFlowsChart(flowsData) {
+            const years = flowsData.map(d => d.year);
+            const revenue = flowsData.map(d => d.revenue || null);
+            const opex = flowsData.map(d => d.opex ? Math.abs(d.opex) : null);
+            const capex = flowsData.map(d => d.capex ? Math.abs(d.capex) : null);
+
+            const traceRevenue = {
+                x: years,
+                y: revenue,
+                name: 'Insättningar (avgifter)',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#4caf50', width: 3 },
+                marker: { size: 8, color: '#4caf50' },
+                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Insättningar</extra>'
+            };
+
+            const traceOpex = {
+                x: years,
+                y: opex,
+                name: 'Driftkostnader',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#ff7043', width: 3 },
+                marker: { size: 8, color: '#ff7043' },
+                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Driftkostnader</extra>'
+            };
+
+            const traceCapex = {
+                x: years,
+                y: capex,
+                name: 'Investeringar',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#7e57c2', width: 3 },
+                marker: { size: 8, color: '#7e57c2' },
+                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Investeringar</extra>'
+            };
+
+            const avg = arr => arr.filter(v => v !== null).reduce((a, b) => a + b, 0) / arr.filter(v => v !== null).length;
+            const avgRevenue = avg(revenue);
+            const avgOpex = avg(opex);
+            const avgCapex = avg(capex);
+
+            const traceAvgRevenue = {
+                x: years, y: years.map(() => avgRevenue),
+                name: 'Snitt insättningar',
+                type: 'scatter', mode: 'lines',
+                line: { color: '#4caf50', width: 2, dash: 'dot' },
+                hovertemplate: '%{y:,.0f} SEK<extra>Snitt insättningar</extra>',
+                showlegend: false
+            };
+            const traceAvgOpex = {
+                x: years, y: years.map(() => avgOpex),
+                name: 'Snitt driftkostnader',
+                type: 'scatter', mode: 'lines',
+                line: { color: '#ff7043', width: 2, dash: 'dot' },
+                hovertemplate: '%{y:,.0f} SEK<extra>Snitt driftkostnader</extra>',
+                showlegend: false
+            };
+            const traceAvgCapex = {
+                x: years, y: years.map(() => avgCapex),
+                name: 'Snitt investeringar',
+                type: 'scatter', mode: 'lines',
+                line: { color: '#7e57c2', width: 2, dash: 'dot' },
+                hovertemplate: '%{y:,.0f} SEK<extra>Snitt investeringar</extra>',
+                showlegend: false
+            };
+
+            const isMobile = window.innerWidth <= 768;
+
+            const layout = {
+                height: isMobile ? 350 : 500,
+                margin: isMobile
+                    ? { t: 10, r: 10, b: 80, l: 80 }
+                    : { t: 20, r: 20, b: 60, l: 80 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                yaxis: {
+                    title: isMobile ? '' : 'Belopp (SEK)',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    tickformat: ',.0f',
+                    showgrid: true,
+                    gridcolor: '#e9ecef'
+                },
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: isMobile ? 11 : 13 }
+                },
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+
+            Plotly.newPlot('flowsChart', [traceRevenue, traceOpex, traceCapex, traceAvgRevenue, traceAvgOpex, traceAvgCapex], layout, config);
+        }
+
         function renderTable(debtData, interestData) {
             const tbody = document.getElementById('tableBody');
             
@@ -626,14 +853,76 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             tbody.innerHTML = rows;
         }
 
+        function renderInterestRatioChart(interestData, flowsData) {
+            const years = flowsData.map(d => d.year);
+            const ratios = years.map(year => {
+                const interest = interestData[year];
+                const flow = flowsData.find(d => d.year === year);
+                const revenue = flow ? flow.revenue : null;
+                if (interest && revenue && revenue > 0) {
+                    return parseFloat(((interest / revenue) * 100).toFixed(1));
+                }
+                return null;
+            });
+
+            const trace = {
+                x: years,
+                y: ratios,
+                name: 'Räntekvot',
+                type: 'bar',
+                marker: {
+                    color: ratios.map(r => r !== null && r >= 20 ? '#e53935' : '#ffa726'),
+                    line: { color: ratios.map(r => r !== null && r >= 20 ? '#b71c1c' : '#f57c00'), width: 1 }
+                },
+                text: ratios.map(r => r !== null ? r.toFixed(1) + '%' : ''),
+                textposition: 'outside',
+                textfont: { size: 13, color: '#333' },
+                hovertemplate: '%{x}: %{y:.1f}%<extra>Räntekvot</extra>'
+            };
+
+            const isMobile = window.innerWidth <= 768;
+
+            const layout = {
+                height: isMobile ? 300 : 400,
+                margin: isMobile
+                    ? { t: 30, r: 10, b: 80, l: 60 }
+                    : { t: 30, r: 20, b: 60, l: 60 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                yaxis: {
+                    title: isMobile ? '' : 'Andel (%)',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    ticksuffix: '%',
+                    showgrid: true,
+                    gridcolor: '#e9ecef',
+                    rangemode: 'tozero'
+                },
+                showlegend: false,
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+
+            Plotly.newPlot('interestRatioChart', [trace], layout, config);
+        }
+
         // Initialize the page
         async function init() {
             try {
                 await loadPDFSources(); // Load PDF sources first
                 const debtData = await loadDebtData();
                 const interestData = await loadInterestData();
+                const flowsData = await loadFlowsData();
                 renderChart(debtData);
+                renderDebtPerSqmChart(debtData);
                 renderInterestChart(debtData, interestData);
+                renderInterestRatioChart(interestData, flowsData);
+                renderFlowsChart(flowsData);
                 renderTable(debtData, interestData);
             } catch (error) {
                 console.error('Error loading data:', error);
