@@ -1,0 +1,170 @@
+category,amount
+# RESULTATRÄKNING (Resultaträkning, sida 10) - Räkenskapsår 2023
+Nettoomsättning,46186034
+Övriga rörelseintäkter,572687
+Summa Rörelseintäkter,46758721
+Driftskostnader,-32236131
+Övriga externa kostnader,-678147
+Personalkostnader,-772279
+Av- och nedskrivningar av materiella och immateriella anläggningstillgångar,-9351715
+Summa Rörelsekostnader,-43038272
+Rörelseresultat,3720449
+Övriga ränteintäkter och liknande resultatposter,10110
+Räntekostnader och liknande resultatposter,-4597090
+Summa Finansiella poster,-4586980
+Resultat efter finansiella poster,-866531
+Årets resultat,-866531
+# BALANSRÄKNING - TILLGÅNGAR (sida 11)
+Byggnader och mark,297157855
+Maskiner och andra tekniska anläggningar,2281189
+Pågående nyanläggningar materiella anläggningstillgångar,3300324
+Summa Materiella anläggningstillgångar,302739368
+Andra långfristiga värdepappersinnehav,500
+Summa Finansiella anläggningstillgångar,500
+Summa Anläggningstillgångar,302739868
+Kundfordringar,227687
+Aktuell skattefordran,44674
+Övriga kortfristiga fordringar,14546689
+Förutbetalda kostnader och upplupna intäkter,1958515
+Summa Kortfristiga fordringar,16777565
+Summa Omsättningstillgångar,16777565
+Summa Tillgångar,319517432
+# BALANSRÄKNING - EGET KAPITAL OCH SKULDER (sida 12)
+Medlemsinsatser,16143000
+Fond för yttre underhåll,9599524
+Summa Bundet eget kapital,25742524
+Balanserat resultat,58185389
+Årets resultat (fritt eget kapital),-866531
+Summa Fritt eget kapital,57318858
+Summa Eget kapital,83061382
+Övriga långfristiga skulder till kreditinstitut,94810505
+Summa Långfristiga skulder,94810505
+Övriga kortfristiga skulder till kreditinstitut,132932440
+Leverantörsskulder,2750556
+Övriga kortfristiga skulder,718427
+Upplupna kostnader och förutbetalda intäkter,5244122
+Summa Kortfristiga skulder,141645545
+Summa Skulder,236456050
+Summa Eget kapital och skulder,319517432
+# KASSAFLÖDESANALYS (sida 13)
+Rörelseresultat (kassaflöde),3720449
+Avskrivningar,9351715
+Summa Justeringar för poster som inte ingår i kassaflödet,9351715
+Erhållen ränta,10110
+Erlagd ränta,-4307781
+Kassaflöde från den löpande verksamheten före förändringar av rörelsekapital,8774493
+Ökning/minskning av rörelsefordringar,-58741
+Ökning/minskning av rörelseskulder,-1187740
+Summa Kassaflöde från förändringar i rörelsekapital,-1246481
+Kassaflöde från den löpande verksamheten,7528012
+Förvärv/avyttring av materiella anläggningstillgångar,-12021818
+Summa Kassaflöde från investeringsverksamheten,-12021818
+Ökning/minskning av skuld till kreditinstitut,7135669
+Summa Kassaflöde från finansieringsverksamheten,7135669
+Årets kassaflöde,2641862
+Likvida medel vid årets början,11898490
+Likvida medel vid årets slut,14540353
+# NOT 2 - Nettoomsättning (sida 15)
+Årsavgifter bostäder andelstalsfördelad,42003711
+Hyror bostäder,417600
+Hyror lokaler,489772
+Hyror garage och parkeringsplatser,2648839
+Hyror förbrukningsbaserad,291926
+Hyror övrigt,577697
+Övriga primära intäkter,280605
+Summa Bruttoomsättning,46710150
+Avgifts- och hyresbortfall,-524116
+Hyresförluster,0
+Summa Nettoomsättning (not 2),46186034
+# NOT 3 - Övriga rörelseintäkter (sida 15)
+Ersättning elstöd,515160
+Övriga intäkter (not 3),57527
+Summa Övriga rörelseintäkter (not 3),572687
+# NOT 4 - Driftskostnader (sida 15)
+Fastighetsskötsel och lokalvård och samfälligheter,-3083280
+Snö och halkbekämpning,-671647
+Reparationer,-4691549
+Planerat underhåll,-2888485
+Försäkringsskador,-1004556
+El,-2750427
+Uppvärmning,-7328481
+Vatten,-2882486
+Sophämtning,-1670020
+Fastighetsförsäkring,-1203960
+Kabel-TV och bredband,-1011436
+Fastighetsskatt och fastighetsavgift,-1110557
+Förvaltningsavtalskostnader,-1671466
+Övriga driftkostnader,-267778
+Summa Driftskostnader (not 4),-32236131
+# NOT 5 - Övriga externa kostnader (sida 16)
+Hyror och arrenden och leasing,-22178
+Förbrukningsinventarier och varuinköp,-80285
+Administrationskostnader,-269435
+Extern revision,-45000
+Konsultkostnader,-1369
+Medlemsavgifter,-84881
+Föreningsverksamhet,-13505
+Övriga förvaltningskostnader,-161493
+Summa Övriga externa kostnader (not 5),-678147
+# NOT 6 - Personalkostnader (sida 16)
+Arvode styrelse,-561750
+Revisionsarvode,-16050
+Övriga arvoden,-32100
+Sociala avgifter,-162379
+Summa Personalkostnader (not 6),-772279
+# NOT 7 - Övriga ränteintäkter (sida 16)
+Ränteintäkter avräkningskonto HSB,6611
+Ränteintäkter HSB placeringskonto,0
+Övriga ränteintäkter och liknande poster,3499
+Summa Övriga ränteintäkter (not 7),10110
+# NOT 8 - Räntekostnader (sida 16)
+Räntekostnader lån till kreditinstitut,-4595878
+Övriga räntekostnader,-1212
+Summa Räntekostnader (not 8),-4597090
+# NOT 9 - Byggnader och mark (sida 17)
+Ingående anskaffningsvärde byggnader,375638722
+Ingående anskaffningsvärde mark,1894525
+Årets investeringar (byggnader),48916579
+Årets utrangering hissar,-3684516
+Summa Ackumulerade anskaffningsvärden,422765310
+Ingående avskrivningar,-120115732
+Årets avskrivningar (byggnader),-9176238
+Återförda avskrivningar utrangering hissar,3684516
+Summa Ackumulerade avskrivningar,-125607454
+Utgående redovisat värde byggnader och mark,297157856
+# NOT 10 - Maskiner och andra tekniska anläggningar (sida 17)
+Ingående anskaffningsvärde maskiner,4408995
+Ingående avskrivningar maskiner,-1952330
+Årets avskrivningar maskiner,-175476
+Summa Ackumulerade avskrivningar maskiner,-2127806
+Utgående redovisat värde maskiner,2281189
+# NOT 11 - Pågående nyanläggningar (sida 17)
+Ingående värde pågående nyanläggning,40195085
+Årets investeringar (pågående),10621637
+Omklassificering till byggnad,-47516398
+Summa Pågående nyanläggningar,3300324
+# NOT 12 - Andra långfristiga värdepappersinnehav (sida 18)
+Ingående värde andel i HSB,500
+# NOT 13 - Övriga kortfristiga fordringar (sida 18)
+Klientmedelskonto HSB och Fastighetsägarna,14540353
+Övriga fordringar (not 13),6336
+Summa Övriga fordringar (not 13),14546689
+# NOT 14 - Förutbetalda kostnader och upplupna intäkter (sida 18)
+Övriga förutbetalda kostnader och upplupna intäkter,1958515
+# NOT 15 - Övriga långfristiga skulder till kreditinstitut (sida 19)
+Långfristig del skulder till kreditinstitut,94810505
+Nästa års amortering av långfristig skuld,0
+Lån som ska konverteras inom ett år,132932440
+Kortfristig del skulder till kreditinstitut,132932440
+Nästa års amorteringar av lång- och kortfristig skuld,3600000
+Genomsnittsräntan vid årets utgång %,2.28
+# NOT 16 - Övriga kortfristiga skulder (sida 19)
+Momsskuld,28661
+Inre fond,559629
+Övriga kortfristiga skulder (not 16),130137
+Summa Övriga kortfristiga skulder (not 16),718427
+# NOT 17 - Upplupna kostnader och förutbetalda intäkter (sida 19)
+Förutbetalda hyror och avgifter,3173700
+Upplupna räntekostnader,547599
+Övriga upplupna kostnader,1522823
+Summa Upplupna kostnader (not 17),5244122

@@ -1,0 +1,168 @@
+category,amount
+# RESULTATRÄKNING (sida 13) - Räkenskapsår 2021
+Nettoomsättning,40905710
+Övriga rörelseintäkter,669176
+Drift och underhåll,-24845023
+Övriga externa kostnader,-637783
+Planerat underhåll,-2527274
+Personalkostnader och arvoden,-768322
+Avskrivningar av materiella anläggningstillgångar,-5711292
+Summa rörelsekostnader,-34489694
+Rörelseresultat,7085192
+Ränteintäkter och liknande resultatposter,15199
+Räntekostnader och liknande resultatposter,-3070190
+Summa finansiella poster,-3054991
+Årets resultat,4030201
+# BALANSRÄKNING - TILLGÅNGAR (sida 14)
+Byggnader och mark,264293478
+Inventarier och maskiner,2632141
+Pågående nyanläggningar,6516046
+Summa Materiella anläggningstillgångar,273441665
+Andra långfristiga värdepappersinnehav,500
+Summa Anläggningstillgångar,273442165
+Avgifts- hyres- och andra kundfordringar,35937
+Avräkningskonto HSB Stockholm,17844336
+Placeringskonto HSB Stockholm,5421
+Övriga fordringar,80499
+Förutbetalda kostnader och upplupna intäkter,1752622
+Summa Kortfristiga fordringar,19718814
+Kassa och bank,120165
+Summa Omsättningstillgångar,19838980
+Summa Tillgångar,293281145
+# BALANSRÄKNING - EGET KAPITAL OCH SKULDER (sida 15)
+Insatser,6208000
+Upplåtelseavgifter,9935000
+Yttre underhållsfond,7448577
+Summa Bundet eget kapital,23591577
+Balanserat resultat,53276214
+Årets resultat (fritt eget kapital),4030201
+Summa Fritt eget kapital,57306416
+Summa Eget kapital,80897992
+Skulder till kreditinstitut (långfristiga),198827276
+Summa Långfristiga skulder,198827276
+Skulder till kreditinstitut (kortfristiga),3157324
+Leverantörsskulder,2531051
+Fond för inre underhåll,591658
+Övriga skulder,14592
+Upplupna kostnader och förutbetalda intäkter,7261252
+Summa Kortfristiga skulder,13555877
+Summa Skulder,212383153
+Summa Eget kapital och skulder,293281145
+# KASSAFLÖDESANALYS (sida 16)
+Resultat efter finansiella poster,4030201
+Avskrivningar,5711292
+Kassaflöde från löpande verksamhet före förändringar av rörelsekapital,9741493
+Ökning/minskning av kortfristiga fordringar,-242288
+Ökning/minskning av kortfristiga skulder,-1222970
+Kassaflöde från löpande verksamhet,8276236
+Investeringar i fastigheter,-53833441
+Kassaflöde från investeringsverksamheten,-53833441
+Ökning/minskning av skulder till kreditinstitut,41842676
+Kassaflöde från finansieringsverksamheten,41842676
+Årets kassaflöde,-3714529
+Likvida medel vid årets början,21684451
+Likvida medel vid årets slut,17969922
+# NOT 1 - Nettoomsättning (sida 18)
+Årsavgifter,36730872
+Individuell mätning el,3600
+Hyror,3996134
+Övriga intäkter (not 1),727918
+Bruttoomsättning,41458524
+Avgifts- och hyresbortfall,-551194
+Hyresförluster,-1620
+Summa Nettoomsättning (not 1),40905710
+# NOT 2 - Övriga rörelseintäkter (sida 18)
+Försäkringsersättningar,669176
+Kompensation HSB,0
+Summa Övriga rörelseintäkter (not 2),669176
+# NOT 3 - Drift och underhåll (sida 18)
+Fastighetsskötsel och lokalvård,3686249
+Reparationer,4059037
+El,1518592
+Uppvärmning,7187660
+Vatten,2809005
+Sophämtning,1399240
+Fastighetsförsäkring,996417
+Kabel-TV och bredband,710418
+Fastighetsskatt och fastighetsavgift,1112244
+Förvaltningsarvoden,1238955
+Övriga driftkostnader,127207
+Summa Drift och underhåll (not 3),24845023
+# NOT 4 - Övriga externa kostnader (sida 18)
+Bevakningskostnader,95972
+Hyror och arrenden,3550
+Förbrukningsinventarier och varuinköp,113113
+Administrationskostnader,267009
+Extern revision,40000
+Konsultkostnader,21781
+Medlemsavgifter,96358
+Övriga externa kostnader juristarvode,0
+Summa Övriga externa kostnader (not 4),637783
+# NOT 5 - Personalkostnader och arvoden (sida 19)
+Arvode styrelse,546315
+Revisionsarvode,14190
+Övriga arvoden,35476
+Löner och övriga ersättningar,0
+Sociala avgifter,152428
+Övriga personalkostnader,19913
+Summa Personalkostnader (not 5),768322
+# NOT 6 - Ränteintäkter och liknande resultatposter (sida 19)
+Ränteintäkter avräkningskonto HSB Stockholm,13709
+Ränteintäkter HSB placeringskonto,5
+Övriga ränteintäkter,1485
+Summa Ränteintäkter (not 6),15199
+# NOT 7 - Räntekostnader och liknande resultatposter (sida 19)
+Räntekostnader långfristiga skulder,3067335
+Övriga räntekostnader,2855
+Summa Räntekostnader (not 7),3070190
+# NOT 8 - Byggnader och mark (sida 20)
+Anskaffningsvärde byggnader,316419046
+Anskaffningsvärde mark,1894525
+Årets investeringar,59219676
+Utgående ackumulerade anskaffningsvärden,377533247
+Ingående avskrivningar,-107703953
+Årets avskrivningar byggnader,-5535816
+Utgående ackumulerade avskrivningar,-113239769
+Utgående bokfört värde byggnader och mark,264293478
+# NOT 9 - Inventarier och maskiner (sida 20)
+Ingående anskaffningsvärde,4408995
+Utgående ackumulerade anskaffningsvärden,4408995
+Ingående avskrivningar maskiner,-1601378
+Årets avskrivningar maskiner,-175476
+Utgående ackumulerade avskrivningar maskiner,-1776854
+Bokfört värde maskiner,2632141
+# NOT 10 - Pågående nyanläggningar och förskott (sida 20)
+Ingående anskaffningsvärde,11902282
+Årets investeringar,53833440
+Omklassificering till byggnad,-59219676
+Utgående ackumulerade anskaffningsvärden,6516046
+# NOT 11 - Andra långfristiga värdepappersinnehav (sida 20)
+Andel i HSB Stockholm,500
+# NOT 12 - Övriga kortfristiga fordringar (sida 20)
+Skattekonto,3345
+Skattefordran,74864
+Övriga fordringar (not 12),2290
+Summa Övriga fordringar (not 12),80499
+# NOT 13 - Förutbetalda kostnader och upplupna intäkter (sida 21)
+Förutbetalda kostnader,1669806
+Upplupna intäkter,82817
+Summa Förutbetalda kostnader (not 13),1752622
+# NOT 14 - Kassa och bank (sida 21)
+Nordea plusgiro,120165
+Summa Kassa och bank (not 14),120165
+# NOT 15 - Skulder till kreditinstitut (sida 21)
+Summa skulder till kreditinstitut,201984600
+Långfristiga skulder exklusive kortfristig del,198827276
+Nästa års amorteringar,3157324
+Fastighetsinteckningar,213906000
+# NOT 16 - Skulder till kreditinstitut kortfristig del (sida 21)
+Kortfristig del av långfristig skuld,3157324
+# NOT 17 - Övriga skulder (sida 21)
+Momsskuld,14592
+Källskatt,0
+Summa Övriga skulder (not 17),14592
+# NOT 18 - Upplupna kostnader och förutbetalda intäkter (sida 22)
+Upplupna räntekostnader,213232
+Förutbetalda hyror och avgifter,3465434
+Övriga upplupna kostnader,3582586
+Summa Upplupna kostnader (not 18),7261252
