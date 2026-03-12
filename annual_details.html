@@ -10,6 +10,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         body { font-size: 1rem; }
+        .hint-touch { display: none; }
+        @media (pointer: coarse) {
+            .hint-desktop { display: none; }
+            .hint-touch { display: inline; }
+        }
         @media (max-width: 640px) {
             body { font-size: 0.875rem; }
             h1 { font-size: 1.5rem; }
@@ -351,6 +356,7 @@
                             <h3>Kassaflöde - Vattenfall</h3>
                             <p style="color: #666; font-size: 0.9em; margin: 0 0 10px 0;"><strong>Kassaflöde från finansieringsverksamheten</strong> visar hur mycket vi behövde låna från banken under året för att ha tillräckligt med pengar till den löpande verksamheten.</p>
                             <div class="chart-container" id="waterfall-container"></div>
+                            <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
                         </div>
 
                         <table class="events-table">

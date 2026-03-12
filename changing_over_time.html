@@ -176,6 +176,12 @@
 
         #pdf-url { color: var(--vm-blue) !important; }
 
+        .hint-touch { display: none; }
+        @media (pointer: coarse) {
+            .hint-desktop { display: none; }
+            .hint-touch { display: inline; }
+        }
+
         /* ── Mobile ────────────────────────────────────── */
         @media (max-width: 768px) {
 
@@ -216,6 +222,7 @@
         <h2 class="chart-title">Skuldutveckling</h2>
         <p class="chart-conclusion">Under de senaste sju åren har våra skulder till kreditinstitut nästan fördubblats, från 119 miljoner till 234 miljoner kronor.</p>
         <div id="debtChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
     <!-- Debt per m² Chart -->
@@ -223,6 +230,7 @@
         <h2 class="chart-title">Skuld per kvadratmeter</h2>
         <p class="chart-conclusion">Total skuld till kreditinstitut dividerat med föreningens totala yta (51 666 m²). Ett mått på hur mycket av skulden varje kvadratmeter "bär".</p>
         <div id="debtPerSqmChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
     <!-- Interest Chart -->
@@ -230,6 +238,7 @@
         <h2 class="chart-title">Räntekostnader</h2>
         <p class="chart-conclusion">Kostnaden vi betalar för ränta på banklån varierar beroende på marknadsäntan och storleken på våra lån. I dagsläget betalar vi mer än 4 miljoner kronor i ränta varje år.</p>
         <div id="interestChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
     <!-- Interest-to-Revenue Ratio Chart -->
@@ -237,6 +246,7 @@
         <h2 class="chart-title">Räntekvot (räntekostnader / intäkter)</h2>
         <p class="chart-conclusion">Andelen av föreningens intäkter som går till att betala ränta på banklån. Ju högre andel, desto mindre utrymme finns för drift, underhåll och investeringar.</p>
         <div id="interestRatioChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
     <!-- Data Table -->
@@ -263,6 +273,7 @@
         <h2 class="chart-title">Intäkter, driftkostnader och investeringar</h2>
         <p class="chart-conclusion">De största posterna i kassaflödet är intäkter, driftkostnader och investeringar. Insättningar (medlemsavgifter) har ökat stadigt, men driftkostnader och investeringar har vuxit ännu snabbare — särskilt under åren med stora stambytesprojekt.</p>
         <div id="flowsChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 </section>
 
