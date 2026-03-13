@@ -274,6 +274,20 @@
         <p class="chart-conclusion">De största posterna i kassaflödet är intäkter, driftkostnader och investeringar. Insättningar (medlemsavgifter) har ökat stadigt, men driftkostnader och investeringar har vuxit ännu snabbare — särskilt under åren med stora stambytesprojekt.</p>
         <div id="flowsChart"></div>
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
+
+        <h3 style="margin-top:32px;font-size:17px;color:var(--vm-blue);border-top:2px solid var(--vm-border);padding-top:18px;">Detaljerad data</h3>
+        <p class="chart-conclusion">Klicka på siffrorna för att hitta den exakta källan i årsredovisningen.</p>
+        <table class="data-table" id="flowsTable">
+            <thead>
+                <tr>
+                    <th>År</th>
+                    <th class="number">Insättningar</th>
+                    <th class="number">Driftkostnader</th>
+                    <th class="number">Investeringar</th>
+                </tr>
+            </thead>
+            <tbody id="flowsTableBody"></tbody>
+        </table>
     </div>
 </section>
 
@@ -826,6 +840,34 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             Plotly.newPlot('flowsChart', [traceRevenue, traceOpex, traceCapex, traceAvgRevenue, traceAvgOpex, traceAvgCapex], layout, config);
         }
 
+        function renderFlowsTable(flowsData) {
+            const tbody = document.getElementById('flowsTableBody');
+
+            function clickable(source, text, year) {
+                if (source && source.file) {
+                    return `<span class="clickable-cell" onclick="showPDF('${source.file}', ${source.page}, ${source.x}, ${source.y}, ${source.width}, ${source.height}, '${year}')">${text}</span>`;
+                }
+                return text;
+            }
+
+            const rows = flowsData.map(item => {
+                const rev = item.revenue != null ? formatCurrency(item.revenue) : 'N/A';
+                const opex = item.opex != null ? formatCurrency(Math.abs(item.opex)) : 'N/A';
+                const capex = item.capex != null ? formatCurrency(Math.abs(item.capex)) : 'N/A';
+
+                return `
+                    <tr>
+                        <td><strong>${item.year}</strong></td>
+                        <td class="number">${clickable(item.revenueSource, rev, item.year)}</td>
+                        <td class="number">${clickable(item.opexSource, opex, item.year)}</td>
+                        <td class="number">${clickable(item.capexSource, capex, item.year)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rows;
+        }
+
         function renderTable(debtData, interestData) {
             const tbody = document.getElementById('tableBody');
             
@@ -934,6 +976,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 renderInterestChart(debtData, interestData);
                 renderInterestRatioChart(interestData, flowsData);
                 renderFlowsChart(flowsData);
+                renderFlowsTable(flowsData);
                 renderTable(debtData, interestData);
             } catch (error) {
                 console.error('Error loading data:', error);
