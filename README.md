@@ -1,1 +1,231 @@
-# sjotungan-analytics
+# sjotungan/analytics
+
+## Preparation
+
+### Provisioning sources file
+
+Add PDF sources to `sources.yaml` file
+
+### Downloading pdf files locally
+
+```bash
+python3 download_sources.py
+```
+
+### Extract data from PDF files to raw CSV files
+
+Task LLM to extract data from pdf files in raw csv format:
+
+```csv
+category,amount
+```
+
+For example,
+
+```csv
+category,amount
+Nettoomsättning,49194715
+Övriga rörelseintäkter,183452
+Summa Rörelseintäkter,49378167
+Driftkostnader,-34361150
+Övriga externa kostnader,-1094944
+```
+
+`data/annual_reports/<file_name>.pdf` data should be extracted to `data/annual_reports/<file_name>.csv` file.
+
+#### Extraction notes
+
+- **Newer reports** (2019+) have selectable text — PyPDF2 can extract text directly.
+- **Older reports** (2013–2016) are scanned images — require OCR via `pytesseract` + `pdf2image`.
+- Use `# SECTION NAME (sida N)` comments to separate sections (Resultaträkning, Balansräkning, Kassaflödesanalys, Noter).
+- Amounts are integers in SEK, negative for costs/expenses.
+- Cross-validate extracted numbers against the **prior-year comparison column** in adjacent reports (each report includes two years).
+- The 2013 report uses **K2 accounting** (different income statement structure — costs grouped as "Drift", "Planerat underhåll", "Fastighetsskatt" rather than "Driftkostnader", "Övriga externa kostnader", "Personalkostnader"). From 2014 onwards **K3 accounting** is used.
+- Some early CSVs (`kallelse_stamma2018.csv`) use a multi-column format (`section,item,note,<year>,<year>`). The preferred format is the simpler `category,amount`.
+
+### Extract data from PDF files in structured form
+
+#### Extract to `data/financial_states.csv`
+
+Balance sheet snapshot values at year-end, with PDF source coordinates for highlighting.
+
+**Format:**
+
+```csv
+year,category_id,amount,file,page,x,y,width,height
+```
+
+- `year` — fiscal year-end (e.g. 2024 = state at 2024-12-31)
+- `category_id` — references `data/state_categories.csv`
+- `amount` — integer in SEK
+- `file` — PDF filename in `data/annual_reports/`
+- `page,x,y,width,height` — highlight coordinates in rendered canvas space (PDF points × scale factor)
+
+**Categories** (`data/state_categories.csv`):
+
+| id | name | description |
+|----|------|-------------|
+| 0 | Övriga skulder till kreditinstitut | Short-term portion of bank loans (next year's amortization) |
+| 1 | Skulder till kreditinstitut | Long-term bank loans |
+| 2 | Kassa och bank | Cash and bank accounts |
+| 3 | Avräkningskonto HSB Stockholm | HSB clearing account |
+| 4 | Placeringskonto HSB Stockholm | HSB investment account |
+| 5 | Kortfristiga placeringar | Short-term investments / money market funds |
+
+**Source mapping:**
+
+| Year(s) | Source PDF | Notes |
+|---------|-----------|-------|
+| 2024 | `stamma2025.pdf` | Text-selectable, pdfplumber for coords |
+| 2023 | `stamma-2024.pdf` | Text-selectable |
+| 2022 | `stamma-2023.pdf` | Text-selectable |
+| 2021, 2020 | `stamma_kallelse_2022.pdf` | Text-selectable, has comparison column |
+| 2019, 2018 | `BRF_Sjotungan_arsredovisning_2019.pdf` | Text-selectable, has comparison column |
+| 2017 | `kallelse_stamma_2019.pdf` | Scanned, OCR coords |
+| 2016 | `kallelse_stamma2018.pdf` | Scanned, OCR coords |
+| 2015 | `arsredovisning2015.pdf` | Scanned, OCR coords |
+| 2014 | `arsredovisning2014.pdf` | Scanned, OCR coords |
+| 2013, 2012 | `arsredovisning_2013.pdf` | Scanned, OCR coords. 2012 from comparison column |
+
+**Extraction notes:**
+
+- Each annual report contains the current year and previous year (comparison column). Earlier years can be sourced from the comparison column of the next report.
+- Debt split (cat 0 vs 1): from **Note 16** ("Skulder till kreditinstitut") which shows "Långfristiga exkl kortfristig del" and "Nästa års amortering".
+- **2012**: the 2013 report only shows total debt (137,493,781) without the short/long split for the comparison year. Cat 0 is set to 0 and cat 1 holds the full total.
+- Categories 3–5 (HSB accounts, short-term investments) are only available in years where those items appear on the balance sheet. Newer reports (2023+) merged these into cat 2.
+- **Scanned PDFs** (2013–2017): coordinates determined via OCR (`pytesseract` + `pdf2image`), then multiplied by the PDF rendering scale factor (1.49× for `arsredovisning_2013.pdf`, varies by PDF).
+- **Text-selectable PDFs** (2018+): coordinates found via `pdfplumber` word extraction.
+
+#### Extract to `data/financial_events.csv`
+
+Cash flow events (income, expenses, investments, financing) by year with PDF source coordinates.
+
+**Format:**
+
+```csv
+year,category_id,amount,file,page,x,y,width,height
+```
+
+- `category_id` — references `data/event_categories.csv`
+- `amount` — integer in SEK (negative for outflows)
+- Categories with `parent` in `event_categories.csv` are sub-items (e.g. cat 2 "Fastighetsskötsel" is a child of cat 1 "Driftkostnader")
+- **Invariant:** the sum of all top-level events (those without a `parent`) for a given year must equal the change in total liquidity (state categories 2+3+4+5) between year-end and prior year-end.
+
+**Categories** (`data/event_categories.csv`):
+
+| id | name | Source | parent |
+|----|------|--------|--------|
+| 0 | Nettoomsättning | Income statement | — |
+| 1 | Driftkostnader | Income statement | — |
+| 2 | Fastighetsskötsel | Income statement (Note 2) | 1 |
+| 3 | Kassaflöde från finansieringsverksamheten | Cash flow statement | — |
+| 4 | Övriga intäkter | Income statement | — |
+| 5 | Övriga externa kostnader | Income statement | — |
+| 6 | Personalkostnader | Income statement | — |
+| 7 | Räntekostnader | Income statement | — |
+| 8 | Investeringar | Cash flow statement | — |
+| 9 | Rörelsekapital - ej insamlade intäkter | Cash flow statement | — |
+| 10 | Rörelsekapital - ej betalda kostnader | Cash flow statement | — |
+| 11 | Leverantörsskulder | Cash flow statement | — |
+| 12 | Övriga kortfristiga skulder | Cash flow statement | — |
+| 13 | Kundfordringar | Cash flow statement | — |
+| 14 | Övriga fordringar | Cash flow statement | — |
+| 15 | Erhållen ränta | Income statement | — |
+| 16 | Planerat underhåll | Income statement | — |
+
+**How to extract events for a new year:**
+
+1. **Prerequisite:** financial states for the target year AND the prior year must already exist in `financial_states.csv`. Compute the expected cash change: `liquidity(year) - liquidity(year-1)` where liquidity = sum of state categories 2, 3, 4, 5.
+
+2. **Identify source PDF.** Check `sources.yaml` for which PDF covers the target `finance_period`. The annual report for year N is filed in the report published the following year (e.g., 2016 events come from `arsredovisning_2016.pdf`).
+
+3. **Extract values from two sections:**
+
+   - **Income statement** (Resultaträkning) — typically page 6–7 in older reports, page 27 in newer ones:
+     - `Nettoomsättning` → cat 0
+     - `Drift och underhåll` → cat 1 (negative)
+     - `Planerat underhåll` → cat 16 (negative, may be zero)
+     - `Övriga externa kostnader` → cat 5 (negative)
+     - `Personalkostnader och arvoden` → cat 6 (negative)
+     - `Ränteintäkter` → cat 15
+     - `Räntekostnader` → cat 7 (negative)
+     - `Övriga intäkter` → cat 4 (if present as separate line; some years fold it into cat 0)
+
+   - **Cash flow statement** (Kassaflödesanalys) — typically page 9 in older reports, page 13 or 30 in newer ones:
+     - Working capital changes (sign as shown in the statement):
+       - `Ökning/minskning kortfristiga fordringar` → cat 9 (earlier years) or split into cat 13 + cat 14 (later years)
+       - `Ökning/minskning kortfristiga skulder` → cat 10 (earlier years) or split into cat 11 + cat 12 (later years)
+     - `Investeringar` (total of investment section) → cat 8 (negative)
+     - `Kassaflöde från finansieringsverksamheten` → cat 3
+
+   **K2 accounting (2013):** The income statement has a different cost structure:
+   - "Drift" (Note 2) includes Personalkostnader — must be separated.
+   - "Fastighetsskatt" is a separate IS line — must be folded into cat 1 (Driftkostnader).
+   - No separate "Övriga externa kostnader" line (cat 5 omitted).
+   - K2→K3 mapping: `cat 1 = -(Drift − Personalkostnader + Fastighetsskatt)`. The OCR search key is the Drift digit string, but the stored amount is the adjusted K3-compatible value.
+   - `Personalkostnader` (cat 6) is extracted from Note 2 breakdown instead of the IS.
+   - Investments (cat 8) may be positive when projects are completed (capitalized) or assets sold.
+
+4. **Get PDF coordinates** for each value. Coordinates in the CSV are in **canvas space** — the HTML viewer draws highlights directly at these values without further scaling.
+
+   - **Text-selectable PDFs** (2018+): use `pdfplumber` to extract words with bounding boxes. Coordinates are in PDF points; multiply by `1.5` for canvas.
+   - **Scanned PDFs** (2013–2017): use `pytesseract.image_to_data()` at DPI=300 to get OCR bounding boxes in pixels, then multiply by `72/300 × 1.5 = 0.36` to convert to canvas coordinates.
+
+   Standard highlight box: `width=100, height=20` (canvas pixels).
+
+   **OCR pitfalls for scanned reports:**
+   - The income statement has two year columns (current + comparison). OCR often merges digits from both columns into one block. Filter tokens by x-position: `left >= 1600px` to exclude labels/notes, then split at `~1950px` to separate the current-year column from the comparison column.
+   - OCR may split a single number (e.g., "20 452 772") into multiple tokens. Group tokens into rows by y-position (±15px tolerance), then concatenate all digits per row to match target amounts.
+   - OCR may insert artifact characters (e.g., colons: "36083:819"). The `_strip()` function removes `:`, `;`, commas, dots, dashes, and spaces before matching.
+   - **PSM mode:** Some scanned PDFs (e.g., 2013 K2 format) require tesseract page segmentation mode 6 (`--psm 6`) instead of the default 3. Set `'psm': 6` in the year's config when the default mode misses rows.
+   - Use `extract_scanned_events.py` as the extraction tool — it handles these pitfalls via `find_amount_coords()`. To extract a new year, add a config entry to `CONFIGS` with the PDF filename, page numbers, amounts dict, column-split threshold, and optionally `psm`. Then run:
+
+     ```bash
+     python3 extract_scanned_events.py <YEAR>            # dry-run (prints CSV lines)
+     python3 extract_scanned_events.py <YEAR> --append    # appends to financial_events.csv
+     ```
+
+   Typical coordinate format: `page,x,y,width,height` where (x,y) is top-left corner.
+
+5. **Add rows** to `data/financial_events.csv`. Use the year's own annual report as `file` (e.g., `arsredovisning_2016.pdf` for 2016 events).
+
+6. **Verify.** Sum all top-level events (categories without a `parent`) for the year. This must equal the expected cash change from step 1. Use `verify_<year>_events.py` or:
+
+   ```bash
+   python3 -c "
+   import csv
+   YEAR = '2016'
+   with open('data/financial_events.csv') as f:
+       events = list(csv.DictReader(f))
+   with open('data/event_categories.csv') as f:
+       cats = {int(r['id']): r for r in csv.DictReader(f)}
+   with open('data/financial_states.csv') as f:
+       states = list(csv.DictReader(f))
+   liq = lambda y: sum(int(s['amount']) for s in states if s['year']==str(y) and int(s['category_id']) in (2,3,4,5))
+   expected = liq(int(YEAR)) - liq(int(YEAR)-1)
+   actual = sum(int(e['amount']) for e in events if e['year']==YEAR and not cats[int(e['category_id'])]['parent'])
+   print(f'Expected: {expected:>12,}')
+   print(f'Actual:   {actual:>12,}')
+   print(f'Diff:     {actual-expected:>12,}')
+   "
+   ```
+
+   A difference of 0–1 SEK (rounding) is acceptable.
+
+**Extraction progress:**
+
+| Year | Status | Source PDF | Notes |
+|------|--------|-----------|-------|
+| 2024 | ✅ | `stamma2025.pdf` | Includes working capital sub-items (cats 11–14) |
+| 2023 | ✅ | `stamma-2024.pdf` | |
+| 2022 | ✅ | `stamma-2023.pdf` | |
+| 2021 | ✅ | `stamma_kallelse_2022.pdf` | |
+| 2020 | ✅ | `stamma_kallelse-2021.pdf` | |
+| 2019 | ✅ | `BRF_Sjotungan_arsredovisning_2019.pdf` | |
+| 2018 | ✅ | `kallelse_stamma_2019.pdf` | Scanned, OCR coords |
+| 2017 | ✅ | `kallelse_stamma2018.pdf` | Scanned, OCR coords |
+| 2016 | ✅ | `arsredovisning_2016.pdf` | Scanned, OCR coords |
+| 2015 | ✅ | `arsredovisning2015.pdf` | Scanned, OCR coords |
+| 2014 | ✅ | `arsredovisning2014.pdf` | Scanned, OCR coords. 20 SEK rounding diff (balance sheet state rounding). |
+| 2013 | ✅ | `arsredovisning_2013.pdf` | K2 accounting, scanned, OCR coords (PSM 6, K2→K3 mapping). 1 SEK rounding diff. |
+| 2012 | ❌ | `arsredovisning_2013.pdf` | Comparison column. Needs 2011 states first (no source PDF for 2012's own report). |
