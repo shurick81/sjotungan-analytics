@@ -23,3 +23,15 @@ annual_reports:
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2018/kallelse%20stamma2018.pdf"
     finance_period: 2017
     local_path: "data/annual_reports/kallelse_stamma2018.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2017/arsredovisning%202016.pdf"
+    finance_period: 2016
+    local_path: "data/annual_reports/arsredovisning_2016.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2016/arsredovisning2015.pdf"
+    finance_period: 2015
+    local_path: "data/annual_reports/arsredovisning2015.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2015/arsredovisning2014.pdf"
+    finance_period: 2014
+    local_path: "data/annual_reports/arsredovisning2014.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2014/arsredovisning%202013.pdf"
+    finance_period: 2013
+    local_path: "data/annual_reports/arsredovisning_2013.pdf"

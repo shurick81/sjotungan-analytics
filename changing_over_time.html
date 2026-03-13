@@ -268,6 +268,31 @@
         </table>
     </div>
 
+    <!-- Cash Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Likvida medel</h2>
+        <p class="chart-conclusion">Föreningens totala likvida medel (kassa, bank, avräkningskonto och placeringar hos HSB). Kassan sjönk kraftigt under stambytet 2019–2022 men har börjat återhämta sig.</p>
+        <div id="cashChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
+
+        <h3 style="margin-top:32px;font-size:17px;color:var(--vm-blue);border-top:2px solid var(--vm-border);padding-top:18px;">Detaljerad data</h3>
+        <p class="chart-conclusion">Klicka på siffrorna för att hitta den exakta källan i årsredovisningen.</p>
+        <table class="data-table" id="cashTable">
+            <thead>
+                <tr>
+                    <th>År</th>
+                    <th class="number">Kassa och bank</th>
+                    <th class="number">Avräkningskonto</th>
+                    <th class="number">Placeringskonto</th>
+                    <th class="number">Placeringar</th>
+                    <th class="number">Totalt</th>
+                    <th class="number">Förändring</th>
+                </tr>
+            </thead>
+            <tbody id="cashTableBody"></tbody>
+        </table>
+    </div>
+
     <!-- Flows Chart -->
     <div class="chart-container">
         <h2 class="chart-title">Intäkter, driftkostnader och investeringar</h2>
@@ -284,6 +309,7 @@
                     <th class="number">Insättningar</th>
                     <th class="number">Driftkostnader</th>
                     <th class="number">Investeringar</th>
+                    <th class="number">Totalt kassaflöde</th>
                 </tr>
             </thead>
             <tbody id="flowsTableBody"></tbody>
@@ -475,6 +501,18 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
         // Load flows data (insättning, driftkostnad, investeringar)
         async function loadFlowsData() {
+            // Load categories to determine which are top-level
+            const catResponse = await fetch('data/event_categories.csv' + cacheBust);
+            const catCsv = await catResponse.text();
+            const catLines = catCsv.trim().split('\n');
+            const topLevelCats = new Set();
+            for (let i = 1; i < catLines.length; i++) {
+                const parts = catLines[i].split(',');
+                const id = parseInt(parts[0]);
+                const parent = parts[2] ? parts[2].trim() : '';
+                if (!parent) topLevelCats.add(id);
+            }
+
             const response = await fetch('data/financial_events.csv' + cacheBust);
             const csvText = await response.text();
 
@@ -494,7 +532,12 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 const height = parseFloat(values[8]);
 
                 if (!flowsData[year]) {
-                    flowsData[year] = { year };
+                    flowsData[year] = { year, cashflow: 0 };
+                }
+
+                // Sum all top-level categories for total cash flow
+                if (topLevelCats.has(categoryId)) {
+                    flowsData[year].cashflow += amount;
                 }
 
                 // Category 0: Nettoomsättning (insättning / member fees)
@@ -524,15 +567,163 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             }).format(value) + ' SEK';
         }
 
+        // Load cash / liquid assets data
+        async function loadCashData() {
+            const response = await fetch('data/financial_states.csv' + cacheBust);
+            const csvText = await response.text();
+            const lines = csvText.trim().split('\n');
+            const data = {};
+            const sourceData = {};
 
+            for (let i = 1; i < lines.length; i++) {
+                const v = lines[i].split(',');
+                const year = v[0];
+                const catId = parseInt(v[1]);
+                const amount = parseInt(v[2]);
+                const file = v[3];
+                const page = parseInt(v[4]);
+                const x = parseFloat(v[5]);
+                const y = parseFloat(v[6]);
+                const width = parseFloat(v[7]);
+                const height = parseFloat(v[8]);
+
+                // Categories 2-5 are liquid assets
+                if (catId < 2 || catId > 5) continue;
+
+                if (!data[year]) {
+                    data[year] = { year, bank: 0, settlement: 0, placement: 0, shortInvest: 0 };
+                    sourceData[year] = {};
+                }
+
+                const src = { file, page, x, y, width, height };
+                if (catId === 2) { data[year].bank = amount; sourceData[year].bank = src; }
+                if (catId === 3) { data[year].settlement = amount; sourceData[year].settlement = src; }
+                if (catId === 4) { data[year].placement = amount; sourceData[year].placement = src; }
+                if (catId === 5) { data[year].shortInvest = amount; sourceData[year].shortInvest = src; }
+            }
+
+            return Object.values(data)
+                .map(d => ({
+                    ...d,
+                    total: d.bank + d.settlement + d.placement + d.shortInvest,
+                    source: sourceData[d.year]
+                }))
+                .sort((a, b) => a.year.localeCompare(b.year));
+        }
+
+        function renderCashChart(cashData) {
+            const years = cashData.map(d => d.year);
+
+            const traceBank = {
+                x: years, y: cashData.map(d => d.bank),
+                name: 'Kassa och bank', type: 'bar',
+                marker: { color: '#42a5f5' }
+            };
+            const traceSettlement = {
+                x: years, y: cashData.map(d => d.settlement),
+                name: 'Avräkningskonto HSB', type: 'bar',
+                marker: { color: '#66bb6a' }
+            };
+            const tracePlacement = {
+                x: years, y: cashData.map(d => d.placement),
+                name: 'Placeringskonto HSB', type: 'bar',
+                marker: { color: '#ab47bc' }
+            };
+            const traceShortInvest = {
+                x: years, y: cashData.map(d => d.shortInvest),
+                name: 'Kortfristiga placeringar', type: 'bar',
+                marker: { color: '#ffa726' }
+            };
+            const traceTotal = {
+                x: years, y: cashData.map(d => d.total),
+                name: 'Totalt likvida medel', type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#e53935', width: 3 },
+                marker: { size: 8, color: '#e53935' },
+                yaxis: 'y'
+            };
+
+            const isMobile = window.innerWidth <= 768;
+
+            const layout = {
+                barmode: 'stack',
+                height: isMobile ? 350 : 500,
+                margin: isMobile
+                    ? { t: 10, r: 10, b: 80, l: 80 }
+                    : { t: 20, r: 20, b: 60, l: 80 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                yaxis: {
+                    title: isMobile ? '' : 'Belopp (SEK)',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    tickformat: ',.0f',
+                    showgrid: true,
+                    gridcolor: '#e9ecef'
+                },
+                legend: {
+                    orientation: 'h', y: -0.25, x: 0.5, xanchor: 'center',
+                    font: { size: isMobile ? 10 : 12 }
+                },
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+            Plotly.newPlot('cashChart',
+                [traceBank, traceSettlement, tracePlacement, traceShortInvest, traceTotal],
+                layout, config);
+        }
+
+        function renderCashTable(cashData) {
+            const tbody = document.getElementById('cashTableBody');
+
+            function cl(src, text, year) {
+                if (src && src.file) {
+                    return `<span class="clickable-cell" onclick="showPDF('${src.file}', ${src.page}, ${src.x}, ${src.y}, ${src.width}, ${src.height}, '${year}')">${text}</span>`;
+                }
+                return text;
+            }
+
+            const rows = cashData.map((d, i) => {
+                const prev = i > 0 ? cashData[i - 1] : null;
+                const change = prev ? d.total - prev.total : null;
+                const changeText = change !== null
+                    ? `${change >= 0 ? '+' : ''}${formatCurrency(change)}`
+                    : 'N/A';
+                const changeColor = change !== null
+                    ? (change >= 0 ? 'color:#2e7d32' : 'color:#c62828')
+                    : '';
+
+                return `<tr>
+                    <td><strong>${d.year}</strong></td>
+                    <td class="number">${d.bank ? cl(d.source.bank, formatCurrency(d.bank), d.year) : '–'}</td>
+                    <td class="number">${d.settlement ? cl(d.source.settlement, formatCurrency(d.settlement), d.year) : '–'}</td>
+                    <td class="number">${d.placement ? cl(d.source.placement, formatCurrency(d.placement), d.year) : '–'}</td>
+                    <td class="number">${d.shortInvest ? cl(d.source.shortInvest, formatCurrency(d.shortInvest), d.year) : '–'}</td>
+                    <td class="number"><strong>${formatCurrency(d.total)}</strong></td>
+                    <td class="number" style="${changeColor}">${changeText}</td>
+                </tr>`;
+            }).join('');
+
+            tbody.innerHTML = rows;
+        }
 
         const TOTAL_AREA_SQM = 51666;
 
-        function renderChart(debtData) {
+        function renderChart(debtData, cashData) {
             const years = debtData.map(d => d.year);
             const shortTermDebt = debtData.map(d => d.shortTerm);
             const longTermDebt = debtData.map(d => d.longTerm);
             const totalDebt = debtData.map(d => d.total);
+
+            // Build a year→total cash map
+            const cashByYear = {};
+            cashData.forEach(d => { cashByYear[d.year] = d.total; });
+            const totalCash = years.map(y => cashByYear[y] ?? null);
             
             const trace1 = {
                 x: years,
@@ -621,7 +812,19 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 displayModeBar: false
             };
             
-            Plotly.newPlot('debtChart', [trace1, trace2, trace3], layout, config);
+            const trace4 = {
+                x: years,
+                y: totalCash,
+                name: 'Likvida medel',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#4caf50', width: 3 },
+                marker: { size: 10, symbol: 'diamond', color: '#4caf50' },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(76,175,80,0.08)'
+            };
+
+            Plotly.newPlot('debtChart', [trace4, trace1, trace2, trace3], layout, config);
         }
 
         function renderDebtPerSqmChart(debtData) {
@@ -837,7 +1040,23 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
             const config = { responsive: true, displayModeBar: false };
 
-            Plotly.newPlot('flowsChart', [traceRevenue, traceOpex, traceCapex, traceAvgRevenue, traceAvgOpex, traceAvgCapex], layout, config);
+            const cashflow = flowsData.map(d => d.cashflow || null);
+            const traceCashflow = {
+                x: years,
+                y: cashflow,
+                name: 'Totalt kassaflöde',
+                type: 'bar',
+                marker: {
+                    color: cashflow.map(v => v !== null && v >= 0 ? 'rgba(76,175,80,0.35)' : 'rgba(244,67,54,0.35)'),
+                    line: {
+                        color: cashflow.map(v => v !== null && v >= 0 ? '#4caf50' : '#f44336'),
+                        width: 1.5
+                    }
+                },
+                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Totalt kassaflöde</extra>'
+            };
+
+            Plotly.newPlot('flowsChart', [traceCashflow, traceRevenue, traceOpex, traceCapex, traceAvgRevenue, traceAvgOpex, traceAvgCapex], layout, config);
         }
 
         function renderFlowsTable(flowsData) {
@@ -854,6 +1073,10 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 const rev = item.revenue != null ? formatCurrency(item.revenue) : 'N/A';
                 const opex = item.opex != null ? formatCurrency(Math.abs(item.opex)) : 'N/A';
                 const capex = item.capex != null ? formatCurrency(Math.abs(item.capex)) : 'N/A';
+                const cf = item.cashflow != null ? formatCurrency(item.cashflow) : 'N/A';
+                const cfColor = item.cashflow != null
+                    ? (item.cashflow >= 0 ? 'color:#2e7d32' : 'color:#c62828')
+                    : '';
 
                 return `
                     <tr>
@@ -861,6 +1084,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                         <td class="number">${clickable(item.revenueSource, rev, item.year)}</td>
                         <td class="number">${clickable(item.opexSource, opex, item.year)}</td>
                         <td class="number">${clickable(item.capexSource, capex, item.year)}</td>
+                        <td class="number" style="${cfColor}"><strong>${cf}</strong></td>
                     </tr>
                 `;
             }).join('');
@@ -971,10 +1195,13 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 const debtData = await loadDebtData();
                 const interestData = await loadInterestData();
                 const flowsData = await loadFlowsData();
-                renderChart(debtData);
+                const cashData = await loadCashData();
+                renderChart(debtData, cashData);
                 renderDebtPerSqmChart(debtData);
                 renderInterestChart(debtData, interestData);
                 renderInterestRatioChart(interestData, flowsData);
+                renderCashChart(cashData);
+                renderCashTable(cashData);
                 renderFlowsChart(flowsData);
                 renderFlowsTable(flowsData);
                 renderTable(debtData, interestData);
