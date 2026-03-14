@@ -334,6 +334,11 @@
 
 </main>
 
+<section class="max-w-6xl mx-auto mt-10 mb-4 px-6">
+  <h2 class="text-lg font-semibold text-gray-600 mb-3">Källdokument (PDF)</h2>
+  <ul id="pdf-source-list" class="space-y-1 text-sm text-gray-600"></ul>
+</section>
+
 <footer class="text-center text-gray-500 text-sm py-4 mt-8">
 &copy; 2025 Vision Myggan – En medlemsrörelse i BRF Sjötungan
 </footer>
@@ -414,12 +419,22 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                         const filename = source.local_path.split('/').pop();
                         pdfSources[filename] = source.url;
                     });
+                    renderPDFSourceList(data.annual_reports);
                 }
                 
                 console.log('Loaded PDF sources:', pdfSources);
             } catch (error) {
                 console.error('Error loading PDF sources:', error);
             }
+        }
+
+        function renderPDFSourceList(reports) {
+            const list = document.getElementById('pdf-source-list');
+            if (!list) return;
+            const sorted = [...reports].sort((a, b) => b.finance_period - a.finance_period);
+            list.innerHTML = sorted.map(r => {
+                return `<li>${r.finance_period} – <a href="${r.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${r.url}</a></li>`;
+            }).join('');
         }
 
         // Load and parse CSV data
