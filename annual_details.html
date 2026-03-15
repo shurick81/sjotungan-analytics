@@ -351,25 +351,31 @@
         }
 
         /* ── Fullscreen treemap overlay ─────────────── */
-        .expand-btn {
+        .expand-btn-row {
             display: none;
+            justify-content: center;
+            margin-top: 14px;
+        }
+        @media (min-width: 768px) {
+            .expand-btn-row { display: flex; }
+        }
+        .expand-btn {
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             background: var(--vm-blue);
             color: white;
             border: none;
-            padding: 7px 14px;
-            border-radius: 8px;
-            font-size: 13px;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
+            box-shadow: 0 2px 6px rgba(31,63,149,0.25);
         }
         .expand-btn:hover { background: #2c54bf; }
-        .expand-btn svg { width: 16px; height: 16px; fill: currentColor; }
-        @media (min-width: 768px) {
-            .expand-btn { display: inline-flex; }
-        }
+        .expand-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
         .treemap-fullscreen {
             display: none;
@@ -507,12 +513,7 @@
                     <div id="costs-treemap-section" class="costs-treemap-wrapper" style="display: none;">
                         <div class="section-header">
                             <h2 class="text-blue-700 font-semibold text-2xl">Kostnadsfördelning</h2>
-                            <button class="expand-btn" onclick="openCostsFullscreen()" title="Visa fullskärm med underkategorier">
-                                <svg viewBox="0 0 20 20"><path d="M3 3h5V1H1v7h2V3zm9-2v2h5v5h2V1h-7zm7 12h-2v5h-5v2h7v-7zM3 12H1v7h7v-2H3v-5z"/></svg>
-                                Visa detaljer
-                            </button>
                         </div>
-                        <p style="color: #666; font-size: 0.9em; margin-bottom: 8px;">Klicka på en kategori med underkategorier för att zooma in — breadcrumb för att gå tillbaka</p>
 
                         <div class="costs-total-banner">
                             <span class="costs-total-label">Totala kostnader</span>
@@ -521,7 +522,29 @@
 
                         <div class="costs-treemap-card">
                             <div id="costs-treemap-chart" style="width: 100%; height: 580px;"></div>
+                            <div class="expand-btn-row">
+                                <button class="expand-btn" onclick="openCostsFullscreen()" title="Visa fullskärm med underkategorier">
+                                    <svg viewBox="0 0 20 20"><path d="M3 3h5V1H1v7h2V3zm9-2v2h5v5h2V1h-7zm7 12h-2v5h-5v2h7v-7zM3 12H1v7h7v-2H3v-5z"/></svg>
+                                    Visa alla underkategorier
+                                </button>
+                            </div>
                         </div>
+
+                        <table class="events-table costs-breakdown-table">
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th style="text-align: right;">Belopp (SEK)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="costs-breakdown-body"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Totala kostnader</td>
+                                    <td style="text-align: right;" id="costs-breakdown-total" class="amount-negative">-</td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
         </section>
@@ -1150,6 +1173,8 @@
             lastCostItems = costItems;
             lastTotalCost = totalCost;
 
+            renderCostsTable(costItems, totalCost);
+
             if (!costsTreemapChart) {
                 costsTreemapChart = echarts.init(document.getElementById('costs-treemap-chart'));
                 window.addEventListener('resize', () => costsTreemapChart && costsTreemapChart.resize());
@@ -1165,20 +1190,11 @@
                 series: [{
                     type: 'treemap',
                     roam: false,
-                    nodeClick: 'zoomToNode',
+                    nodeClick: false,
                     leafDepth: 1,
                     width: '100%',
                     height: '100%',
-                    breadcrumb: {
-                        show: true,
-                        bottom: 4,
-                        height: 26,
-                        itemStyle: {
-                            color: '#f3f4f6',
-                            borderColor: '#d1d5db',
-                            textStyle: { color: '#374151', fontWeight: '600', fontSize: 12 }
-                        }
-                    },
+                    breadcrumb: { show: false },
                     label: {
                         show: true,
                         formatter: p => '{n|' + p.name + '}\n{v|' + fmtShort(p.value) + '}',
@@ -1234,20 +1250,11 @@
                 series: [{
                     type: 'treemap',
                     roam: false,
-                    nodeClick: 'zoomToNode',
+                    nodeClick: false,
                     leafDepth: 2,
                     width: '100%',
                     height: '100%',
-                    breadcrumb: {
-                        show: true,
-                        bottom: 4,
-                        height: 26,
-                        itemStyle: {
-                            color: '#f3f4f6',
-                            borderColor: '#d1d5db',
-                            textStyle: { color: '#374151', fontWeight: '600', fontSize: 12 }
-                        }
-                    },
+                    breadcrumb: { show: false },
                     label: {
                         show: true,
                         formatter: p => '{n|' + p.name + '}\n{v|' + fmtShort(p.value) + '}',
@@ -1284,6 +1291,25 @@
         function closeCostsFullscreen() {
             document.getElementById('costs-treemap-fullscreen').classList.remove('active');
             document.body.style.overflow = '';
+        }
+
+        function renderCostsTable(costItems, totalCost) {
+            const tbody = document.getElementById('costs-breakdown-body');
+            tbody.innerHTML = '';
+            costItems.forEach(item => {
+                const parentVal = item.value || (item.children ? item.children.reduce((s, c) => s + c.value, 0) : 0);
+                const row = document.createElement('tr');
+                row.innerHTML = `<td style="font-weight:600;">${item.name}</td><td style="text-align:right;" class="amount-negative">${formatNumber(-parentVal)} SEK</td>`;
+                tbody.appendChild(row);
+                if (item.children) {
+                    item.children.forEach(child => {
+                        const sub = document.createElement('tr');
+                        sub.innerHTML = `<td style="padding-left:35px; color:#5e6b80;">${child.name}</td><td style="text-align:right;" class="amount-negative">${formatNumber(-child.value)} SEK</td>`;
+                        tbody.appendChild(sub);
+                    });
+                }
+            });
+            document.getElementById('costs-breakdown-total').textContent = formatNumber(-totalCost) + ' SEK';
         }
 
         document.addEventListener('keydown', e => {
