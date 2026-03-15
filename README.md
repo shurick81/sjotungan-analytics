@@ -229,3 +229,26 @@ year,category_id,amount,file,page,x,y,width,height
 | 2014 | ✅ | `arsredovisning2014.pdf` | Scanned, OCR coords. 20 SEK rounding diff (balance sheet state rounding). |
 | 2013 | ✅ | `arsredovisning_2013.pdf` | K2 accounting, scanned, OCR coords (PSM 6, K2→K3 mapping). 1 SEK rounding diff. |
 | 2012 | ❌ | `arsredovisning_2013.pdf` | Comparison column. Needs 2011 states first (no source PDF for 2012's own report). |
+
+## Previewing pages locally
+
+Start a local HTTP server from the project root:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open in your browser:
+
+| Page | URL |
+|------|-----|
+| Ekonomisk utveckling | [http://localhost:8000/changing_over_time.html](http://localhost:8000/changing_over_time.html) |
+| Kassaflödesdetaljer | [http://localhost:8000/annual_details.html](http://localhost:8000/annual_details.html) |
+
+The pages load CSV data and PDF sources via `fetch()`, so they must be served over HTTP (opening the `.html` files directly won't work due to CORS).
+
+To stop the server: press `Ctrl+C`, or from another terminal:
+
+```bash
+lsof -ti:8000 | xargs kill
+```
