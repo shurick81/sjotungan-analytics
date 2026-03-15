@@ -1,7 +1,7 @@
 id,name,parent
 0,Nettoomsättning,
 1,Driftkostnader,
-2,Fastighetsskötsel,1
+2,Fastighetsskötsel och lokalvård,1
 3,Kassaflöde från finansieringsverksamheten,
 4,Övriga intäkter,
 5,Övriga externa kostnader,
@@ -20,3 +20,15 @@ id,name,parent
 18,Hyror,0
 19,Övriga intäkter (nettoomsättning),0
 20,Avgifts- och hyresbortfall,0
+21,Reparationer,1
+22,El,1
+23,Uppvärmning,1
+24,Vatten,1
+25,Sophämtning,1
+26,Fastighetsförsäkring,1
+27,Kabel-TV och bredband,1
+28,Fastighetsskatt och fastighetsavgift,1
+29,Förvaltningsarvoden,1
+30,Övriga driftkostnader,1
+31,Underhåll,1
+32,Försäkringsskador,1

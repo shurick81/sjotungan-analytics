@@ -198,6 +198,67 @@
             .chart-title { font-size: 16px; margin-bottom: 12px; }
             .data-table th, .data-table td { padding: 8px 6px; }
         }
+
+        /* ── Category filter chips ─────────────────────── */
+        .category-filter {
+            margin: 12px 0 16px;
+            padding: 12px 16px;
+            background: #f0f4fa;
+            border-radius: 8px;
+            border: 1px solid #dde6f4;
+        }
+        .category-filter .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #33486f;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .category-filter .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .category-filter .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            border: 2px solid #ccc;
+            background: white;
+            color: #555;
+            transition: all 0.15s;
+        }
+        .category-filter .filter-chip:hover {
+            background: #e8edf6;
+        }
+        .category-filter .filter-chip.active {
+            color: white;
+            font-weight: 600;
+        }
+        .category-filter .filter-chip.active:hover {
+            opacity: 0.85;
+            background: inherit;
+        }
+        .category-filter .filter-chip .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .category-filter .filter-chip.sub-category {
+            font-size: 12px;
+            padding: 3px 8px;
+        }
+        @media (max-width: 768px) {
+            .category-filter { padding: 10px 12px; }
+            .category-filter .filter-chip { font-size: 12px; padding: 3px 8px; }
+            .category-filter .filter-chip.sub-category { font-size: 11px; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -243,7 +304,7 @@
 
     <!-- Interest-to-Revenue Ratio Chart -->
     <div class="chart-container">
-        <h2 class="chart-title">Räntekvot (räntekostnader / intäkter)</h2>
+        <h2 class="chart-title">Räntekvot (räntekostnader / årsavgifter)</h2>
         <p class="chart-conclusion">Andelen av föreningens intäkter som går till att betala ränta på banklån. Ju högre andel, desto mindre utrymme finns för drift, underhåll och investeringar.</p>
         <div id="interestRatioChart"></div>
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
@@ -297,6 +358,10 @@
     <div class="chart-container">
         <h2 class="chart-title">Intäkter, driftkostnader och investeringar</h2>
         <p class="chart-conclusion">De största posterna i kassaflödet är intäkter, driftkostnader och investeringar. Insättningar (medlemsavgifter) har ökat stadigt, men driftkostnader och investeringar har vuxit ännu snabbare — särskilt under åren med stora stambytesprojekt.</p>
+        <div id="flowsCategoryFilter" class="category-filter">
+            <div class="filter-label">Visa kategorier:</div>
+            <div class="filter-options" id="flowsFilterOptions"></div>
+        </div>
         <div id="flowsChart"></div>
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
 
@@ -406,6 +471,20 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         const ctx = canvas.getContext('2d');
 
         const cacheBust = `?t=${Date.now()}`;
+
+        // ── Category colors & global state for flows filter ──
+        const CATEGORY_COLORS = {
+            0: '#4caf50', 1: '#ff7043', 2: '#a1887f', 3: '#42a5f5',
+            4: '#66bb6a', 5: '#ef5350', 6: '#ab47bc', 7: '#ec407a',
+            8: '#7e57c2', 9: '#78909c', 10: '#8d6e63', 11: '#26c6da',
+            12: '#ffca28', 13: '#9ccc65', 14: '#ffa726', 15: '#29b6f6',
+            16: '#d4e157', 17: '#26a69a', 18: '#7cb342', 19: '#5c6bc0',
+            20: '#f06292'
+        };
+        let allEventCategories = [];
+        let selectedFlowCats = new Set([0, 1, 8, 17]);
+        let showCashflowBar = true;
+        let currentFlowsData = null;
 
         // Load PDF sources from YAML
         async function loadPDFSources() {
@@ -517,16 +596,19 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
         // Load flows data (insättning, driftkostnad, investeringar)
         async function loadFlowsData() {
-            // Load categories to determine which are top-level
+            // Load categories
             const catResponse = await fetch('data/event_categories.csv' + cacheBust);
             const catCsv = await catResponse.text();
             const catLines = catCsv.trim().split('\n');
             const topLevelCats = new Set();
+            allEventCategories = [];
             for (let i = 1; i < catLines.length; i++) {
                 const parts = catLines[i].split(',');
                 const id = parseInt(parts[0]);
+                const name = parts[1];
                 const parent = parts[2] ? parts[2].trim() : '';
                 if (!parent) topLevelCats.add(id);
+                allEventCategories.push({ id, name, parent: parent ? parseInt(parent) : null });
             }
 
             const response = await fetch('data/financial_events.csv' + cacheBust);
@@ -548,7 +630,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 const height = parseFloat(values[8]);
 
                 if (!flowsData[year]) {
-                    flowsData[year] = { year, cashflow: 0 };
+                    flowsData[year] = { year, cashflow: 0, cats: {} };
                 }
 
                 // Sum all top-level categories for total cash flow
@@ -556,25 +638,25 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     flowsData[year].cashflow += amount;
                 }
 
-                // Category 0: Nettoomsättning (insättning / member fees)
+                // Store every category generically
+                flowsData[year].cats[categoryId] = {
+                    amount,
+                    source: { file, page, x, y, width, height }
+                };
+
+                // Keep backward-compatible aliases used by other charts
                 if (categoryId === 0) {
                     flowsData[year].revenue = amount;
                     flowsData[year].revenueSource = { file, page, x, y, width, height };
                 }
-                // Category 1: Driftkostnader (operating costs)
                 if (categoryId === 1) {
                     flowsData[year].opex = amount;
-                    flowsData[year].opexSource = { file, page, x, y, width, height };
                 }
-                // Category 8: Investeringar
                 if (categoryId === 8) {
                     flowsData[year].capex = amount;
-                    flowsData[year].capexSource = { file, page, x, y, width, height };
                 }
-                // Category 17: Årsavgifter (annual fees)
                 if (categoryId === 17) {
                     flowsData[year].avgift = amount;
-                    flowsData[year].avgiftSource = { file, page, x, y, width, height };
                 }
             }
 
@@ -961,85 +1043,51 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
         function renderFlowsChart(flowsData) {
             const years = flowsData.map(d => d.year);
-            const revenue = flowsData.map(d => d.revenue || null);
-            const opex = flowsData.map(d => d.opex ? Math.abs(d.opex) : null);
-            const capex = flowsData.map(d => d.capex ? Math.abs(d.capex) : null);
 
-            const traceRevenue = {
-                x: years,
-                y: revenue,
-                name: 'Insättningar (avgifter)',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: { color: '#4caf50', width: 3 },
-                marker: { size: 8, color: '#4caf50' },
-                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Insättningar</extra>'
-            };
+            const traces = [];
 
-            const traceOpex = {
-                x: years,
-                y: opex,
-                name: 'Driftkostnader',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: { color: '#ff7043', width: 3 },
-                marker: { size: 8, color: '#ff7043' },
-                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Driftkostnader</extra>'
-            };
+            // Total cashflow bar (togglable)
+            if (showCashflowBar) {
+                const cashflow = flowsData.map(d => d.cashflow || null);
+                traces.push({
+                    x: years,
+                    y: cashflow,
+                    name: 'Totalt kassaflöde',
+                    type: 'bar',
+                    marker: {
+                        color: cashflow.map(v => v !== null && v >= 0 ? 'rgba(76,175,80,0.35)' : 'rgba(244,67,54,0.35)'),
+                        line: {
+                            color: cashflow.map(v => v !== null && v >= 0 ? '#4caf50' : '#f44336'),
+                            width: 1.5
+                        }
+                    },
+                    hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Totalt kassaflöde</extra>'
+                });
+            }
 
-            const traceCapex = {
-                x: years,
-                y: capex,
-                name: 'Investeringar',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: { color: '#7e57c2', width: 3 },
-                marker: { size: 8, color: '#7e57c2' },
-                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Investeringar</extra>'
-            };
+            // One line per selected category
+            for (const catId of [...selectedFlowCats].sort((a, b) => a - b)) {
+                const cat = allEventCategories.find(c => c.id === catId);
+                if (!cat) continue;
+                const color = CATEGORY_COLORS[catId] || '#999';
+                const isChild = cat.parent !== null;
 
-            const avgift = flowsData.map(d => d.avgift || null);
+                const values = flowsData.map(d => {
+                    const c = d.cats && d.cats[catId];
+                    return c ? Math.abs(c.amount) : null;
+                });
 
-            const traceAvgift = {
-                x: years,
-                y: avgift,
-                name: 'Årsavgifter',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: { color: '#26a69a', width: 3, dash: 'dash' },
-                marker: { size: 8, symbol: 'diamond', color: '#26a69a' },
-                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Årsavgifter</extra>'
-            };
-
-            const avg = arr => arr.filter(v => v !== null).reduce((a, b) => a + b, 0) / arr.filter(v => v !== null).length;
-            const avgRevenue = avg(revenue);
-            const avgOpex = avg(opex);
-            const avgCapex = avg(capex);
-
-            const traceAvgRevenue = {
-                x: years, y: years.map(() => avgRevenue),
-                name: 'Snitt insättningar',
-                type: 'scatter', mode: 'lines',
-                line: { color: '#4caf50', width: 2, dash: 'dot' },
-                hovertemplate: '%{y:,.0f} SEK<extra>Snitt insättningar</extra>',
-                showlegend: false
-            };
-            const traceAvgOpex = {
-                x: years, y: years.map(() => avgOpex),
-                name: 'Snitt driftkostnader',
-                type: 'scatter', mode: 'lines',
-                line: { color: '#ff7043', width: 2, dash: 'dot' },
-                hovertemplate: '%{y:,.0f} SEK<extra>Snitt driftkostnader</extra>',
-                showlegend: false
-            };
-            const traceAvgCapex = {
-                x: years, y: years.map(() => avgCapex),
-                name: 'Snitt investeringar',
-                type: 'scatter', mode: 'lines',
-                line: { color: '#7e57c2', width: 2, dash: 'dot' },
-                hovertemplate: '%{y:,.0f} SEK<extra>Snitt investeringar</extra>',
-                showlegend: false
-            };
+                traces.push({
+                    x: years,
+                    y: values,
+                    name: cat.name,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color, width: isChild ? 2 : 3, dash: isChild ? 'dash' : 'solid' },
+                    marker: { size: isChild ? 6 : 8, color, symbol: isChild ? 'diamond' : 'circle' },
+                    hovertemplate: `%{x}: %{y:,.0f} SEK<extra>${cat.name}</extra>`
+                });
+            }
 
             const isMobile = window.innerWidth <= 768;
 
@@ -1074,27 +1122,23 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
             const config = { responsive: true, displayModeBar: false };
 
-            const cashflow = flowsData.map(d => d.cashflow || null);
-            const traceCashflow = {
-                x: years,
-                y: cashflow,
-                name: 'Totalt kassaflöde',
-                type: 'bar',
-                marker: {
-                    color: cashflow.map(v => v !== null && v >= 0 ? 'rgba(76,175,80,0.35)' : 'rgba(244,67,54,0.35)'),
-                    line: {
-                        color: cashflow.map(v => v !== null && v >= 0 ? '#4caf50' : '#f44336'),
-                        width: 1.5
-                    }
-                },
-                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Totalt kassaflöde</extra>'
-            };
-
-            Plotly.newPlot('flowsChart', [traceCashflow, traceRevenue, traceAvgift, traceOpex, traceCapex, traceAvgRevenue, traceAvgOpex, traceAvgCapex], layout, config);
+            Plotly.newPlot('flowsChart', traces, layout, config);
         }
 
         function renderFlowsTable(flowsData) {
+            const thead = document.querySelector('#flowsTable thead tr');
             const tbody = document.getElementById('flowsTableBody');
+
+            const sortedCats = [...selectedFlowCats].sort((a, b) => a - b);
+
+            // Dynamic header
+            let headerHtml = '<th>År</th>';
+            for (const catId of sortedCats) {
+                const cat = allEventCategories.find(c => c.id === catId);
+                if (cat) headerHtml += `<th class="number">${cat.name}</th>`;
+            }
+            if (showCashflowBar) headerHtml += '<th class="number">Totalt kassaflöde</th>';
+            thead.innerHTML = headerHtml;
 
             function clickable(source, text, year) {
                 if (source && source.file) {
@@ -1104,28 +1148,80 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             }
 
             const rows = flowsData.map(item => {
-                const rev = item.revenue != null ? formatCurrency(item.revenue) : 'N/A';
-                const avgiftVal = item.avgift != null ? formatCurrency(item.avgift) : 'N/A';
-                const opex = item.opex != null ? formatCurrency(Math.abs(item.opex)) : 'N/A';
-                const capex = item.capex != null ? formatCurrency(Math.abs(item.capex)) : 'N/A';
-                const cf = item.cashflow != null ? formatCurrency(item.cashflow) : 'N/A';
-                const cfColor = item.cashflow != null
-                    ? (item.cashflow >= 0 ? 'color:#2e7d32' : 'color:#c62828')
-                    : '';
-
-                return `
-                    <tr>
-                        <td><strong>${item.year}</strong></td>
-                        <td class="number">${clickable(item.revenueSource, rev, item.year)}</td>
-                        <td class="number">${clickable(item.avgiftSource, avgiftVal, item.year)}</td>
-                        <td class="number">${clickable(item.opexSource, opex, item.year)}</td>
-                        <td class="number">${clickable(item.capexSource, capex, item.year)}</td>
-                        <td class="number" style="${cfColor}"><strong>${cf}</strong></td>
-                    </tr>
-                `;
+                let cells = `<td><strong>${item.year}</strong></td>`;
+                for (const catId of sortedCats) {
+                    const catData = item.cats && item.cats[catId];
+                    if (catData) {
+                        const displayVal = formatCurrency(Math.abs(catData.amount));
+                        cells += `<td class="number">${clickable(catData.source, displayVal, item.year)}</td>`;
+                    } else {
+                        cells += '<td class="number">N/A</td>';
+                    }
+                }
+                if (showCashflowBar) {
+                    const cf = item.cashflow != null ? formatCurrency(item.cashflow) : 'N/A';
+                    const cfColor = item.cashflow != null
+                        ? (item.cashflow >= 0 ? 'color:#2e7d32' : 'color:#c62828')
+                        : '';
+                    cells += `<td class="number" style="${cfColor}"><strong>${cf}</strong></td>`;
+                }
+                return `<tr>${cells}</tr>`;
             }).join('');
 
             tbody.innerHTML = rows;
+        }
+
+        function renderFlowsCategoryFilter() {
+            const container = document.getElementById('flowsFilterOptions');
+            const topLevel = allEventCategories.filter(c => c.parent === null).sort((a, b) => a.id - b.id);
+            const children = allEventCategories.filter(c => c.parent !== null).sort((a, b) => a.id - b.id);
+
+            // Categories that actually have data
+            const catsWithData = new Set();
+            currentFlowsData.forEach(d => {
+                if (d.cats) Object.keys(d.cats).forEach(k => catsWithData.add(parseInt(k)));
+            });
+
+            let html = '';
+            for (const cat of topLevel) {
+                if (!catsWithData.has(cat.id)) continue;
+                const active = selectedFlowCats.has(cat.id);
+                const color = CATEGORY_COLORS[cat.id] || '#999';
+                html += `<span class="filter-chip ${active ? 'active' : ''}" data-cat-id="${cat.id}" style="${active ? `background:${color}; border-color:${color};` : `border-color:${color};`}"><span class="color-dot" style="background:${active ? 'white' : color}"></span>${cat.name}</span>`;
+
+                const catChildren = children.filter(c => c.parent === cat.id);
+                for (const child of catChildren) {
+                    if (!catsWithData.has(child.id)) continue;
+                    const childActive = selectedFlowCats.has(child.id);
+                    const childColor = CATEGORY_COLORS[child.id] || '#999';
+                    html += `<span class="filter-chip sub-category ${childActive ? 'active' : ''}" data-cat-id="${child.id}" style="${childActive ? `background:${childColor}; border-color:${childColor};` : `border-color:${childColor};`}"><span class="color-dot" style="background:${childActive ? 'white' : childColor}"></span>↳ ${child.name}</span>`;
+                }
+            }
+
+            // Add "Totalt kassaflöde" as the last chip
+            const cfColor = '#607d8b';
+            const cfActive = showCashflowBar;
+            html += `<span class="filter-chip ${cfActive ? 'active' : ''}" data-cashflow="1" style="${cfActive ? `background:${cfColor}; border-color:${cfColor};` : `border-color:${cfColor};`}"><span class="color-dot" style="background:${cfActive ? 'white' : cfColor}"></span>Totalt kassaflöde</span>`;
+
+            container.innerHTML = html;
+
+            container.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    if (chip.dataset.cashflow) {
+                        showCashflowBar = !showCashflowBar;
+                    } else {
+                        const catId = parseInt(chip.dataset.catId);
+                        if (selectedFlowCats.has(catId)) {
+                            selectedFlowCats.delete(catId);
+                        } else {
+                            selectedFlowCats.add(catId);
+                        }
+                    }
+                    renderFlowsCategoryFilter();
+                    renderFlowsChart(currentFlowsData);
+                    renderFlowsTable(currentFlowsData);
+                });
+            });
         }
 
         function renderTable(debtData, interestData) {
@@ -1171,9 +1267,9 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             const ratios = years.map(year => {
                 const interest = interestData[year];
                 const flow = flowsData.find(d => d.year === year);
-                const revenue = flow ? flow.revenue : null;
-                if (interest && revenue && revenue > 0) {
-                    return parseFloat(((interest / revenue) * 100).toFixed(1));
+                const avgift = flow ? flow.avgift : null;
+                if (interest && avgift && avgift > 0) {
+                    return parseFloat(((interest / avgift) * 100).toFixed(1));
                 }
                 return null;
             });
@@ -1231,6 +1327,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 const debtData = await loadDebtData();
                 const interestData = await loadInterestData();
                 const flowsData = await loadFlowsData();
+                currentFlowsData = flowsData;
                 const cashData = await loadCashData();
                 renderChart(debtData, cashData);
                 renderDebtPerSqmChart(debtData);
@@ -1238,6 +1335,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 renderInterestRatioChart(interestData, flowsData);
                 renderCashChart(cashData);
                 renderCashTable(cashData);
+                renderFlowsCategoryFilter();
                 renderFlowsChart(flowsData);
                 renderFlowsTable(flowsData);
                 renderTable(debtData, interestData);
