@@ -117,7 +117,7 @@ year,category_id,amount,file,page,x,y,width,height
 |----|------|--------|--------|
 | 0 | Nettoomsättning | Income statement | — |
 | 1 | Driftkostnader | Income statement | — |
-| 2 | Fastighetsskötsel | Income statement (Note 2) | 1 |
+| 2 | Fastighetsskötsel och lokalvård | Note (Driftkostnader) | 1 |
 | 3 | Kassaflöde från finansieringsverksamheten | Cash flow statement | — |
 | 4 | Övriga intäkter | Income statement | — |
 | 5 | Övriga externa kostnader | Income statement | — |
@@ -136,6 +136,18 @@ year,category_id,amount,file,page,x,y,width,height
 | 18 | Hyror | Note (Nettoomsättning) | 0 |
 | 19 | Övriga intäkter (nettoomsättning) | Note (Nettoomsättning) | 0 |
 | 20 | Avgifts- och hyresbortfall | Note (Nettoomsättning) | 0 |
+| 21 | Reparationer | Note (Driftkostnader) | 1 |
+| 22 | El | Note (Driftkostnader) | 1 |
+| 23 | Uppvärmning | Note (Driftkostnader) | 1 |
+| 24 | Vatten | Note (Driftkostnader) | 1 |
+| 25 | Sophämtning | Note (Driftkostnader) | 1 |
+| 26 | Fastighetsförsäkring | Note (Driftkostnader) | 1 |
+| 27 | Kabel-TV och bredband | Note (Driftkostnader) | 1 |
+| 28 | Fastighetsskatt och fastighetsavgift | Note (Driftkostnader) | 1 |
+| 29 | Förvaltningsarvoden | Note (Driftkostnader) | 1 |
+| 30 | Övriga driftkostnader | Note (Driftkostnader) | 1 |
+| 31 | Underhåll | Note (Driftkostnader) | 1 |
+| 32 | Försäkringsskador | Note (Driftkostnader) | 1 |
 
 **How to extract events for a new year:**
 

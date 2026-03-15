@@ -6,6 +6,7 @@
     <title>Vision Myggan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
@@ -312,6 +313,105 @@
         #pdf-url {
             color: var(--vm-blue) !important;
         }
+
+        /* ── Costs treemap ──────────────────────────────── */
+        .costs-treemap-wrapper {
+            margin-top: 30px;
+        }
+        .costs-treemap-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            margin-top: 12px;
+        }
+        .costs-total-banner {
+            background: white;
+            border-radius: 10px;
+            padding: 14px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .costs-total-label {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .costs-total-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #dc2626;
+        }
+
+        @media (max-width: 640px) {
+            #costs-treemap-chart { height: 400px !important; }
+        }
+
+        /* ── Fullscreen treemap overlay ─────────────── */
+        .expand-btn {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .expand-btn:hover { background: #2c54bf; }
+        .expand-btn svg { width: 16px; height: 16px; fill: currentColor; }
+        @media (min-width: 768px) {
+            .expand-btn { display: inline-flex; }
+        }
+
+        .treemap-fullscreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #f0f2f5;
+            padding: 20px;
+            flex-direction: column;
+        }
+        .treemap-fullscreen.active { display: flex; }
+        .treemap-fs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .treemap-fs-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .treemap-fs-header .fs-total {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #dc2626;
+            margin-left: 12px;
+        }
+        .treemap-fs-close {
+            background: none;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #374151;
+            font-weight: 600;
+        }
+        .treemap-fs-close:hover { background: #e5e7eb; }
+        #costs-treemap-fs-chart { flex: 1; min-height: 0; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -402,6 +502,27 @@
                             </tfoot>
                         </table>
                     </div>
+
+                    <!-- ── Costs treemap ────────────────── -->
+                    <div id="costs-treemap-section" class="costs-treemap-wrapper" style="display: none;">
+                        <div class="section-header">
+                            <h2 class="text-blue-700 font-semibold text-2xl">Kostnadsfördelning</h2>
+                            <button class="expand-btn" onclick="openCostsFullscreen()" title="Visa fullskärm med underkategorier">
+                                <svg viewBox="0 0 20 20"><path d="M3 3h5V1H1v7h2V3zm9-2v2h5v5h2V1h-7zm7 12h-2v5h-5v2h7v-7zM3 12H1v7h7v-2H3v-5z"/></svg>
+                                Visa detaljer
+                            </button>
+                        </div>
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 8px;">Klicka på en kategori med underkategorier för att zooma in — breadcrumb för att gå tillbaka</p>
+
+                        <div class="costs-total-banner">
+                            <span class="costs-total-label">Totala kostnader</span>
+                            <span class="costs-total-value" id="costs-tm-total">—</span>
+                        </div>
+
+                        <div class="costs-treemap-card">
+                            <div id="costs-treemap-chart" style="width: 100%; height: 580px;"></div>
+                        </div>
+                    </div>
                 </div>
         </section>
 
@@ -429,6 +550,18 @@
 <footer class="text-center text-gray-500 text-sm py-4 mt-8">
 &copy; 2026 Vision Myggan – En medlemsrörelse i BRF Sjötungan
 </footer>
+
+    <!-- Fullscreen treemap overlay -->
+    <div id="costs-treemap-fullscreen" class="treemap-fullscreen">
+        <div class="treemap-fs-header">
+            <div style="display:flex;align-items:baseline;">
+                <h2>Kostnadsfördelning</h2>
+                <span class="fs-total" id="costs-fs-total"></span>
+            </div>
+            <button class="treemap-fs-close" onclick="closeCostsFullscreen()">Stäng ×</button>
+        </div>
+        <div id="costs-treemap-fs-chart"></div>
+    </div>
 
     <!-- PDF Modal -->
     <div id="pdfModal" class="modal">
@@ -911,17 +1044,267 @@
             queueRenderPage(pageNum);
         }
 
+        /* ── Costs treemap ──────────────────────────────── */
+        const fmtLong = v => {
+            const a = Math.abs(v);
+            const s = v < 0 ? '−' : '';
+            if (a >= 1e6) return s + (a / 1e6).toFixed(2) + ' M SEK';
+            if (a >= 1e3) return s + (a / 1e3).toFixed(0) + ' k SEK';
+            return s + a.toLocaleString('sv-SE') + ' SEK';
+        };
+        const fmtShort = v => {
+            const a = Math.abs(v);
+            const s = v < 0 ? '−' : '';
+            if (a >= 1e6) return s + (a / 1e6).toFixed(2) + ' M';
+            if (a >= 1e3) return s + (a / 1e3).toFixed(0) + ' k';
+            return s + a.toLocaleString('sv-SE');
+        };
+
+        const COST_COLORS = {
+            '1':  '#dc2626', // Driftkostnader
+            '5':  '#f97316', // Övriga externa kostnader
+            '6':  '#d97706', // Personalkostnader
+            '7':  '#b91c1c', // Räntekostnader
+            '16': '#ea580c', // Planerat underhåll
+            '8':  '#9333ea', // Investeringar
+            '3':  '#6366f1', // Finansiering
+            '9':  '#64748b', // Rörelsekapital
+            '10': '#64748b',
+            '11': '#64748b',
+            '12': '#64748b',
+            '13': '#64748b',
+            '14': '#64748b',
+        };
+
+        let costsTreemapChart = null;
+        let costsFsChart = null;
+        let lastCostItems = null;
+        let lastTotalCost = 0;
+
+        async function loadCostsTreemap() {
+            const year = document.getElementById('year-select').value;
+            const [events, categories] = await Promise.all([
+                loadCSV('data/financial_events.csv'),
+                loadCSV('data/event_categories.csv')
+            ]);
+
+            const catMap = {};
+            categories.forEach(c => { catMap[c.id] = c; });
+
+            const childrenOf = {};
+            categories.forEach(c => {
+                if (c.parent) {
+                    if (!childrenOf[c.parent]) childrenOf[c.parent] = [];
+                    childrenOf[c.parent].push(c.id);
+                }
+            });
+
+            const yearAmounts = {};
+            events.filter(e => e.year === year).forEach(e => {
+                yearAmounts[e.category_id] = parseInt(e.amount);
+            });
+
+            function buildCostNode(catId) {
+                const cat = catMap[catId];
+                if (!cat) return null;
+                const amount = yearAmounts[catId];
+                const kids = (childrenOf[catId] || [])
+                    .filter(cid => yearAmounts[cid] !== undefined && parseInt(yearAmounts[cid] || 0) < 0)
+                    .map(cid => ({
+                        name: catMap[cid].name,
+                        value: Math.abs(yearAmounts[cid])
+                    }))
+                    .filter(n => n.value > 0)
+                    .sort((a, b) => b.value - a.value);
+
+                const color = COST_COLORS[catId] || '#94a3b8';
+                if (kids.length > 0) {
+                    return { name: cat.name, itemStyle: { color }, children: kids };
+                } else if (amount !== undefined && amount < 0) {
+                    return { name: cat.name, value: Math.abs(amount), itemStyle: { color } };
+                }
+                return null;
+            }
+
+            const costItems = [];
+            let totalCost = 0;
+
+            categories.filter(c => !c.parent).forEach(c => {
+                const amount = yearAmounts[c.id];
+                if (amount === undefined || amount >= 0) return;
+                const node = buildCostNode(c.id);
+                if (!node) return;
+                costItems.push(node);
+                totalCost += Math.abs(amount);
+            });
+
+            const section = document.getElementById('costs-treemap-section');
+            if (costItems.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            document.getElementById('costs-tm-total').textContent = fmtShort(totalCost);
+
+            lastCostItems = costItems;
+            lastTotalCost = totalCost;
+
+            if (!costsTreemapChart) {
+                costsTreemapChart = echarts.init(document.getElementById('costs-treemap-chart'));
+                window.addEventListener('resize', () => costsTreemapChart && costsTreemapChart.resize());
+            }
+
+            costsTreemapChart.setOption({
+                tooltip: {
+                    formatter: info => {
+                        const path = info.treePathInfo.map(n => n.name).filter(Boolean).join(' › ');
+                        return '<b>' + path + '</b><br/>' + fmtLong(info.value);
+                    }
+                },
+                series: [{
+                    type: 'treemap',
+                    roam: false,
+                    nodeClick: 'zoomToNode',
+                    leafDepth: 1,
+                    width: '100%',
+                    height: '100%',
+                    breadcrumb: {
+                        show: true,
+                        bottom: 4,
+                        height: 26,
+                        itemStyle: {
+                            color: '#f3f4f6',
+                            borderColor: '#d1d5db',
+                            textStyle: { color: '#374151', fontWeight: '600', fontSize: 12 }
+                        }
+                    },
+                    label: {
+                        show: true,
+                        formatter: p => '{n|' + p.name + '}\n{v|' + fmtShort(p.value) + '}',
+                        rich: {
+                            n: { fontSize: 12, color: '#fff', lineHeight: 16 },
+                            v: { fontSize: 11, color: 'rgba(255,255,255,0.75)', lineHeight: 14 }
+                        }
+                    },
+                    upperLabel: {
+                        show: true,
+                        height: 28,
+                        fontSize: 13,
+                        fontWeight: 'bold',
+                        color: '#fff',
+                        formatter: '{b}'
+                    },
+                    levels: [
+                        {
+                            itemStyle: { borderColor: '#e5e7eb', borderWidth: 4, gapWidth: 4 },
+                            upperLabel: { show: true, height: 30 }
+                        },
+                        {
+                            colorSaturation: [0.45, 0.85],
+                            itemStyle: { borderColor: 'rgba(255,255,255,0.25)', borderWidth: 1, gapWidth: 1 }
+                        }
+                    ],
+                    data: costItems
+                }]
+            }, true);
+        }
+
+        /* ── Fullscreen treemap ───────────────────── */
+        function openCostsFullscreen() {
+            if (!lastCostItems || lastCostItems.length === 0) return;
+            const overlay = document.getElementById('costs-treemap-fullscreen');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            document.getElementById('costs-fs-total').textContent = fmtShort(lastTotalCost);
+
+            if (!costsFsChart) {
+                costsFsChart = echarts.init(document.getElementById('costs-treemap-fs-chart'));
+                window.addEventListener('resize', () => costsFsChart && costsFsChart.resize());
+            }
+
+            costsFsChart.setOption({
+                tooltip: {
+                    formatter: info => {
+                        const path = info.treePathInfo.map(n => n.name).filter(Boolean).join(' › ');
+                        return '<b>' + path + '</b><br/>' + fmtLong(info.value);
+                    }
+                },
+                series: [{
+                    type: 'treemap',
+                    roam: false,
+                    nodeClick: 'zoomToNode',
+                    leafDepth: 2,
+                    width: '100%',
+                    height: '100%',
+                    breadcrumb: {
+                        show: true,
+                        bottom: 4,
+                        height: 26,
+                        itemStyle: {
+                            color: '#f3f4f6',
+                            borderColor: '#d1d5db',
+                            textStyle: { color: '#374151', fontWeight: '600', fontSize: 12 }
+                        }
+                    },
+                    label: {
+                        show: true,
+                        formatter: p => '{n|' + p.name + '}\n{v|' + fmtShort(p.value) + '}',
+                        rich: {
+                            n: { fontSize: 13, color: '#fff', lineHeight: 18 },
+                            v: { fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 16 }
+                        }
+                    },
+                    upperLabel: {
+                        show: true,
+                        height: 30,
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                        color: '#fff',
+                        formatter: '{b}'
+                    },
+                    levels: [
+                        {
+                            itemStyle: { borderColor: '#e5e7eb', borderWidth: 4, gapWidth: 4 },
+                            upperLabel: { show: true, height: 32 }
+                        },
+                        {
+                            colorSaturation: [0.45, 0.85],
+                            itemStyle: { borderColor: 'rgba(255,255,255,0.3)', borderWidth: 2, gapWidth: 2 }
+                        }
+                    ],
+                    data: lastCostItems
+                }]
+            }, true);
+
+            setTimeout(() => costsFsChart.resize(), 50);
+        }
+
+        function closeCostsFullscreen() {
+            document.getElementById('costs-treemap-fullscreen').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeCostsFullscreen();
+        });
+
         /* ── Initialise ───────────────────────────────── */
         async function init() {
             await loadPDFSources();
             await populateYearSelector();
             await loadData();
+            await loadCostsTreemap();
         }
 
         init();
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('year-select').addEventListener('change', loadData);
+            document.getElementById('year-select').addEventListener('change', () => {
+                loadData();
+                loadCostsTreemap();
+            });
             loadFromHash();
         });
     </script>
