@@ -307,6 +307,7 @@
                 <tr>
                     <th>År</th>
                     <th class="number">Insättningar</th>
+                    <th class="number">Årsavgifter</th>
                     <th class="number">Driftkostnader</th>
                     <th class="number">Investeringar</th>
                     <th class="number">Totalt kassaflöde</th>
@@ -569,6 +570,11 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 if (categoryId === 8) {
                     flowsData[year].capex = amount;
                     flowsData[year].capexSource = { file, page, x, y, width, height };
+                }
+                // Category 17: Årsavgifter (annual fees)
+                if (categoryId === 17) {
+                    flowsData[year].avgift = amount;
+                    flowsData[year].avgiftSource = { file, page, x, y, width, height };
                 }
             }
 
@@ -992,6 +998,19 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Investeringar</extra>'
             };
 
+            const avgift = flowsData.map(d => d.avgift || null);
+
+            const traceAvgift = {
+                x: years,
+                y: avgift,
+                name: 'Årsavgifter',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#26a69a', width: 3, dash: 'dash' },
+                marker: { size: 8, symbol: 'diamond', color: '#26a69a' },
+                hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Årsavgifter</extra>'
+            };
+
             const avg = arr => arr.filter(v => v !== null).reduce((a, b) => a + b, 0) / arr.filter(v => v !== null).length;
             const avgRevenue = avg(revenue);
             const avgOpex = avg(opex);
@@ -1071,7 +1090,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Totalt kassaflöde</extra>'
             };
 
-            Plotly.newPlot('flowsChart', [traceCashflow, traceRevenue, traceOpex, traceCapex, traceAvgRevenue, traceAvgOpex, traceAvgCapex], layout, config);
+            Plotly.newPlot('flowsChart', [traceCashflow, traceRevenue, traceAvgift, traceOpex, traceCapex, traceAvgRevenue, traceAvgOpex, traceAvgCapex], layout, config);
         }
 
         function renderFlowsTable(flowsData) {
@@ -1086,6 +1105,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
             const rows = flowsData.map(item => {
                 const rev = item.revenue != null ? formatCurrency(item.revenue) : 'N/A';
+                const avgiftVal = item.avgift != null ? formatCurrency(item.avgift) : 'N/A';
                 const opex = item.opex != null ? formatCurrency(Math.abs(item.opex)) : 'N/A';
                 const capex = item.capex != null ? formatCurrency(Math.abs(item.capex)) : 'N/A';
                 const cf = item.cashflow != null ? formatCurrency(item.cashflow) : 'N/A';
@@ -1097,6 +1117,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     <tr>
                         <td><strong>${item.year}</strong></td>
                         <td class="number">${clickable(item.revenueSource, rev, item.year)}</td>
+                        <td class="number">${clickable(item.avgiftSource, avgiftVal, item.year)}</td>
                         <td class="number">${clickable(item.opexSource, opex, item.year)}</td>
                         <td class="number">${clickable(item.capexSource, capex, item.year)}</td>
                         <td class="number" style="${cfColor}"><strong>${cf}</strong></td>

@@ -132,6 +132,10 @@ year,category_id,amount,file,page,x,y,width,height
 | 14 | Övriga fordringar | Cash flow statement | — |
 | 15 | Erhållen ränta | Income statement | — |
 | 16 | Planerat underhåll | Income statement | — |
+| 17 | Årsavgifter | Note (Nettoomsättning) | 0 |
+| 18 | Hyror | Note (Nettoomsättning) | 0 |
+| 19 | Övriga intäkter (nettoomsättning) | Note (Nettoomsättning) | 0 |
+| 20 | Avgifts- och hyresbortfall | Note (Nettoomsättning) | 0 |
 
 **How to extract events for a new year:**
 
