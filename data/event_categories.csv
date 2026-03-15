@@ -32,3 +32,20 @@ id,name,parent
 30,Övriga driftkostnader,1
 31,Underhåll,1
 32,Försäkringsskador,1
+33,Bevakningskostnader,5
+34,Hyror och arrenden,5
+35,Förbrukningsinventarier och varuinköp,5
+36,Administrationskostnader,5
+37,Extern revision,5
+38,Konsultkostnader,5
+39,Medlemsavgifter,5
+40,Juristarvode,5
+41,Föreningsverksamhet,5
+42,Övriga förvaltningskostnader,5
+43,Underhållsplan,5
+44,Styrelsearvoden,6
+45,Revisionsarvode,6
+46,Övriga arvoden,6
+47,Sociala avgifter,6
+48,Övriga personalkostnader,6
+49,Löner och övriga ersättningar,6
