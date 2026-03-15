@@ -464,7 +464,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         let pageRendering = false;
         let pageNumPending = null;
         let scale = 1.5;
-        let highlightBox = null;
+        let highlightBoxes = [];
         let pdfSources = {}; // Map filename to URL
 
         const canvas = document.getElementById('pdf-canvas');
@@ -479,7 +479,9 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             8: '#7e57c2', 9: '#78909c', 10: '#8d6e63', 11: '#26c6da',
             12: '#ffca28', 13: '#9ccc65', 14: '#ffa726', 15: '#29b6f6',
             16: '#d4e157', 17: '#26a69a', 18: '#7cb342', 19: '#5c6bc0',
-            20: '#f06292'
+            20: '#f06292',
+            50: '#8d6e63', 51: '#bcaaa4', 52: '#795548',
+            53: '#6d4c41', 54: '#a1887f', 55: '#4e342e'
         };
         let allEventCategories = [];
         let selectedFlowCats = new Set([0, 1, 8, 17]);
@@ -657,6 +659,32 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 }
                 if (categoryId === 17) {
                     flowsData[year].avgift = amount;
+                }
+            }
+
+            // Synthetic aggregation: cat 2 = cat 2 (residual) + cats 50-55
+            const cat2Subcats = [50, 51, 52, 53, 54, 55];
+            for (const yd of Object.values(flowsData)) {
+                let subcatTotal = 0;
+                let hasSubcats = false;
+                let firstSubcatSource = null;
+                for (const sid of cat2Subcats) {
+                    if (yd.cats[sid]) {
+                        subcatTotal += yd.cats[sid].amount;
+                        hasSubcats = true;
+                        if (!firstSubcatSource) firstSubcatSource = yd.cats[sid].source;
+                    }
+                }
+                if (hasSubcats) {
+                    const existing = yd.cats[2] ? yd.cats[2].amount : 0;
+                    const existingSource = yd.cats[2] ? yd.cats[2].source : firstSubcatSource;
+                    // Collect all component sources for multi-highlight
+                    const allSources = [];
+                    if (yd.cats[2] && yd.cats[2].source) allSources.push(yd.cats[2].source);
+                    for (const sid of cat2Subcats) {
+                        if (yd.cats[sid] && yd.cats[sid].source) allSources.push(yd.cats[sid].source);
+                    }
+                    yd.cats[2] = { amount: existing + subcatTotal, source: existingSource, sources: allSources };
                 }
             }
 
@@ -1140,11 +1168,16 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             if (showCashflowBar) headerHtml += '<th class="number">Totalt kassaflöde</th>';
             thead.innerHTML = headerHtml;
 
-            function clickable(source, text, year) {
-                if (source && source.file) {
-                    return `<span class="clickable-cell" onclick="showPDF('${source.file}', ${source.page}, ${source.x}, ${source.y}, ${source.width}, ${source.height}, '${year}')">${text}</span>`;
+            function clickable(catData, text, year) {
+                if (!catData) return text;
+                const source = catData.source;
+                if (!source || !source.file) return text;
+                // If this is a synthetic aggregate with multiple sources, use multi-highlight
+                if (catData.sources && catData.sources.length > 1) {
+                    const boxesJson = JSON.stringify(catData.sources.map(s => ({ x: s.x, y: s.y, width: s.width, height: s.height }))).replace(/"/g, '&quot;');
+                    return `<span class="clickable-cell" onclick="showPDFMulti('${source.file}', ${source.page}, '${boxesJson}', '${year}')">${text}</span>`;
                 }
-                return text;
+                return `<span class="clickable-cell" onclick="showPDF('${source.file}', ${source.page}, ${source.x}, ${source.y}, ${source.width}, ${source.height}, '${year}')">${text}</span>`;
             }
 
             const rows = flowsData.map(item => {
@@ -1153,7 +1186,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     const catData = item.cats && item.cats[catId];
                     if (catData) {
                         const displayVal = formatCurrency(Math.abs(catData.amount));
-                        cells += `<td class="number">${clickable(catData.source, displayVal, item.year)}</td>`;
+                        cells += `<td class="number">${clickable(catData, displayVal, item.year)}</td>`;
                     } else {
                         cells += '<td class="number">N/A</td>';
                     }
@@ -1195,6 +1228,15 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     const childActive = selectedFlowCats.has(child.id);
                     const childColor = CATEGORY_COLORS[child.id] || '#999';
                     html += `<span class="filter-chip sub-category ${childActive ? 'active' : ''}" data-cat-id="${child.id}" style="${childActive ? `background:${childColor}; border-color:${childColor};` : `border-color:${childColor};`}"><span class="color-dot" style="background:${childActive ? 'white' : childColor}"></span>↳ ${child.name}</span>`;
+
+                    // Grandchildren (e.g. cats 50-55 under cat 2)
+                    const grandChildren = children.filter(gc => gc.parent === child.id);
+                    for (const gc of grandChildren) {
+                        if (!catsWithData.has(gc.id)) continue;
+                        const gcActive = selectedFlowCats.has(gc.id);
+                        const gcColor = CATEGORY_COLORS[gc.id] || '#999';
+                        html += `<span class="filter-chip sub-category ${gcActive ? 'active' : ''}" data-cat-id="${gc.id}" style="margin-left:12px; ${gcActive ? `background:${gcColor}; border-color:${gcColor};` : `border-color:${gcColor};`}"><span class="color-dot" style="background:${gcActive ? 'white' : gcColor}"></span>↳ ${gc.name}</span>`;
+                    }
                 }
             }
 
@@ -1350,6 +1392,10 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
         // PDF Modal Functions
         function showPDF(file, page, x, y, width, height, year) {
+            showPDFMulti(file, page, JSON.stringify([{ x, y, width, height }]), year);
+        }
+
+        function showPDFMulti(file, page, boxesJson, year) {
             const modal = document.getElementById('pdfModal');
             const title = document.getElementById('modal-title');
             const urlLink = document.getElementById('pdf-url');
@@ -1365,14 +1411,9 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 document.getElementById('pdf-source-link').style.display = 'none';
             }
             
-            // Set highlight box
-            highlightBox = {
-                pageNum: page,
-                x: x,
-                y: y,
-                width: width,
-                height: height
-            };
+            // Set highlight boxes
+            const boxes = JSON.parse(boxesJson);
+            highlightBoxes = boxes.map(b => ({ pageNum: page, ...b }));
             
             // Show modal
             modal.style.display = 'block';
@@ -1384,7 +1425,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         function closeModal() {
             const modal = document.getElementById('pdfModal');
             modal.style.display = 'none';
-            highlightBox = null;
+            highlightBoxes = [];
             pdfDoc = null;
         }
 
@@ -1425,9 +1466,9 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
             await page.render(renderContext).promise;
             
-            // Draw highlight box if we have one for this page
-            if (highlightBox && highlightBox.pageNum === num) {
-                drawHighlight(highlightBox, viewport);
+            // Draw highlight boxes for this page
+            for (const box of highlightBoxes) {
+                if (box.pageNum === num) drawHighlight(box, viewport);
             }
             
             pageRendering = false;

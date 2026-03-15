@@ -148,6 +148,29 @@ year,category_id,amount,file,page,x,y,width,height
 | 30 | Övriga driftkostnader | Note (Driftkostnader) | 1 |
 | 31 | Underhåll | Note (Driftkostnader) | 1 |
 | 32 | Försäkringsskador | Note (Driftkostnader) | 1 |
+| 33 | Bevakningskostnader | Note (Övriga externa kostnader) | 5 |
+| 34 | Hyror och arrenden | Note (Övriga externa kostnader) | 5 |
+| 35 | Förbrukningsinventarier och varuinköp | Note (Övriga externa kostnader) | 5 |
+| 36 | Administrationskostnader | Note (Övriga externa kostnader) | 5 |
+| 37 | Extern revision | Note (Övriga externa kostnader) | 5 |
+| 38 | Konsultkostnader | Note (Övriga externa kostnader) | 5 |
+| 39 | Medlemsavgifter | Note (Övriga externa kostnader) | 5 |
+| 40 | Juristarvode | Note (Övriga externa kostnader) | 5 |
+| 41 | Föreningsverksamhet | Note (Övriga externa kostnader) | 5 |
+| 42 | Övriga förvaltningskostnader | Note (Övriga externa kostnader) | 5 |
+| 43 | Underhållsplan | Note (Övriga externa kostnader) | 5 |
+| 44 | Styrelsearvoden | Note (Personalkostnader) | 6 |
+| 45 | Revisionsarvode | Note (Personalkostnader) | 6 |
+| 46 | Övriga arvoden | Note (Personalkostnader) | 6 |
+| 47 | Sociala avgifter | Note (Personalkostnader) | 6 |
+| 48 | Övriga personalkostnader | Note (Personalkostnader) | 6 |
+| 49 | Löner och övriga ersättningar | Note (Personalkostnader) | 6 |
+| 50 | Fastighetsskötsel | Note (Driftkostnader) | 2 |
+| 51 | Städning | Note (Driftkostnader) | 2 |
+| 52 | Hisstillsyn | Note (Driftkostnader) | 2 |
+| 53 | Tillsyn och besiktning | Note (Driftkostnader) | 2 |
+| 54 | Trädgårdsskötsel | Note (Driftkostnader) | 2 |
+| 55 | Snöröjning | Note (Driftkostnader) | 2 |
 
 **How to extract events for a new year:**
 
@@ -184,8 +207,12 @@ year,category_id,amount,file,page,x,y,width,height
 
 4. **Get PDF coordinates** for each value. Coordinates in the CSV are in **canvas space** — the HTML viewer draws highlights directly at these values without further scaling.
 
-   - **Text-selectable PDFs** (2018+): use `pdfplumber` to extract words with bounding boxes. Coordinates are in PDF points; multiply by `1.5` for canvas.
-   - **Scanned PDFs** (2013–2017): use `pytesseract.image_to_data()` at DPI=300 to get OCR bounding boxes in pixels, then multiply by `72/300 × 1.5 = 0.36` to convert to canvas coordinates.
+   - **Text-selectable PDFs** (2018+): use `pdfplumber` to extract words with bounding boxes. Coordinates are in PDF points; **multiply x, y, width, height by `1.5`** for canvas.
+   - **Scanned PDFs** (2013–2017): use `pytesseract.image_to_data()` to get OCR bounding boxes in pixels, then convert to PDF points (multiply by `pdf_width / image_width`), then **multiply by `1.5`** for canvas.
+
+   **⚠️ Common pitfall — coordinate scale:** All coordinates in the CSV must be in **canvas pixel space** (PDF points × 1.5). The HTML viewer draws highlights directly at these values with `ctx.fillRect(x, y, w, h)` — no further scaling is applied at render time. If you store raw pdfplumber or raw OCR coordinates without the ×1.5 factor, highlights will appear in the wrong position.
+
+   **⚠️ Common pitfall — scanned pages returning no text:** Some PDF pages are scanned images with no extractable text layer. `pdfplumber.extract_words()` returns an empty list for these pages. If coordinate extraction returns `(0, 0)`, the page is likely scanned. Use OCR instead: try DPI=300 first, then DPI=400 if amounts aren't found (lower-quality scans need higher resolution). See `fix_zero_coordinates.py` for the OCR fallback approach.
 
    Standard highlight box: `width=100, height=20` (canvas pixels).
 
@@ -227,6 +254,27 @@ year,category_id,amount,file,page,x,y,width,height
    ```
 
    A difference of 0–1 SEK (rounding) is acceptable.
+
+**Extracting note subcategories:**
+
+Three income statement categories have note-level breakdowns extracted via dedicated scripts:
+
+- **Driftkostnader** (cat 1 → subcategories 2, 21–32): `python3 extract_driftkostnader.py`
+- **Övriga externa kostnader** (cat 5 → subcategories 33–43): `python3 extract_ovriga_externa.py`
+- **Personalkostnader** (cat 6 → subcategories 44–49): `python3 extract_personalkostnader.py`
+
+Each script:
+1. Contains hardcoded amounts compiled from the annual report CSVs for all years.
+2. Attempts to find PDF bounding-box coordinates via `pdfplumber` (text-selectable PDFs only; scanned PDFs get placeholder `0,0,100,20`).
+3. The scripts apply the ×1.5 canvas scaling to `pdfplumber` coordinates internally — output is already in canvas space.
+4. For scanned PDFs where `pdfplumber` returns no words, run `fix_zero_coordinates.py` to extract coordinates via OCR and replace the `0,0` placeholders. That script also outputs canvas-scaled coordinates.
+5. Prints CSV rows to stdout — pipe to `financial_events.csv`:
+   ```bash
+   python3 extract_ovriga_externa.py 2>/dev/null | grep -E '^[0-9]{4},' >> data/financial_events.csv
+   ```
+6. Verifies that subcategory sums match the parent category totals (1 SEK rounding tolerance).
+
+To add a new year, add the subcategory amounts to the `data` dict and the PDF source to `sources` in the relevant script, then re-run.
 
 **Extraction progress:**
 

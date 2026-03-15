@@ -1123,8 +1123,10 @@
             });
 
             const yearAmounts = {};
+            const yearSources = {};
             events.filter(e => e.year === year).forEach(e => {
                 yearAmounts[e.category_id] = parseInt(e.amount);
+                yearSources[e.category_id] = { file: e.file, page: parseInt(e.page), x: parseFloat(e.x), y: parseFloat(e.y), width: parseFloat(e.width), height: parseFloat(e.height) };
             });
 
             function buildCostNode(catId) {
@@ -1132,19 +1134,24 @@
                 if (!cat) return null;
                 const amount = yearAmounts[catId];
                 const kids = (childrenOf[catId] || [])
-                    .filter(cid => yearAmounts[cid] !== undefined && parseInt(yearAmounts[cid] || 0) < 0)
-                    .map(cid => ({
-                        name: catMap[cid].name,
-                        value: Math.abs(yearAmounts[cid])
-                    }))
-                    .filter(n => n.value > 0)
-                    .sort((a, b) => b.value - a.value);
+                    .map(cid => buildCostNode(cid))
+                    .filter(n => n !== null);
 
-                const color = COST_COLORS[catId] || '#94a3b8';
                 if (kids.length > 0) {
-                    return { name: cat.name, itemStyle: { color }, children: kids };
+                    // If this category also has a direct amount, add the residual as an extra child
+                    if (amount !== undefined && amount < 0) {
+                        const childrenTotal = kids.reduce((s, c) => s + nodeValue(c), 0);
+                        const residual = Math.abs(amount) - childrenTotal;
+                        if (residual > 0) {
+                            kids.push({ name: 'Övrigt ' + cat.name.toLowerCase(), value: residual, src: yearSources[catId] });
+                        }
+                    }
+                    kids.sort((a, b) => nodeValue(b) - nodeValue(a));
+                    const color = COST_COLORS[catId] || '#94a3b8';
+                    return { name: cat.name, itemStyle: { color }, children: kids, src: yearSources[catId] };
                 } else if (amount !== undefined && amount < 0) {
-                    return { name: cat.name, value: Math.abs(amount), itemStyle: { color } };
+                    const color = COST_COLORS[catId] || '#94a3b8';
+                    return { name: cat.name, value: Math.abs(amount), itemStyle: { color }, src: yearSources[catId] };
                 }
                 return null;
             }
@@ -1251,7 +1258,7 @@
                     type: 'treemap',
                     roam: false,
                     nodeClick: false,
-                    leafDepth: 2,
+                    leafDepth: 3,
                     width: '100%',
                     height: '100%',
                     breadcrumb: { show: false },
@@ -1279,6 +1286,10 @@
                         {
                             colorSaturation: [0.45, 0.85],
                             itemStyle: { borderColor: 'rgba(255,255,255,0.3)', borderWidth: 2, gapWidth: 2 }
+                        },
+                        {
+                            colorSaturation: [0.35, 0.75],
+                            itemStyle: { borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, gapWidth: 1 }
                         }
                     ],
                     data: lastCostItems
@@ -1293,22 +1304,42 @@
             document.body.style.overflow = '';
         }
 
+        function srcLink(src, name, displayText) {
+            if (src && src.file) {
+                return `<span class="clickable-amount" onclick="showPDF('${src.file}', ${src.page}, ${src.x}, ${src.y}, ${src.width}, ${src.height}, '${name.replace(/'/g, "\\'")}')">` + displayText + `</span>`;
+            }
+            return displayText;
+        }
+
+        function nodeValue(n) {
+            if (n.value) return n.value;
+            if (n.children) return n.children.reduce((s, c) => s + nodeValue(c), 0);
+            return 0;
+        }
+
         function renderCostsTable(costItems, totalCost) {
             const tbody = document.getElementById('costs-breakdown-body');
             tbody.innerHTML = '';
-            costItems.forEach(item => {
-                const parentVal = item.value || (item.children ? item.children.reduce((s, c) => s + c.value, 0) : 0);
-                const row = document.createElement('tr');
-                row.innerHTML = `<td style="font-weight:600;">${item.name}</td><td style="text-align:right;" class="amount-negative">${formatNumber(-parentVal)} SEK</td>`;
-                tbody.appendChild(row);
-                if (item.children) {
-                    item.children.forEach(child => {
-                        const sub = document.createElement('tr');
-                        sub.innerHTML = `<td style="padding-left:35px; color:#5e6b80;">${child.name}</td><td style="text-align:right;" class="amount-negative">${formatNumber(-child.value)} SEK</td>`;
-                        tbody.appendChild(sub);
-                    });
-                }
-            });
+
+            function addRows(items, depth) {
+                items.forEach(item => {
+                    const val = nodeValue(item);
+                    const amtHtml = srcLink(item.src, item.name, formatNumber(-val) + ' SEK');
+                    const row = document.createElement('tr');
+                    if (depth === 0) {
+                        row.innerHTML = `<td style="font-weight:600;">${item.name}</td><td style="text-align:right;" class="amount-negative">${amtHtml}</td>`;
+                    } else {
+                        const pl = 20 + depth * 15;
+                        row.innerHTML = `<td style="padding-left:${pl}px; color:#5e6b80;">${item.name}</td><td style="text-align:right;" class="amount-negative">${amtHtml}</td>`;
+                    }
+                    tbody.appendChild(row);
+                    if (item.children) {
+                        addRows(item.children, depth + 1);
+                    }
+                });
+            }
+
+            addRows(costItems, 0);
             document.getElementById('costs-breakdown-total').textContent = formatNumber(-totalCost) + ' SEK';
         }
 
