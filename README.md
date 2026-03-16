@@ -305,7 +305,8 @@ year,category_id,value,file,page,x,y,width,height
 ```
 
 - `category_id` — references `data/general_categories.csv`
-- `value` — text value (name or date range). Board members (cat 3) are semicolon-separated.
+- `value` — text value (name or date range). Multi-person fields (cats 3, 4, 5) are semicolon-separated.
+- `page` — 1-based page number (matches pdf.js `getPage()` convention)
 - Coordinates are in **canvas pixel space** (PDF points × 1.5), same convention as `financial_states.csv`.
 
 **Categories** (`data/general_categories.csv`):
@@ -316,11 +317,15 @@ year,category_id,value,file,page,x,y,width,height
 | 1 | Ordförande | Chairman |
 | 2 | Vice ordförande | Vice chairman (empty if not listed separately) |
 | 3 | Ledamöter | Board members (semicolon-separated names) |
+| 4 | Valberedning | Nomination committee members (semicolon-separated names) |
+| 5 | Revisorer | Auditors: elected revisor(s) + HSB-appointed firm (semicolon-separated) |
 
 **Source pages:**
 
 - Board composition is found in the förvaltningsberättelse (management report) section, typically labelled "Styrelsens sammansättning" or "Styrelsen har utgjorts av".
 - For reports with two compositions (before/after stämma), the post-stämma (end-of-year) board is used.
+- Valberedning and revisorer are listed in the same förvaltningsberättelse section, typically a few paragraphs after board composition.
+- Revisorer (cat 5) include both the elected revisor(s) and the HSB-appointed auditing firm (e.g. "Mattias Matti;BoRevision" or "Mattias Matti;Kungsbron Borevision").
 - **2019–2024** are text-selectable; coordinates extracted via `pdfplumber` × 1.5.
 - **2013–2018** are scanned PDFs; coordinates extracted via OCR (`pytesseract`) × canvas scale.
 
