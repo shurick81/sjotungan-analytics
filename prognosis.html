@@ -549,7 +549,7 @@ function renderRateOverrides(trendWindow, minYear) {
                 label.style.color = 'var(--vm-text)';
                 resetBtn.style.visibility = 'hidden';
             }
-            if (prognosisData) renderPrognosisChart();
+            if (prognosisData) renderPrognosisChart(true);
         });
     });
 
@@ -814,13 +814,13 @@ document.getElementById('abs-costs').addEventListener('change', function() {
     if (prognosisData) renderPrognosisChart();
 });
 
-function renderPrognosisChart() {
+function renderPrognosisChart(skipRateOverrides) {
     const { categories, eventsByCategory, maxYear } = prognosisData;
     const trendWindow = parseInt(document.getElementById('trend-slider').value);
     const forecastYears = parseInt(document.getElementById('forecast-years').value);
     const minYear = maxYear - trendWindow + 1;
 
-    renderRateOverrides(trendWindow, minYear);
+    if (!skipRateOverrides) renderRateOverrides(trendWindow, minYear);
 
     const seriesDefs = [
         { catId: 0, histColor: '#1f3f95', foreColor: '#dc2626' },
