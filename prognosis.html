@@ -900,7 +900,7 @@ function renderPrognosisChart(skipRateOverrides) {
         const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
         const sign = totalGrowth > 0 ? '+' : '';
         document.getElementById('prognosis-chart-summary').innerHTML =
-            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
     }
 
     // Cash balance forecast chart
@@ -1180,7 +1180,7 @@ function renderTotalCashflowChart(trendWindow, forecastYears, minYear) {
     const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
     const sign = totalGrowth > 0 ? '+' : '';
     document.getElementById('total-cashflow-chart-summary').innerHTML =
-        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
 }
 
 function renderSingleSeriesChart(divId, catId, histColor, foreColor, trendWindow, forecastYears, minYear) {
@@ -1265,10 +1265,11 @@ function renderSingleSeriesChart(divId, catId, histColor, foreColor, trendWindow
     const summaryEl = document.getElementById(divId + '-summary');
     if (summaryEl) {
         const endVal = foreY[foreY.length - 1];
-        const totalGrowth = lastVal !== 0 ? ((endVal - lastVal) / Math.abs(lastVal)) * 100 : 0;
+        const startAbs = flip ? Math.abs(lastVal) : lastVal;
+        const totalGrowth = startAbs !== 0 ? ((endVal - startAbs) / Math.abs(startAbs)) * 100 : 0;
         const sign = totalGrowth > 0 ? '+' : '';
         summaryEl.innerHTML =
-            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
     }
 }
 
@@ -1360,7 +1361,7 @@ function renderFinancingChart(trendWindow, forecastYears, minYear) {
         const totalGrowth = lastVal !== 0 ? ((endVal - lastVal) / Math.abs(lastVal)) * 100 : 0;
         const sign = totalGrowth > 0 ? '+' : '';
         summaryEl.innerHTML =
-            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
     }
 }
 
@@ -1448,7 +1449,7 @@ function renderLoanChart(trendWindow, forecastYears, minYear) {
     const totalGrowth = lastDebt !== 0 ? ((endVal - lastDebt) / Math.abs(lastDebt)) * 100 : 0;
     const sign = totalGrowth > 0 ? '+' : '';
     document.getElementById('loan-chart-summary').innerHTML =
-        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
 }
 
 const TOTAL_AREA_SQM = 51666;
@@ -1508,7 +1509,7 @@ function renderLoanPerSqmChart(trendWindow, forecastYears, minYear) {
     const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
     const sign = totalGrowth > 0 ? '+' : '';
     document.getElementById('loan-sqm-chart-summary').innerHTML =
-        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(endVal)} kr/m² &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(endVal)} kr/m² &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
 }
 
 // Compute projected debt array for reuse (returns array of {year, debt})
@@ -1613,7 +1614,7 @@ function renderInterestChart(trendWindow, forecastYears, minYear) {
     const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
     const sign = totalGrowth > 0 ? '+' : '';
     document.getElementById('interest-chart-summary').innerHTML =
-        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
 }
 
 function renderInvestmentChart(trendWindow, forecastYears, minYear) {
@@ -1710,7 +1711,7 @@ function renderInvestmentChart(trendWindow, forecastYears, minYear) {
     const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
     const sign = totalGrowth > 0 ? '+' : '';
     document.getElementById('investment-chart-summary').innerHTML =
-        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Prognostiserad förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
