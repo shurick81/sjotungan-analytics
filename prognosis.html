@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Myggan – Prognos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <style>
+        body { font-size: 1rem; }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        .chart-container {
+            margin-bottom: 40px;
+            padding: 20px 24px;
+            background: #eff6ff;
+            border-left: 4px solid #93c5fd;
+            border-radius: 8px;
+        }
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--vm-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .cash-banner {
+            background: linear-gradient(135deg, #1f3f95 0%, #3b62c7 100%);
+            color: white;
+            padding: 24px 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .cash-banner h2 { color: #c0d4ff; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .cash-banner .amount { font-size: 2.5rem; font-weight: 800; }
+        .cash-banner .year-label { color: #a0bbee; font-size: 14px; }
+
+        .event-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .event-table thead { background: #eef3fb; }
+        .event-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #33486f;
+            border-bottom: 2px solid var(--vm-border);
+        }
+        .event-table th.number { text-align: right; }
+        .event-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #dde6f4;
+            color: var(--vm-text);
+        }
+        .event-table td.number {
+            text-align: right;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+        }
+        .event-table tbody tr:hover { background: #eef3fb; }
+        .event-table tbody tr:last-child td { border-bottom: none; }
+
+        .trend-up { color: #16a34a; }
+        .trend-down { color: #dc2626; }
+        .trend-flat { color: #6b7280; }
+
+        .clickable-cell {
+            cursor: pointer;
+            color: var(--vm-blue);
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .clickable-cell:hover {
+            color: #2c54bf;
+            text-decoration: underline;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--vm-border);
+        }
+        .modal-header h2 { font-size: 18px; font-weight: 600; color: var(--vm-blue); }
+        .modal-header .close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            background: none;
+            border: none;
+        }
+        .modal-header .close:hover { color: #333; }
+        .pdf-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .pdf-controls button {
+            padding: 6px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #f9fafb;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .pdf-controls button:hover { background: #e5e7eb; }
+        .pdf-controls button:disabled { opacity: 0.4; cursor: default; }
+        #pdf-canvas { display: block; margin: 0 auto; max-width: 100%; }
+
+        #trendModal .modal-content { max-width: 700px; }
+        #trendChartDiv { width: 100%; height: 350px; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+<button onclick="showSection('start')" class="hover:text-yellow-400 font-semibold">Start</button>
+<button onclick="showSection('vision')" class="hover:text-yellow-400 font-semibold">Vision</button>
+<button onclick="showSection('motioner')" class="hover:text-yellow-400 font-semibold">Motioner</button>
+<button onclick="showSection('forum')" class="hover:text-yellow-400 font-semibold">Forum</button>
+</nav>
+</header>
+
+<main class="container mx-auto mt-8 p-4">
+
+<!-- Start -->
+<section id="start" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+    <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Prognos</h1>
+
+    <div id="loading" class="text-center text-gray-500 py-8">Laddar data...</div>
+
+    <div id="prognosis-content" style="display: none;">
+        <!-- Utgångsläge -->
+        <div class="chart-container">
+            <h2 class="chart-title">Utgångsläge</h2>
+            <p style="color: var(--vm-text); font-size: 15px; line-height: 1.5; margin-bottom: 20px;">Senaste kända värden från årsredovisningen samt historisk trend.</p>
+
+            <!-- Cash & loan banners -->
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                <div class="cash-banner" id="cash-banner" style="flex:1; min-width:260px;">
+                    <h2>Kassa och bank vid årets slut</h2>
+                    <div class="amount" id="cash-amount">–</div>
+                    <div class="year-label" id="cash-year-label"></div>
+                </div>
+                <div class="cash-banner" id="loan-banner" style="flex:1; min-width:260px; background:linear-gradient(135deg, #7c2d12 0%, #b45309 100%);">
+                    <h2 style="color:#fed7aa;">Totala skulder till kreditinstitut</h2>
+                    <div class="amount" id="loan-amount">–</div>
+                    <div class="year-label" id="loan-year-label" style="color:#fdba74;"></div>
+                </div>
+            </div>
+
+            <!-- Events table -->
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Kassaflödesposter</h3>
+            <p style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px;">Varje post visar belopp för senaste året samt årlig tillväxttakt beräknad med <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">OLS-linjärregression</a> på absolutbelopp. +10 % = ökar 10 % per år, −5 % = minskar 5 % per år, 0 % = oförändrat. Minst 3 datapunkter krävs.</p>
+
+            <!-- Trend window slider -->
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                <label for="trend-slider" style="font-weight:600; color:var(--vm-blue); font-size:14px;">Trendperiod:</label>
+                <input type="range" id="trend-slider" min="0" max="12" value="8" style="flex:1; min-width:120px; max-width:300px; accent-color:var(--vm-blue);">
+                <span id="trend-slider-label" style="font-weight:600; color:var(--vm-text); font-size:14px; min-width:50px;">8 år</span>
+            </div>
+            <table class="event-table">
+                <thead>
+                    <tr>
+                        <th>Kategori</th>
+                        <th class="number">Belopp (kr)</th>
+                        <th class="number">Tillväxttakt / år</th>
+                    </tr>
+                </thead>
+                <tbody id="events-tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- Stambyte -->
+        <div class="chart-container" style="background:#fef3c7; border-left-color:#f59e0b;">
+            <h2 class="chart-title" style="color:#92400e; border-bottom-color:#fbbf24;">Stambyte</h2>
+            <p style="color:#78350f; font-size: 15px; line-height: 1.5; margin-bottom: 20px;">Planerat stambyte. Investeringen fördelas jämnt över vald period och ersätter den trendbaserade investeringsprognosen under dessa år.</p>
+
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:15px; color:#78350f; font-weight:600; margin-bottom:16px;">
+                <input type="checkbox" id="stambyte-enabled" checked style="accent-color:#b45309; width:18px; height:18px;">
+                <span>Inkludera stambyte i prognosen</span>
+            </label>
+
+            <div id="stambyte-controls">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                    <label for="stambyte-cost" style="font-weight:600; color:#92400e; font-size:14px;">Totalkostnad:</label>
+                    <input type="number" id="stambyte-cost" value="290000000" min="0" step="1000000" style="width:160px; padding:4px 8px; border:2px solid #d97706; border-radius:6px; font-size:14px; font-weight:600; color:#78350f; background:#fffbeb; text-align:right;">
+                    <span id="stambyte-cost-label" style="font-weight:600; color:#78350f; font-size:14px;">290 Mkr</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                    <label for="stambyte-years" style="font-weight:600; color:#92400e; font-size:14px;">Fördela över:</label>
+                    <input type="range" id="stambyte-years" min="1" max="15" value="5" style="flex:1; min-width:120px; max-width:300px; accent-color:#b45309;">
+                    <span id="stambyte-years-label" style="font-weight:600; color:#78350f; font-size:14px; min-width:50px;">5 år</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                    <label for="stambyte-bank-pct" style="font-weight:600; color:#92400e; font-size:14px;">Bankfinansiering:</label>
+                    <input type="range" id="stambyte-bank-pct" min="0" max="100" value="80" step="5" style="flex:1; min-width:120px; max-width:300px; accent-color:#b45309;">
+                    <span id="stambyte-bank-pct-label" style="font-weight:600; color:#78350f; font-size:14px; min-width:50px;">80&thinsp;%</span>
+                </div>
+                <div id="stambyte-info" style="font-size:14px; color:#78350f;"></div>
+            </div>
+        </div>
+
+        <!-- Prognos -->
+        <div class="chart-container">
+            <h2 class="chart-title">Prognos</h2>
+            <p style="color: var(--vm-text); font-size: 15px; line-height: 1.5; margin-bottom: 20px;">Framskrivning baserad på beräknad tillväxttakt från Utgångsläge. Streckad linje visar prognos.</p>
+
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                <label for="forecast-years" style="font-weight:600; color:var(--vm-blue); font-size:14px;">Prognoshorisont:</label>
+                <input type="range" id="forecast-years" min="1" max="20" value="10" style="flex:1; min-width:120px; max-width:300px; accent-color:var(--vm-blue);">
+                <span id="forecast-years-label" style="font-weight:600; color:var(--vm-text); font-size:14px; min-width:50px;">10 år</span>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:24px; margin-bottom:16px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <label for="bank-rate" style="font-weight:600; color:var(--vm-blue); font-size:14px;">Bankränta:</label>
+                    <input type="range" id="bank-rate" value="1.75" min="0" max="10" step="0.25" style="flex:1; min-width:100px; max-width:200px; accent-color:var(--vm-blue);">
+                    <span id="bank-rate-label" style="font-weight:600; color:var(--vm-text); font-size:14px; min-width:55px;">1,75&thinsp;%</span>
+                </div>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:14px; color:var(--vm-text);">
+                    <input type="checkbox" id="abs-costs" checked style="accent-color:var(--vm-blue); width:16px; height:16px;">
+                    <span>Visa kostnader som positiva belopp</span>
+                </label>
+            </div>
+
+            <div style="margin-bottom:16px; padding:12px 16px; background:#f0f4fa; border-radius:8px; border:1px solid #dde6f4;">
+                <div style="font-size:13px; font-weight:600; color:#33486f; text-transform:uppercase; margin-bottom:8px;">Tillväxttakt (årlig)</div>
+                <div id="rate-overrides" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Likvida medel prognos</h3>
+            <p style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;">Projicerat kassabehållning: utgår från faktisk kassa vid årets slut och ackumulerar det prognostiserade kassaflödet för varje år.</p>
+            <div id="cash-balance-chart" style="width:100%; height:400px;"></div>
+            <div id="cash-balance-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Totalt kassaflöde</h3>
+            <p style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;">Summan av alla kassaflödesposter. Visar hur föreningens totala kassaflöde förväntas utvecklas baserat på prognoserna för varje enskild kategori.</p>
+            <div id="total-cashflow-chart" style="width:100%; height:400px;"></div>
+            <div id="total-cashflow-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Nettoomsättning</h3>
+            <p style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;">Nettoomsättning utgörs till största delen av årsavgifter från medlemmarna samt hyresintäkter.</p>
+            <div id="prognosis-chart" style="width:100%; height:400px;"></div>
+            <div id="prognosis-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Driftkostnader</h3>
+            <div id="chart-cat-1" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-1-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Investeringar</h3>
+            <p id="investment-stambyte-note" style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;"></p>
+            <div id="investment-chart" style="width:100%; height:400px;"></div>
+            <div id="investment-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Kassaflöde från finansieringsverksamheten</h3>
+            <p id="financing-stambyte-note" style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;"></p>
+            <div id="financing-chart" style="width:100%; height:400px;"></div>
+            <div id="financing-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Skulder till kreditinstitut – prognos</h3>
+            <p id="loan-stambyte-note" style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;"></p>
+            <div id="loan-chart" style="width:100%; height:400px;"></div>
+            <div id="loan-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Skuld per kvadratmeter – prognos</h3>
+            <p style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;">Total skuld till kreditinstitut dividerat med föreningens totala yta (51 666 m²).</p>
+            <div id="loan-sqm-chart" style="width:100%; height:400px;"></div>
+            <div id="loan-sqm-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Räntekostnader – prognos</h3>
+            <p id="interest-stambyte-note" style="color: var(--vm-muted); font-size: 13px; line-height: 1.5; margin-bottom: 12px;"></p>
+            <div id="interest-chart" style="width:100%; height:400px;"></div>
+            <div id="interest-chart-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Leverantörsskulder</h3>
+            <div id="chart-cat-11" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-11-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Övriga externa kostnader</h3>
+            <div id="chart-cat-5" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-5-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Övriga kortfristiga skulder</h3>
+            <div id="chart-cat-12" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-12-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Personalkostnader</h3>
+            <div id="chart-cat-6" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-6-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Övriga fordringar</h3>
+            <div id="chart-cat-14" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-14-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Kundfordringar</h3>
+            <div id="chart-cat-13" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-13-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+
+            <h3 style="font-size: 17px; font-weight: 600; color: var(--vm-blue); margin: 24px 0 8px;">Övriga intäkter</h3>
+            <div id="chart-cat-4" style="width:100%; height:400px;"></div>
+            <div id="chart-cat-4-summary" style="margin-top:8px; font-size:14px; color:var(--vm-text);"></div>
+        </div>
+    </div>
+</section>
+
+<section id="vision" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Prognos</h1>
+  <p class="text-gray-700">Samma innehåll visas under Start.</p>
+</section>
+
+<section id="motioner" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Prognos</h1>
+  <p class="text-gray-700">Samma innehåll visas under Start.</p>
+</section>
+
+<section id="forum" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+  <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Prognos</h1>
+  <p class="text-gray-700">Samma innehåll visas under Start.</p>
+</section>
+
+</main>
+
+<footer class="text-center text-gray-500 text-sm py-4 mt-8">
+&copy; 2026 Vision Myggan – En medlemsrörelse i BRF Sjötungan
+</footer>
+
+<!-- PDF Modal -->
+<div id="pdfModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Källdokument</h2>
+            <button class="close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="pdf-viewer">
+            <div class="pdf-controls">
+                <button id="prev-page" onclick="changePage(-1)">← Föregående</button>
+                <span>Sida <span id="page-num">1</span> av <span id="page-count">-</span></span>
+                <button id="next-page" onclick="changePage(1)">Nästa →</button>
+            </div>
+            <canvas id="pdf-canvas"></canvas>
+            <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
+                <a href="#" target="_blank" id="pdf-url" style="color: var(--vm-blue); text-decoration: none; font-size: 12px; word-wrap: break-word;"></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trend Chart Modal -->
+<div id="trendModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="trend-modal-title">Tillväxttakt</h2>
+            <button class="close" onclick="closeTrendModal()">&times;</button>
+        </div>
+        <div id="trendChartDiv"></div>
+    </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let pdfDoc = null;
+let pageNum = 1;
+let pageRendering = false;
+let pageNumPending = null;
+let scale = 1.5;
+let highlightBoxes = [];
+let pdfSources = {};
+
+const canvas = document.getElementById('pdf-canvas');
+const ctx = canvas.getContext('2d');
+
+function showSection(id) {
+  document.querySelectorAll('main section').forEach(sec => sec.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  history.replaceState(null, null, '#' + id);
+}
+
+function loadFromHash() {
+  const hash = window.location.hash.substring(1);
+  if (hash && document.getElementById(hash)) {
+    showSection(hash);
+  } else {
+    showSection('start');
+  }
+}
+
+function formatKr(amount) {
+    const abs = Math.abs(amount);
+    const formatted = abs.toLocaleString('sv-SE');
+    return (amount < 0 ? '−' : '') + formatted;
+}
+
+// Linear regression: returns {slope, intercept}
+function linearRegression(points) {
+    const n = points.length;
+    if (n < 2) return null;
+    const sumX = points.reduce((s, p) => s + p.x, 0);
+    const sumY = points.reduce((s, p) => s + p.y, 0);
+    const sumXY = points.reduce((s, p) => s + p.x * p.y, 0);
+    const sumX2 = points.reduce((s, p) => s + p.x * p.x, 0);
+    const denom = n * sumX2 - sumX * sumX;
+    if (denom === 0) return null;
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumY - slope * sumX) / n;
+    return { slope, intercept };
+}
+
+// Linear regression: returns slope only (backward compat)
+function linearTrend(points) {
+    const reg = linearRegression(points);
+    return reg ? reg.slope : null;
+}
+
+// Express trend as annual growth factor on absolute values (100% = unchanged)
+function growthFactor(points) {
+    if (points.length < 3) return null;
+    // Work on absolute values
+    const absPoints = points.map(p => ({ x: p.x, y: Math.abs(p.y) }));
+    const slope = linearTrend(absPoints);
+    if (slope === null) return null;
+    const meanAbs = absPoints.reduce((s, p) => s + p.y, 0) / absPoints.length;
+    if (meanAbs === 0) return null;
+    return (1 + slope / meanAbs) * 100;
+}
+
+// Shared state after data load
+let prognosisData = null;
+
+// Rate override map: catId -> override rate (as decimal, e.g. 0.03 for 3%)
+// null = use computed trend
+const rateOverrides = {};
+
+// Compute auto rate for a category
+function computeAutoRate(catId, trendWindow, minYear) {
+    const { eventsByCategory, maxYear } = prognosisData;
+    const yearData = eventsByCategory[catId];
+    if (!yearData || trendWindow === 0) return 0;
+    const pts = [];
+    for (let y = minYear; y <= maxYear; y++) {
+        if (yearData[y] !== undefined) pts.push({ x: y, y: yearData[y] });
+    }
+    const f = pts.length >= 3 ? growthFactor(pts) : null;
+    return f !== null ? (f - 100) / 100 : 0;
+}
+
+// Get effective rate: override if set, else auto
+function getCategoryRate(catId, trendWindow, minYear) {
+    if (rateOverrides[catId] !== undefined && rateOverrides[catId] !== null) {
+        return rateOverrides[catId];
+    }
+    return computeAutoRate(catId, trendWindow, minYear);
+}
+
+// Categories with rate override controls
+const rateOverrideCategories = [0, 3, 8, 1, 11, 5, 12, 6];
+
+function renderRateOverrides(trendWindow, minYear) {
+    const { categories } = prognosisData;
+    const container = document.getElementById('rate-overrides');
+    container.innerHTML = '';
+    for (const catId of rateOverrideCategories) {
+        if (!categories[catId]) continue;
+        const autoRate = computeAutoRate(catId, trendWindow, minYear);
+        const hasOverride = rateOverrides[catId] !== undefined && rateOverrides[catId] !== null;
+        const currentRate = hasOverride ? rateOverrides[catId] * 100 : autoRate * 100;
+        const displayRate = currentRate.toFixed(1).replace('.', ',');
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'display:flex; align-items:center; gap:8px;';
+        wrapper.innerHTML = `
+            <label style="font-size:13px; color:var(--vm-text); white-space:nowrap; min-width:180px; flex-shrink:0;">${categories[catId]}:</label>
+            <input type="range" data-cat-id="${catId}" data-auto-rate="${autoRate}" value="${currentRate.toFixed(1)}" min="-20" max="20" step="0.5"
+                style="flex:1; min-width:100px; accent-color:${hasOverride ? '#f59e0b' : 'var(--vm-blue)'};">
+            <span data-label-for="${catId}" style="font-size:13px; font-weight:600; color:${hasOverride ? '#92400e' : 'var(--vm-text)'}; min-width:55px; flex-shrink:0; text-align:right; white-space:nowrap;">${displayRate}&thinsp;%</span>
+            <button data-reset-for="${catId}" title="Återställ till beräknad trend" style="font-size:11px; padding:2px 7px; border:1px solid var(--vm-border); border-radius:4px; background:${hasOverride ? '#fef3c7' : '#f8f8f8'}; cursor:pointer; color:var(--vm-muted); flex-shrink:0; visibility:${hasOverride ? 'visible' : 'hidden'};">↺</button>`;
+        container.appendChild(wrapper);
+    }
+
+    container.querySelectorAll('input[data-cat-id]').forEach(input => {
+        input.addEventListener('input', function() {
+            const catId = parseInt(this.dataset.catId);
+            const autoRate = parseFloat(this.dataset.autoRate);
+            const val = parseFloat(this.value);
+            const label = container.querySelector(`[data-label-for="${catId}"]`);
+            const resetBtn = container.querySelector(`[data-reset-for="${catId}"]`);
+            const isOverride = Math.abs(val - autoRate * 100) >= 0.25;
+            label.innerHTML = val.toFixed(1).replace('.', ',') + '&thinsp;%';
+            if (isOverride) {
+                rateOverrides[catId] = val / 100;
+                this.style.accentColor = '#f59e0b';
+                label.style.color = '#92400e';
+                resetBtn.style.visibility = 'visible';
+                resetBtn.style.background = '#fef3c7';
+            } else {
+                delete rateOverrides[catId];
+                this.style.accentColor = 'var(--vm-blue)';
+                label.style.color = 'var(--vm-text)';
+                resetBtn.style.visibility = 'hidden';
+            }
+            if (prognosisData) renderPrognosisChart();
+        });
+    });
+
+    container.querySelectorAll('button[data-reset-for]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const catId = parseInt(this.dataset.resetFor);
+            delete rateOverrides[catId];
+            const slider = container.querySelector(`input[data-cat-id="${catId}"]`);
+            const autoRate = parseFloat(slider.dataset.autoRate);
+            slider.value = (autoRate * 100).toFixed(1);
+            slider.style.accentColor = 'var(--vm-blue)';
+            const label = container.querySelector(`[data-label-for="${catId}"]`);
+            label.innerHTML = (autoRate * 100).toFixed(1).replace('.', ',') + '&thinsp;%';
+            label.style.color = 'var(--vm-text)';
+            this.style.visibility = 'hidden';
+            if (prognosisData) renderPrognosisChart();
+        });
+    });
+}
+
+function renderTable(trendWindow) {
+    const { categories, topLevelIds, eventsByCategory, eventSources, maxYear } = prognosisData;
+    const tbody = document.getElementById('events-tbody');
+    tbody.innerHTML = '';
+    const minYear = maxYear - trendWindow + 1;
+
+    const hiddenCats = new Set([7]); // Räntekostnader excluded — will be calculated from interest rate
+    const sortedCats = [...topLevelIds].filter(id => !hiddenCats.has(id) && eventsByCategory[id] && eventsByCategory[id][maxYear] !== undefined)
+        .sort((a, b) => {
+            const amtA = Math.abs(eventsByCategory[a][maxYear] || 0);
+            const amtB = Math.abs(eventsByCategory[b][maxYear] || 0);
+            return amtB - amtA;
+        });
+
+    let totalAmount = 0;
+    for (const catId of sortedCats) {
+        const yearData = eventsByCategory[catId];
+        const lastAmount = yearData[maxYear] || 0;
+        totalAmount += lastAmount;
+
+        const points = [];
+        for (let y = minYear; y <= maxYear; y++) {
+            if (yearData[y] !== undefined) {
+                points.push({ x: y, y: yearData[y] });
+            }
+        }
+
+        let trendHtml;
+        if (trendWindow === 0) {
+            trendHtml = '<span class="trend-flat">0,0&thinsp;%</span>';
+        } else if (points.length < 3) {
+            trendHtml = '<span class="trend-flat">–</span>';
+        } else {
+            const factor = growthFactor(points);
+            if (factor === null) {
+                trendHtml = '<span class="trend-flat">–</span>';
+            } else {
+                const rate = factor - 100; // 0% = unchanged
+                const isCost = lastAmount < 0;
+                const isGrowing = rate > 0;
+                let cls;
+                if (Math.abs(rate) < 1) {
+                    cls = 'trend-flat';
+                } else if (isCost) {
+                    cls = isGrowing ? 'trend-down' : 'trend-up';
+                } else {
+                    cls = isGrowing ? 'trend-up' : 'trend-down';
+                }
+                const sign = rate > 0 ? '+' : '';
+                trendHtml = `<span class="clickable-cell ${cls}" onclick="showTrendChart(${catId})">${sign}${rate.toFixed(1)}&thinsp;%</span>`;
+            }
+        }
+
+
+        const tr = document.createElement('tr');
+        const src = eventSources[catId] && eventSources[catId][maxYear];
+        let amountHtml;
+        if (src) {
+            amountHtml = `<span class="clickable-cell" onclick="showPDF('${src.file}',${src.page},${src.x},${src.y},${src.width},${src.height},'${maxYear}')">${formatKr(lastAmount)}</span>`;
+        } else {
+            amountHtml = formatKr(lastAmount);
+        }
+        tr.innerHTML = `
+            <td>${categories[catId]}</td>
+            <td class="number">${amountHtml}</td>
+            <td class="number">${trendHtml}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+async function loadPrognosis() {
+    const cacheBust = '?v=' + Date.now();
+
+    const catResp = await fetch('data/event_categories.csv' + cacheBust);
+    const catText = await catResp.text();
+    const catLines = catText.trim().split('\n');
+    const categories = {};
+    const topLevelIds = new Set();
+    for (let i = 1; i < catLines.length; i++) {
+        const parts = catLines[i].split(',');
+        const id = parseInt(parts[0]);
+        const name = parts[1];
+        const parent = parts[2] ? parts[2].trim() : '';
+        categories[id] = name;
+        if (!parent) topLevelIds.add(id);
+    }
+
+    const evResp = await fetch('data/financial_events.csv' + cacheBust);
+    const evText = await evResp.text();
+    const evLines = evText.trim().split('\n');
+    const eventsByCategory = {};
+    const eventSources = {}; // { catId: { year: {file,page,x,y,width,height} } }
+    let maxYear = 0;
+    for (let i = 1; i < evLines.length; i++) {
+        const vals = evLines[i].split(',');
+        const year = parseInt(vals[0]);
+        const catId = parseInt(vals[1]);
+        const amount = parseInt(vals[2]);
+        const file = vals[3];
+        const page = parseInt(vals[4]);
+        const x = parseFloat(vals[5]);
+        const y = parseFloat(vals[6]);
+        const width = parseFloat(vals[7]);
+        const height = parseFloat(vals[8]);
+        if (!topLevelIds.has(catId)) continue;
+        if (!eventsByCategory[catId]) eventsByCategory[catId] = {};
+        if (!eventSources[catId]) eventSources[catId] = {};
+        eventsByCategory[catId][year] = amount;
+        eventSources[catId][year] = { file, page, x, y, width, height };
+        if (year > maxYear) maxYear = year;
+    }
+
+    const stResp = await fetch('data/financial_states.csv' + cacheBust);
+    const stText = await stResp.text();
+    const stLines = stText.trim().split('\n');
+    let cashAmount = null;
+    let cashSource = null;
+    let loanAmount = 0;
+    let loanSource = null;
+    const debtByYear = {}; // total debt per year (cat 0 + cat 1)
+    const cashByYear = {}; // cash balance per year (cat 2)
+    for (let i = 1; i < stLines.length; i++) {
+        const vals = stLines[i].split(',');
+        const year = parseInt(vals[0]);
+        const catId = parseInt(vals[1]);
+        const amount = parseInt(vals[2]);
+        const src = { file: vals[3], page: parseInt(vals[4]), x: parseFloat(vals[5]), y: parseFloat(vals[6]), width: parseFloat(vals[7]), height: parseFloat(vals[8]) };
+        if (catId === 2) {
+            cashByYear[year] = amount;
+            if (year === maxYear) {
+                cashAmount = amount;
+                cashSource = src;
+            }
+        }
+        // Total debt = Skulder till kreditinstitut (1) + Övriga skulder till kreditinstitut (0)
+        if (catId === 0 || catId === 1) {
+            debtByYear[year] = (debtByYear[year] || 0) + amount;
+            if (year === maxYear) {
+                loanAmount += amount;
+                if (!loanSource) loanSource = src;
+            }
+        }
+    }
+
+    // Cash banner — clickable
+    const cashText = formatKr(cashAmount) + ' kr';
+    const cashEl = document.getElementById('cash-amount');
+    if (cashSource) {
+        cashEl.innerHTML = `<span class="clickable-cell" style="color:white;text-decoration:underline dotted rgba(255,255,255,0.5)" onclick="showPDF('${cashSource.file}',${cashSource.page},${cashSource.x},${cashSource.y},${cashSource.width},${cashSource.height},'${maxYear}')">${cashText}</span>`;
+    } else {
+        cashEl.textContent = cashText;
+    }
+    document.getElementById('cash-year-label').textContent = 'Per 31 december ' + maxYear;
+
+    // Loan banner — clickable
+    const loanText = formatKr(loanAmount) + ' kr';
+    const loanEl = document.getElementById('loan-amount');
+    if (loanSource) {
+        loanEl.innerHTML = `<span class="clickable-cell" style="color:white;text-decoration:underline dotted rgba(255,255,255,0.5)" onclick="showPDF('${loanSource.file}',${loanSource.page},${loanSource.x},${loanSource.y},${loanSource.width},${loanSource.height},'${maxYear}')">${loanText}</span>`;
+    } else {
+        loanEl.textContent = loanText;
+    }
+    document.getElementById('loan-year-label').textContent = 'Per 31 december ' + maxYear;
+
+    prognosisData = { categories, topLevelIds, eventsByCategory, eventSources, maxYear, debtByYear, cashByYear };
+
+    // Set slider max based on available data span
+    const allYears = Object.values(eventsByCategory).flatMap(yd => Object.keys(yd).map(Number));
+    const minDataYear = Math.min(...allYears);
+    const maxSpan = maxYear - minDataYear + 1;
+    const slider = document.getElementById('trend-slider');
+    slider.max = Math.min(maxSpan, 12);
+
+    renderTable(parseInt(slider.value));
+
+    // Load PDF sources from YAML
+    try {
+        const srcResp = await fetch('sources.yaml' + cacheBust);
+        const yamlText = await srcResp.text();
+        const data = jsyaml.load(yamlText);
+        if (data.annual_reports) {
+            data.annual_reports.forEach(source => {
+                const filename = source.local_path.split('/').pop();
+                pdfSources[filename] = source.url;
+            });
+        }
+    } catch (e) { console.error('Error loading sources.yaml:', e); }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('prognosis-content').style.display = 'block';
+
+    renderPrognosisChart();
+}
+
+// Slider interaction
+document.getElementById('trend-slider').addEventListener('input', function() {
+    const val = parseInt(this.value);
+    document.getElementById('trend-slider-label').textContent = val === 0 ? 'Fast' : val + ' år';
+    if (prognosisData) {
+        renderTable(val);
+        renderPrognosisChart();
+    }
+});
+
+document.getElementById('forecast-years').addEventListener('input', function() {
+    const val = parseInt(this.value);
+    document.getElementById('forecast-years-label').textContent = val + ' år';
+    if (prognosisData) renderPrognosisChart();
+});
+
+document.getElementById('stambyte-cost').addEventListener('input', function() {
+    const val = parseInt(this.value) || 0;
+    const mkr = Math.round(val / 1000000);
+    document.getElementById('stambyte-cost-label').textContent = mkr + ' Mkr';
+    if (prognosisData) renderPrognosisChart();
+});
+
+document.getElementById('stambyte-years').addEventListener('input', function() {
+    const val = parseInt(this.value);
+    document.getElementById('stambyte-years-label').textContent = val + ' år';
+    if (prognosisData) renderPrognosisChart();
+});
+
+document.getElementById('stambyte-enabled').addEventListener('change', function() {
+    document.getElementById('stambyte-controls').style.opacity = this.checked ? '1' : '0.4';
+    document.getElementById('stambyte-controls').style.pointerEvents = this.checked ? 'auto' : 'none';
+    if (prognosisData) renderPrognosisChart();
+});
+
+document.getElementById('stambyte-bank-pct').addEventListener('input', function() {
+    document.getElementById('stambyte-bank-pct-label').innerHTML = this.value + '&thinsp;%';
+    if (prognosisData) renderPrognosisChart();
+});
+
+document.getElementById('bank-rate').addEventListener('input', function() {
+    document.getElementById('bank-rate-label').innerHTML = parseFloat(this.value).toFixed(2).replace('.', ',') + '&thinsp;%';
+    if (prognosisData) renderPrognosisChart();
+});
+
+document.getElementById('abs-costs').addEventListener('change', function() {
+    if (prognosisData) renderPrognosisChart();
+});
+
+function renderPrognosisChart() {
+    const { categories, eventsByCategory, maxYear } = prognosisData;
+    const trendWindow = parseInt(document.getElementById('trend-slider').value);
+    const forecastYears = parseInt(document.getElementById('forecast-years').value);
+    const minYear = maxYear - trendWindow + 1;
+
+    renderRateOverrides(trendWindow, minYear);
+
+    const seriesDefs = [
+        { catId: 0, histColor: '#1f3f95', foreColor: '#dc2626' },
+    ];
+
+    const traces = [];
+
+    for (const { catId, histColor, foreColor } of seriesDefs) {
+        const yearData = eventsByCategory[catId];
+        if (!yearData) continue;
+
+        // Collect historical points
+        const allYears = Object.keys(yearData).map(Number).sort((a, b) => a - b);
+        const histX = [];
+        const histY = [];
+        for (const y of allYears) {
+            histX.push(y);
+            histY.push(yearData[y]);
+        }
+
+        // Compute growth rate using the trend window (0 = fixed)
+        let rate = getCategoryRate(catId, trendWindow, minYear);
+        let factor = rate !== 0 ? (1 + rate) * 100 : null;
+        if (trendWindow === 0) { rate = 0; factor = null; }
+
+        // Historical trace
+        traces.push({
+            x: histX,
+            y: histY,
+            mode: 'lines+markers',
+            name: categories[catId] + ' (historisk)',
+            line: { color: histColor, width: 2.5 },
+            marker: { size: 7, color: histColor }
+        });
+
+        // Forecast trace
+        const lastVal = yearData[maxYear];
+        const foreX = [maxYear];
+        const foreY = [lastVal];
+        for (let i = 1; i <= forecastYears; i++) {
+            foreX.push(maxYear + i);
+            foreY.push(lastVal * Math.pow(1 + rate, i));
+        }
+        const rateLabel = trendWindow === 0 ? 'fast' : (factor !== null ? ((rate * 100 > 0 ? '+' : '') + (rate * 100).toFixed(1) + ' %/år') : 'ingen trend');
+        traces.push({
+            x: foreX,
+            y: foreY,
+            mode: 'lines+markers',
+            name: categories[catId] + ' (prognos ' + rateLabel + ')',
+            line: { color: foreColor, width: 2.5, dash: 'dash' },
+            marker: { size: 5, color: foreColor, symbol: 'diamond' }
+        });
+    }
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot('prognosis-chart', traces, layout, { responsive: true, displayModeBar: false });
+
+    // Summary for Nettoomsättning
+    const nettoData = eventsByCategory[0];
+    if (nettoData) {
+        const startVal = nettoData[maxYear];
+        const endVal = traces.length >= 2 ? traces[1].y[traces[1].y.length - 1] : startVal;
+        const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
+        const sign = totalGrowth > 0 ? '+' : '';
+        document.getElementById('prognosis-chart-summary').innerHTML =
+            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+    }
+
+    // Cash balance forecast chart
+    renderCashBalanceChart(trendWindow, forecastYears, minYear);
+
+    // Total cashflow chart (sum of all categories)
+    renderTotalCashflowChart(trendWindow, forecastYears, minYear);
+
+    // Financing chart (with stambyte override)
+    renderFinancingChart(trendWindow, forecastYears, minYear);
+
+    // Loan prognosis chart: historical debt + projected using financing cashflow
+    renderLoanChart(trendWindow, forecastYears, minYear);
+
+    // Loan per m² chart
+    renderLoanPerSqmChart(trendWindow, forecastYears, minYear);
+
+    // Interest cost chart based on projected debt and bank rate
+    renderInterestChart(trendWindow, forecastYears, minYear);
+
+    // Investeringar chart with stambyte override
+    renderInvestmentChart(trendWindow, forecastYears, minYear);
+
+    // Remaining top-level categories
+    const remainingCharts = [
+        { catId: 1,  histColor: '#b91c1c', foreColor: '#f87171' },
+        { catId: 11, histColor: '#0e7490', foreColor: '#67e8f9' },
+        { catId: 5,  histColor: '#9333ea', foreColor: '#c084fc' },
+        { catId: 12, histColor: '#0369a1', foreColor: '#38bdf8' },
+        { catId: 6,  histColor: '#c2410c', foreColor: '#fb923c' },
+        { catId: 14, histColor: '#4338ca', foreColor: '#818cf8' },
+        { catId: 13, histColor: '#15803d', foreColor: '#86efac' },
+        { catId: 4,  histColor: '#0d9488', foreColor: '#5eead4' },
+    ];
+    for (const { catId, histColor, foreColor } of remainingCharts) {
+        renderSingleSeriesChart('chart-cat-' + catId, catId, histColor, foreColor, trendWindow, forecastYears, minYear);
+    }
+}
+
+function renderCashBalanceChart(trendWindow, forecastYears, minYear) {
+    const { topLevelIds, eventsByCategory, maxYear, cashByYear } = prognosisData;
+
+    const stambyteEnabled = document.getElementById('stambyte-enabled').checked;
+    const stambyteYears = stambyteEnabled ? parseInt(document.getElementById('stambyte-years').value) : 0;
+    const stambyteTotal = parseInt(document.getElementById('stambyte-cost').value) || 0;
+    const stambytePerYear = stambyteYears > 0 ? stambyteTotal / stambyteYears : 0;
+    const stampctBank = parseInt(document.getElementById('stambyte-bank-pct').value) / 100;
+    const stambytePerYearBank = stambytePerYear * stampctBank;
+    const bankRate = parseFloat(document.getElementById('bank-rate').value) / 100 || 0;
+
+    // Historical cash balances
+    const histYears = Object.keys(cashByYear).map(Number).sort((a, b) => a - b);
+    const histX = [];
+    const histY = [];
+    for (const y of histYears) {
+        histX.push(y);
+        histY.push(cashByYear[y]);
+    }
+
+    // Compute forecast cashflow per year (same logic as renderTotalCashflowChart)
+    const catRates = {};
+    for (const catId of topLevelIds) {
+        if (catId === 7 || catId === 8 || catId === 3) continue;
+        const yd = eventsByCategory[catId];
+        if (!yd) continue;
+        catRates[catId] = { lastVal: yd[maxYear] || 0, rate: getCategoryRate(catId, trendWindow, minYear) };
+    }
+
+    const finData = eventsByCategory[3];
+    const finRate = getCategoryRate(3, trendWindow, minYear);
+    const lastFinCF = finData ? (finData[maxYear] || 0) : 0;
+
+    const invData = eventsByCategory[8];
+    const invRate = getCategoryRate(8, trendWindow, minYear);
+    const lastInv = invData ? (invData[maxYear] || 0) : 0;
+
+    const projDebt = getProjectedDebtArray(trendWindow, forecastYears, minYear);
+
+    // Build forecast: start with actual cash, accumulate projected cashflow
+    const startCash = cashByYear[maxYear] || 0;
+    const foreX = [maxYear];
+    const foreY = [startCash];
+    let balance = startCash;
+    for (let i = 1; i <= forecastYears; i++) {
+        let cf = 0;
+        for (const catId in catRates) {
+            const { lastVal, rate } = catRates[catId];
+            cf += lastVal * Math.pow(1 + rate, i);
+        }
+        cf += getProjectedFinancingCF(i, lastFinCF, finRate, stambytePerYearBank, stambyteYears);
+        if (i <= stambyteYears) {
+            cf += -stambytePerYear;
+        } else {
+            cf += lastInv * Math.pow(1 + invRate, i);
+        }
+        const debtEntry = projDebt.find(p => p.year === maxYear + i);
+        if (debtEntry) {
+            cf += -(Math.abs(debtEntry.debt) * bankRate);
+        }
+        balance += cf;
+        foreX.push(maxYear + i);
+        foreY.push(balance);
+    }
+
+    const traceHist = {
+        x: histX, y: histY,
+        mode: 'lines+markers',
+        name: 'Kassa (historisk)',
+        line: { color: '#0d9488', width: 2.5 },
+        marker: { size: 7, color: '#0d9488' }
+    };
+
+    const traceFore = {
+        x: foreX, y: foreY,
+        mode: 'lines+markers',
+        name: 'Kassa (prognos)',
+        line: { color: '#f59e0b', width: 2.5, dash: 'dash' },
+        marker: { size: 5, color: '#f59e0b', symbol: 'diamond' },
+        fill: 'tozeroy',
+        fillcolor: foreY[foreY.length - 1] >= 0 ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)'
+    };
+
+    // Add zero line shape
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [
+            {
+                type: 'line',
+                x0: maxYear, x1: maxYear,
+                y0: 0, y1: 1, yref: 'paper',
+                line: { color: '#9ca3af', width: 1, dash: 'dot' }
+            },
+            {
+                type: 'line',
+                x0: histX[0], x1: maxYear + forecastYears,
+                y0: 0, y1: 0,
+                line: { color: '#ef4444', width: 1.5, dash: 'dash' }
+            }
+        ]
+    };
+
+    Plotly.newPlot('cash-balance-chart', [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    const endVal = foreY[foreY.length - 1];
+    const totalChange = startCash !== 0 ? ((endVal - startCash) / Math.abs(startCash)) * 100 : 0;
+    const sign = totalChange > 0 ? '+' : '';
+    const summaryEl = document.getElementById('cash-balance-chart-summary');
+    if (summaryEl) {
+        summaryEl.innerHTML = `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Förändring från ${maxYear}:</strong> ${sign}${totalChange.toFixed(1)}&thinsp;%` +
+            (endVal < 0 ? ' &nbsp;|&nbsp; <span style="color:#ef4444; font-weight:600;">⚠ Kassan når negativt!</span>' : '');
+    }
+}
+
+function renderTotalCashflowChart(trendWindow, forecastYears, minYear) {
+    const { topLevelIds, eventsByCategory, maxYear } = prognosisData;
+
+    const stambyteEnabled = document.getElementById('stambyte-enabled').checked;
+    const stambyteYears = stambyteEnabled ? parseInt(document.getElementById('stambyte-years').value) : 0;
+    const stambyteTotal = parseInt(document.getElementById('stambyte-cost').value) || 0;
+    const stambytePerYear = stambyteYears > 0 ? stambyteTotal / stambyteYears : 0;
+    const stampctBank = parseInt(document.getElementById('stambyte-bank-pct').value) / 100;
+    const stambytePerYearBank = stambytePerYear * stampctBank;
+    const bankRate = parseFloat(document.getElementById('bank-rate').value) / 100 || 0;
+
+    // Collect all years present in any top-level category
+    const allYearsSet = new Set();
+    for (const catId of topLevelIds) {
+        const yd = eventsByCategory[catId];
+        if (yd) Object.keys(yd).forEach(y => allYearsSet.add(Number(y)));
+    }
+    const allYears = [...allYearsSet].sort((a, b) => a - b);
+
+    // Historical totals
+    const histX = [];
+    const histY = [];
+    for (const y of allYears) {
+        let sum = 0;
+        for (const catId of topLevelIds) {
+            const yd = eventsByCategory[catId];
+            if (yd && yd[y] !== undefined) sum += yd[y];
+        }
+        histX.push(y);
+        histY.push(sum);
+    }
+
+    // Compute per-category growth rates (excluding special cats 7, 8, 3)
+    const catRates = {};
+    for (const catId of topLevelIds) {
+        if (catId === 7 || catId === 8 || catId === 3) continue;
+        const yd = eventsByCategory[catId];
+        if (!yd) continue;
+        const rate = getCategoryRate(catId, trendWindow, minYear);
+        catRates[catId] = { lastVal: yd[maxYear] || 0, rate };
+    }
+
+    // Cat 3 (financing): rate + stambyte override
+    const finData = eventsByCategory[3];
+    const finRate = getCategoryRate(3, trendWindow, minYear);
+    const lastFinCF = finData ? (finData[maxYear] || 0) : 0;
+
+    // Cat 8 (investeringar): rate + stambyte override
+    const invData = eventsByCategory[8];
+    const invRate = getCategoryRate(8, trendWindow, minYear);
+    const lastInv = invData ? (invData[maxYear] || 0) : 0;
+
+    // Get projected debt for cat 7 (interest)
+    const projDebt = getProjectedDebtArray(trendWindow, forecastYears, minYear);
+
+    // Forecast totals
+    const foreX = [maxYear];
+    const foreY = [histY[histY.length - 1]];
+    for (let i = 1; i <= forecastYears; i++) {
+        let sum = 0;
+        // Standard categories
+        for (const catId in catRates) {
+            const { lastVal, rate } = catRates[catId];
+            sum += lastVal * Math.pow(1 + rate, i);
+        }
+        // Cat 3: financing with stambyte override (bank-financed portion only)
+        sum += getProjectedFinancingCF(i, lastFinCF, finRate, stambytePerYearBank, stambyteYears);
+        // Cat 8: investment with stambyte override
+        if (i <= stambyteYears) {
+            sum += -stambytePerYear; // investments are negative
+        } else {
+            sum += lastInv * Math.pow(1 + invRate, i);
+        }
+        // Cat 7: interest from projected debt
+        const debtEntry = projDebt.find(p => p.year === maxYear + i);
+        if (debtEntry) {
+            sum += -(Math.abs(debtEntry.debt) * bankRate); // interest is negative
+        }
+        foreX.push(maxYear + i);
+        foreY.push(sum);
+    }
+
+    const traceHist = {
+        x: histX, y: histY,
+        type: 'bar',
+        name: 'Totalt kassaflöde (historisk)',
+        marker: {
+            color: histY.map(v => v >= 0 ? 'rgba(76,175,80,0.6)' : 'rgba(244,67,54,0.6)'),
+            line: { color: histY.map(v => v >= 0 ? '#4caf50' : '#f44336'), width: 1.5 }
+        }
+    };
+
+    const traceFore = {
+        x: foreX, y: foreY,
+        mode: 'lines+markers',
+        name: 'Totalt kassaflöde (prognos)',
+        line: { color: '#1f3f95', width: 2.5, dash: 'dash' },
+        marker: { size: 6, color: '#1f3f95', symbol: 'diamond' }
+    };
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot('total-cashflow-chart', [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    const startVal = histY[histY.length - 1];
+    const endVal = foreY[foreY.length - 1];
+    const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
+    const sign = totalGrowth > 0 ? '+' : '';
+    document.getElementById('total-cashflow-chart-summary').innerHTML =
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+}
+
+function renderSingleSeriesChart(divId, catId, histColor, foreColor, trendWindow, forecastYears, minYear) {
+    const { categories, eventsByCategory, maxYear } = prognosisData;
+    const yearData = eventsByCategory[catId];
+    if (!yearData) return;
+
+    const allYears = Object.keys(yearData).map(Number).sort((a, b) => a - b);
+    const absCosts = document.getElementById('abs-costs').checked;
+    const isCost = yearData[maxYear] < 0;
+    const flip = absCosts && isCost;
+    const histX = [];
+    const histY = [];
+    for (const y of allYears) {
+        histX.push(y);
+        histY.push(flip ? Math.abs(yearData[y]) : yearData[y]);
+    }
+
+    let rate = 0;
+    let factor = null;
+    if (trendWindow > 0) {
+        const windowPoints = [];
+        for (let y = minYear; y <= maxYear; y++) {
+            if (yearData[y] !== undefined) {
+                windowPoints.push({ x: y, y: yearData[y] });
+            }
+        }
+        factor = windowPoints.length >= 3 ? growthFactor(windowPoints) : null;
+        rate = factor !== null ? (factor - 100) / 100 : 0;
+    }
+    // Apply override if set
+    if (rateOverrides[catId] !== undefined && rateOverrides[catId] !== null) {
+        rate = rateOverrides[catId];
+        factor = (1 + rate) * 100;
+    }
+
+    const traceHist = {
+        x: histX,
+        y: histY,
+        mode: 'lines+markers',
+        name: categories[catId] + ' (historisk)',
+        line: { color: histColor, width: 2.5 },
+        marker: { size: 7, color: histColor }
+    };
+
+    const lastVal = yearData[maxYear];
+    const foreX = [maxYear];
+    const foreY = [flip ? Math.abs(lastVal) : lastVal];
+    for (let i = 1; i <= forecastYears; i++) {
+        const raw = lastVal * Math.pow(1 + rate, i);
+        foreX.push(maxYear + i);
+        foreY.push(flip ? Math.abs(raw) : raw);
+    }
+    const rateLabel = trendWindow === 0 ? 'fast' : (factor !== null ? ((rate * 100 > 0 ? '+' : '') + (rate * 100).toFixed(1) + ' %/år') : 'ingen trend');
+    const traceFore = {
+        x: foreX,
+        y: foreY,
+        mode: 'lines+markers',
+        name: categories[catId] + ' (prognos ' + rateLabel + ')',
+        line: { color: foreColor, width: 2.5, dash: 'dash' },
+        marker: { size: 5, color: foreColor, symbol: 'diamond' }
+    };
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot(divId, [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    // Summary below chart
+    const summaryEl = document.getElementById(divId + '-summary');
+    if (summaryEl) {
+        const endVal = foreY[foreY.length - 1];
+        const totalGrowth = lastVal !== 0 ? ((endVal - lastVal) / Math.abs(lastVal)) * 100 : 0;
+        const sign = totalGrowth > 0 ? '+' : '';
+        summaryEl.innerHTML =
+            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+    }
+}
+
+// Compute projected financing cashflow for year (maxYear + i), with stambyte override
+function getProjectedFinancingCF(i, lastFinCF, finRate, stambytePerYear, stambyteYears) {
+    if (i >= 1 && i <= stambyteYears) {
+        return stambytePerYear; // positive: new loans to finance stambyte
+    }
+    return lastFinCF * Math.pow(1 + finRate, i);
+}
+
+function renderFinancingChart(trendWindow, forecastYears, minYear) {
+    const { categories, eventsByCategory, maxYear } = prognosisData;
+    const catId = 3;
+    const yearData = eventsByCategory[catId];
+    if (!yearData) return;
+
+    const stambyteEnabled = document.getElementById('stambyte-enabled').checked;
+    const stambyteYears = stambyteEnabled ? parseInt(document.getElementById('stambyte-years').value) : 0;
+    const stambyteTotal = parseInt(document.getElementById('stambyte-cost').value) || 0;
+    const stambytePerYear = stambyteYears > 0 ? stambyteTotal / stambyteYears : 0;
+    const stampctBank = parseInt(document.getElementById('stambyte-bank-pct').value) / 100;
+    const stambytePerYearBank = stambytePerYear * stampctBank;
+
+    if (stambyteEnabled) {
+        document.getElementById('financing-stambyte-note').innerHTML =
+            `Under stambyteperioden (${maxYear + 1}–${maxYear + stambyteYears}) ersätts det trendbaserade finansieringskassaflödet med nyupplåning motsvarande ${Math.round(stampctBank * 100)}&thinsp;% av stambytekostnaden (<strong>${formatKr(Math.round(stambytePerYearBank))} kr/år</strong>). Därefter återgår prognosen till den historiska trenden.`;
+    } else {
+        document.getElementById('financing-stambyte-note').innerHTML =
+            'Prognosen baseras på den historiska trenden för finansieringskassaflödet.';
+    }
+
+    const allYears = Object.keys(yearData).map(Number).sort((a, b) => a - b);
+    const histX = [];
+    const histY = [];
+    for (const y of allYears) {
+        histX.push(y);
+        histY.push(yearData[y]);
+    }
+
+    const rate = getCategoryRate(3, trendWindow, minYear);
+
+    const traceHist = {
+        x: histX,
+        y: histY,
+        mode: 'lines+markers',
+        name: categories[catId] + ' (historisk)',
+        line: { color: '#16a34a', width: 2.5 },
+        marker: { size: 7, color: '#16a34a' }
+    };
+
+    const lastVal = yearData[maxYear];
+    const foreX = [maxYear];
+    const foreY = [lastVal];
+    for (let i = 1; i <= forecastYears; i++) {
+        foreX.push(maxYear + i);
+        foreY.push(getProjectedFinancingCF(i, lastVal, rate, stambytePerYearBank, stambyteYears));
+    }
+
+    const traceFore = {
+        x: foreX,
+        y: foreY,
+        mode: 'lines+markers',
+        name: categories[catId] + (stambyteEnabled ? ' (prognos med stambyte)' : ' (prognos)'),
+        line: { color: '#f59e0b', width: 2.5, dash: 'dash' },
+        marker: { size: 5, color: '#f59e0b', symbol: 'diamond' }
+    };
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot('financing-chart', [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    const summaryEl = document.getElementById('financing-chart-summary');
+    if (summaryEl) {
+        const endVal = foreY[foreY.length - 1];
+        const totalGrowth = lastVal !== 0 ? ((endVal - lastVal) / Math.abs(lastVal)) * 100 : 0;
+        const sign = totalGrowth > 0 ? '+' : '';
+        summaryEl.innerHTML =
+            `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+    }
+}
+
+function renderLoanChart(trendWindow, forecastYears, minYear) {
+    const { eventsByCategory, maxYear, debtByYear } = prognosisData;
+
+    // Historical debt
+    const histYears = Object.keys(debtByYear).map(Number).sort((a, b) => a - b);
+    const histX = [];
+    const histY = [];
+    for (const y of histYears) {
+        histX.push(y);
+        histY.push(debtByYear[y]);
+    }
+
+    // Compute financing cashflow growth rate (or use override)
+    const finData = eventsByCategory[3];
+    const finRate = getCategoryRate(3, trendWindow, minYear);
+
+    const stambyteEnabled = document.getElementById('stambyte-enabled').checked;
+    const stambyteYears = stambyteEnabled ? parseInt(document.getElementById('stambyte-years').value) : 0;
+    const stambyteTotal = parseInt(document.getElementById('stambyte-cost').value) || 0;
+    const stambytePerYear = stambyteYears > 0 ? stambyteTotal / stambyteYears : 0;
+    const stampctBank = parseInt(document.getElementById('stambyte-bank-pct').value) / 100;
+    const stambytePerYearBank = stambytePerYear * stampctBank;
+
+    if (stambyteEnabled) {
+        document.getElementById('loan-stambyte-note').innerHTML =
+            `Skuldprognosen baseras på det projicerade finansieringskassaflödet. Under stambyteperioden (${maxYear + 1}–${maxYear + stambyteYears}) ökar skulden med bankfinansierad del av stambytet (${Math.round(stampctBank * 100)}&thinsp;% = <strong>${formatKr(Math.round(stambytePerYearBank))} kr/år</strong>), vilket ger en markant skuldökning dessa år.`;
+    } else {
+        document.getElementById('loan-stambyte-note').innerHTML =
+            'Skuldprognosen baseras på det projicerade finansieringskassaflödet och den historiska trenden.';
+    }
+
+    // Project loan: each year debt(y) = debt(y-1) + financing_cashflow(y)
+    const lastDebt = debtByYear[maxYear] || 0;
+    const lastFinCF = finData ? (finData[maxYear] || 0) : 0;
+    const foreX = [maxYear];
+    const foreY = [lastDebt];
+    let debt = lastDebt;
+    for (let i = 1; i <= forecastYears; i++) {
+        const cf = getProjectedFinancingCF(i, lastFinCF, finRate, stambytePerYearBank, stambyteYears);
+        debt = debt + cf;
+        foreX.push(maxYear + i);
+        foreY.push(debt);
+    }
+
+    const traceHist = {
+        x: histX,
+        y: histY,
+        mode: 'lines+markers',
+        name: 'Skulder (historisk)',
+        line: { color: '#7c2d12', width: 2.5 },
+        marker: { size: 7, color: '#7c2d12' }
+    };
+
+    const traceFore = {
+        x: foreX,
+        y: foreY,
+        mode: 'lines+markers',
+        name: 'Skulder (prognos)',
+        line: { color: '#b45309', width: 2.5, dash: 'dash' },
+        marker: { size: 5, color: '#b45309', symbol: 'diamond' }
+    };
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot('loan-chart', [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    // Summary
+    const endVal = foreY[foreY.length - 1];
+    const totalGrowth = lastDebt !== 0 ? ((endVal - lastDebt) / Math.abs(lastDebt)) * 100 : 0;
+    const sign = totalGrowth > 0 ? '+' : '';
+    document.getElementById('loan-chart-summary').innerHTML =
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+}
+
+const TOTAL_AREA_SQM = 51666;
+
+function renderLoanPerSqmChart(trendWindow, forecastYears, minYear) {
+    const { maxYear, debtByYear } = prognosisData;
+    const projDebt = getProjectedDebtArray(trendWindow, forecastYears, minYear);
+
+    // Historical
+    const histYears = Object.keys(debtByYear).map(Number).sort((a, b) => a - b);
+    const histX = [];
+    const histY = [];
+    for (const y of histYears) {
+        histX.push(y);
+        histY.push(Math.round(debtByYear[y] / TOTAL_AREA_SQM));
+    }
+
+    // Forecast
+    const foreX = projDebt.map(p => p.year);
+    const foreY = projDebt.map(p => Math.round(p.debt / TOTAL_AREA_SQM));
+
+    const traceHist = {
+        x: histX, y: histY,
+        mode: 'lines+markers',
+        name: 'Skuld per m² (historisk)',
+        line: { color: '#7c2d12', width: 2.5 },
+        marker: { size: 7, color: '#7c2d12' }
+    };
+
+    const traceFore = {
+        x: foreX, y: foreY,
+        mode: 'lines+markers',
+        name: 'Skuld per m² (prognos)',
+        line: { color: '#b45309', width: 2.5, dash: 'dash' },
+        marker: { size: 5, color: '#b45309', symbol: 'diamond' }
+    };
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'SEK / m²', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot('loan-sqm-chart', [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    const startVal = Math.round((debtByYear[maxYear] || 0) / TOTAL_AREA_SQM);
+    const endVal = foreY[foreY.length - 1];
+    const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
+    const sign = totalGrowth > 0 ? '+' : '';
+    document.getElementById('loan-sqm-chart-summary').innerHTML =
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(endVal)} kr/m² &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+}
+
+// Compute projected debt array for reuse (returns array of {year, debt})
+function getProjectedDebtArray(trendWindow, forecastYears, minYear) {
+    const { eventsByCategory, maxYear, debtByYear } = prognosisData;
+    const finData = eventsByCategory[3];
+    const finRate = getCategoryRate(3, trendWindow, minYear);
+    const stambyteEnabled = document.getElementById('stambyte-enabled').checked;
+    const stambyteYears = stambyteEnabled ? parseInt(document.getElementById('stambyte-years').value) : 0;
+    const stambyteTotal = parseInt(document.getElementById('stambyte-cost').value) || 0;
+    const stambytePerYear = stambyteYears > 0 ? stambyteTotal / stambyteYears : 0;
+    const stampctBank = parseInt(document.getElementById('stambyte-bank-pct').value) / 100;
+    const stambytePerYearBank = stambytePerYear * stampctBank;
+    const lastDebt = debtByYear[maxYear] || 0;
+    const lastFinCF = finData ? (finData[maxYear] || 0) : 0;
+    const result = [{ year: maxYear, debt: lastDebt }];
+    let debt = lastDebt;
+    for (let i = 1; i <= forecastYears; i++) {
+        const cf = getProjectedFinancingCF(i, lastFinCF, finRate, stambytePerYearBank, stambyteYears);
+        debt = debt + cf;
+        result.push({ year: maxYear + i, debt });
+    }
+    return result;
+}
+
+function renderInterestChart(trendWindow, forecastYears, minYear) {
+    const { eventsByCategory, maxYear, debtByYear } = prognosisData;
+    const bankRate = parseFloat(document.getElementById('bank-rate').value) / 100 || 0;
+
+    // Historical interest costs (category 7)
+    const intData = eventsByCategory[7];
+    const histX = [];
+    const histY = [];
+    if (intData) {
+        const allYears = Object.keys(intData).map(Number).sort((a, b) => a - b);
+        const absCosts = document.getElementById('abs-costs').checked;
+        for (const y of allYears) {
+            histX.push(y);
+            histY.push(absCosts ? Math.abs(intData[y]) : intData[y]);
+        }
+    }
+
+    // Projected interest = projected debt * bank rate
+    const stambyteEnabled = document.getElementById('stambyte-enabled').checked;
+    const stambyteYears = stambyteEnabled ? parseInt(document.getElementById('stambyte-years').value) : 0;
+    const bankRatePct = document.getElementById('bank-rate').value;
+    if (stambyteEnabled) {
+        document.getElementById('interest-stambyte-note').innerHTML =
+            `Beräknad årlig räntekostnad baserad på prognostiserad skuld och vald bankränta (${bankRatePct}&thinsp;%). Eftersom skulden ökar markant under stambyteperioden (${maxYear + 1}–${maxYear + stambyteYears}) stiger även räntekostnaderna under dessa år.`;
+    } else {
+        document.getElementById('interest-stambyte-note').innerHTML =
+            `Beräknad årlig räntekostnad baserad på prognostiserad skuld och vald bankränta (${bankRatePct}&thinsp;%).`;
+    }
+
+    const absCosts = document.getElementById('abs-costs').checked;
+    const projDebt = getProjectedDebtArray(trendWindow, forecastYears, minYear);
+    const foreX = [maxYear];
+    const foreY = [intData ? (absCosts ? Math.abs(intData[maxYear] || 0) : (intData[maxYear] || 0)) : 0];
+    for (let i = 1; i < projDebt.length; i++) {
+        foreX.push(projDebt[i].year);
+        const raw = Math.abs(projDebt[i].debt) * bankRate;
+        foreY.push(absCosts ? raw : -raw);
+    }
+
+    const traceHist = {
+        x: histX,
+        y: histY,
+        mode: 'lines+markers',
+        name: 'Räntekostnader (historisk)',
+        line: { color: '#dc2626', width: 2.5 },
+        marker: { size: 7, color: '#dc2626' }
+    };
+
+    const traceFore = {
+        x: foreX,
+        y: foreY,
+        mode: 'lines+markers',
+        name: 'Räntekostnader (prognos)',
+        line: { color: '#f87171', width: 2.5, dash: 'dash' },
+        marker: { size: 5, color: '#f87171', symbol: 'diamond' }
+    };
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot('interest-chart', [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    const endVal = foreY[foreY.length - 1];
+    const startVal = foreY[0];
+    const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
+    const sign = totalGrowth > 0 ? '+' : '';
+    document.getElementById('interest-chart-summary').innerHTML =
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+}
+
+function renderInvestmentChart(trendWindow, forecastYears, minYear) {
+    const { categories, eventsByCategory, maxYear } = prognosisData;
+    const catId = 8; // Investeringar
+    const yearData = eventsByCategory[catId];
+    if (!yearData) return;
+
+    const stambyteEnabled = document.getElementById('stambyte-enabled').checked;
+    const stambyteYears = stambyteEnabled ? parseInt(document.getElementById('stambyte-years').value) : 0;
+    const stambyteTotal = parseInt(document.getElementById('stambyte-cost').value) || 0;
+    const stambytePerYear = stambyteYears > 0 ? stambyteTotal / stambyteYears : 0;
+
+    // Update stambyte info
+    if (stambyteEnabled) {
+        const stampctBank = parseInt(document.getElementById('stambyte-bank-pct').value) / 100;
+        document.getElementById('stambyte-info').innerHTML =
+            `<strong>${formatKr(Math.round(stambytePerYear))} kr / år</strong> under ${stambyteYears} år (${maxYear + 1}–${maxYear + stambyteYears}) — varav <strong>${Math.round(stampctBank * 100)}&thinsp;%</strong> bankfinansierat`;
+        document.getElementById('investment-stambyte-note').innerHTML =
+            `Under stambyteperioden (${maxYear + 1}–${maxYear + stambyteYears}) ersätts den trendbaserade investeringsprognosen med den beräknade stambytekostnaden på <strong>${formatKr(Math.round(stambytePerYear))} kr/år</strong>. Därefter återgår prognosen till den historiska trenden.`;
+    } else {
+        document.getElementById('stambyte-info').innerHTML = '';
+        document.getElementById('investment-stambyte-note').innerHTML =
+            'Prognosen baseras på den historiska trenden för investeringar.';
+    }
+
+    // Historical
+    const allYears = Object.keys(yearData).map(Number).sort((a, b) => a - b);
+    const absCosts = document.getElementById('abs-costs').checked;
+    const histX = [];
+    const histY = [];
+    for (const y of allYears) {
+        histX.push(y);
+        histY.push(absCosts ? Math.abs(yearData[y]) : yearData[y]);
+    }
+
+    // Compute trend-based growth rate (or use override)
+    const rate = getCategoryRate(8, trendWindow, minYear);
+
+    // Forecast: stambyte overrides during its period, then reverts to trend
+    const lastVal = yearData[maxYear];
+    const foreX = [maxYear];
+    const foreY = [absCosts ? Math.abs(lastVal) : lastVal];
+    for (let i = 1; i <= forecastYears; i++) {
+        let val;
+        if (i <= stambyteYears) {
+            val = absCosts ? stambytePerYear : -stambytePerYear;
+        } else {
+            const raw = lastVal * Math.pow(1 + rate, i);
+            val = absCosts ? Math.abs(raw) : raw;
+        }
+        foreX.push(maxYear + i);
+        foreY.push(val);
+    }
+
+    const traceHist = {
+        x: histX,
+        y: histY,
+        mode: 'lines+markers',
+        name: categories[catId] + ' (historisk)',
+        line: { color: '#7c3aed', width: 2.5 },
+        marker: { size: 7, color: '#7c3aed' }
+    };
+
+    const traceFore = {
+        x: foreX,
+        y: foreY,
+        mode: 'lines+markers',
+        name: categories[catId] + (stambyteEnabled ? ' (prognos med stambyte)' : ' (prognos)'),
+        line: { color: '#a855f7', width: 2.5, dash: 'dash' },
+        marker: { size: 5, color: '#a855f7', symbol: 'diamond' }
+    };
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 2 },
+        yaxis: { title: 'Belopp (kr)', tickformat: ',.0f', separatethousands: true },
+        margin: { t: 20, r: 30, b: 50, l: 100 },
+        legend: { orientation: 'h', y: -0.25 },
+        hovermode: 'x unified',
+        shapes: [{
+            type: 'line',
+            x0: maxYear, x1: maxYear,
+            y0: 0, y1: 1,
+            yref: 'paper',
+            line: { color: '#9ca3af', width: 1, dash: 'dot' }
+        }]
+    };
+
+    Plotly.newPlot('investment-chart', [traceHist, traceFore], layout, { responsive: true, displayModeBar: false });
+
+    // Summary
+    const endVal = foreY[foreY.length - 1];
+    const startVal = lastVal;
+    const totalGrowth = startVal !== 0 ? ((endVal - startVal) / Math.abs(startVal)) * 100 : 0;
+    const sign = totalGrowth > 0 ? '+' : '';
+    document.getElementById('investment-chart-summary').innerHTML =
+        `<strong>År ${maxYear + forecastYears}:</strong> ${formatKr(Math.round(endVal))} kr &nbsp;|&nbsp; <strong>Total förändring:</strong> ${sign}${totalGrowth.toFixed(1)}&thinsp;%`;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    loadFromHash();
+    loadPrognosis();
+});
+window.addEventListener('hashchange', loadFromHash);
+
+// Trend Chart
+function showTrendChart(catId) {
+    const { categories, eventsByCategory, maxYear } = prognosisData;
+    const trendWindow = parseInt(document.getElementById('trend-slider').value);
+    const minYear = maxYear - trendWindow + 1;
+    const yearData = eventsByCategory[catId];
+    const name = categories[catId];
+
+    // Collect actual data points in window
+    const points = [];
+    for (let y = minYear; y <= maxYear; y++) {
+        if (yearData[y] !== undefined) {
+            points.push({ x: y, y: yearData[y] });
+        }
+    }
+    // Absolute value points for regression
+    const absPoints = points.map(p => ({ x: p.x, y: Math.abs(p.y) }));
+    const reg = linearRegression(absPoints);
+
+    // Actual data trace
+    const traceActual = {
+        x: absPoints.map(p => p.x),
+        y: absPoints.map(p => p.y),
+        mode: 'lines+markers',
+        name: 'Absolutbelopp',
+        line: { color: '#1f3f95', width: 2 },
+        marker: { size: 8, color: '#1f3f95' }
+    };
+
+    const traces = [traceActual];
+
+    // Compound growth curve trace
+    const factor = growthFactor(points);
+    const rate = factor !== null ? factor - 100 : null;
+    if (reg && rate !== null) {
+        const growthMultiplier = 1 + rate / 100;
+        // Start value: OLS fitted value at the first year
+        const startVal = reg.intercept + reg.slope * absPoints[0].x;
+        const curveX = [];
+        const curveY = [];
+        const firstYear = absPoints[0].x;
+        const lastYear = absPoints[absPoints.length - 1].x;
+        // Generate smooth curve with sub-year steps
+        for (let y = firstYear; y <= lastYear; y += 0.25) {
+            curveX.push(y);
+            curveY.push(startVal * Math.pow(growthMultiplier, y - firstYear));
+        }
+        traces.push({
+            x: curveX,
+            y: curveY,
+            mode: 'lines',
+            name: `Tillväxttakt (${(rate > 0 ? '+' : '')}${rate.toFixed(1)} %/år)`,
+            line: { color: '#dc2626', width: 2, dash: 'dash' }
+        });
+    }
+    const rateStr = rate !== null ? ((rate > 0 ? '+' : '') + rate.toFixed(1) + ' %/år') : '';
+
+    document.getElementById('trend-modal-title').textContent = `${name} — ${rateStr}`;
+
+    const layout = {
+        xaxis: { title: 'År', dtick: 1 },
+        yaxis: { title: 'Belopp (kr)' },
+        margin: { t: 20, r: 30, b: 50, l: 80 },
+        legend: { orientation: 'h', y: -0.2 },
+        hovermode: 'x unified'
+    };
+
+    Plotly.newPlot('trendChartDiv', traces, layout, { responsive: true, displayModeBar: false });
+    document.getElementById('trendModal').style.display = 'block';
+}
+
+function closeTrendModal() {
+    document.getElementById('trendModal').style.display = 'none';
+    Plotly.purge('trendChartDiv');
+}
+
+// Close trend modal on outside click
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('trendModal')) closeTrendModal();
+});
+
+// PDF Modal Functions
+function showPDF(file, page, x, y, width, height, year) {
+    const modal = document.getElementById('pdfModal');
+    const title = document.getElementById('modal-title');
+    const urlLink = document.getElementById('pdf-url');
+
+    title.textContent = `Källdokument: ${file} – År ${year}`;
+
+    if (pdfSources[file]) {
+        urlLink.href = pdfSources[file];
+        urlLink.textContent = pdfSources[file];
+        document.getElementById('pdf-source-link').style.display = 'block';
+    } else {
+        document.getElementById('pdf-source-link').style.display = 'none';
+    }
+
+    highlightBoxes = [{ pageNum: page, x, y, width, height }];
+    modal.style.display = 'block';
+    loadPDF('data/annual_reports/' + file, page);
+}
+
+function closeModal() {
+    document.getElementById('pdfModal').style.display = 'none';
+    highlightBoxes = [];
+    pdfDoc = null;
+}
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('pdfModal')) closeModal();
+};
+
+async function loadPDF(pdfPath, targetPage) {
+    try {
+        pageNum = targetPage || 1;
+        const loadingTask = pdfjsLib.getDocument(pdfPath);
+        pdfDoc = await loadingTask.promise;
+        document.getElementById('page-count').textContent = pdfDoc.numPages;
+        renderPage(pageNum);
+    } catch (error) {
+        console.error('Error loading PDF:', error);
+    }
+}
+
+async function renderPage(num) {
+    pageRendering = true;
+    const page = await pdfDoc.getPage(num);
+    const viewport = page.getViewport({ scale });
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    for (const box of highlightBoxes) {
+        if (box.pageNum === num) drawHighlight(box);
+    }
+    pageRendering = false;
+    if (pageNumPending !== null) {
+        renderPage(pageNumPending);
+        pageNumPending = null;
+    }
+    document.getElementById('page-num').textContent = num;
+    document.getElementById('prev-page').disabled = (num <= 1);
+    document.getElementById('next-page').disabled = (num >= pdfDoc.numPages);
+}
+
+function drawHighlight(box) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+    ctx.strokeStyle = 'rgb(255, 152, 0)';
+    ctx.lineWidth = 3;
+    ctx.fillRect(box.x, box.y, box.width, box.height);
+    ctx.strokeRect(box.x, box.y, box.width, box.height);
+    ctx.strokeStyle = 'rgba(240, 147, 251, 0.8)';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
+    ctx.restore();
+}
+
+function changePage(offset) {
+    pageNum += offset;
+    if (pageNum < 1) pageNum = 1;
+    if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+    if (pageRendering) { pageNumPending = pageNum; } else { renderPage(pageNum); }
+}
+</script>
+</body>
+</html>
