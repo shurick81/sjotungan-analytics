@@ -294,6 +294,36 @@ To add a new year, add the subcategory amounts to the `data` dict and the PDF so
 | 2013 | ✅ | `arsredovisning_2013.pdf` | K2 accounting, scanned, OCR coords (PSM 6, K2→K3 mapping). 1 SEK rounding diff. |
 | 2012 | ❌ | `arsredovisning_2013.pdf` | Comparison column. Needs 2011 states first (no source PDF for 2012's own report). |
 
+#### Extract to `data/general_states.csv`
+
+General non-financial data per year: fiscal period, board chairman, vice chairman, and board members, with PDF source coordinates.
+
+**Format:**
+
+```csv
+year,category_id,value,file,page,x,y,width,height
+```
+
+- `category_id` — references `data/general_categories.csv`
+- `value` — text value (name or date range). Board members (cat 3) are semicolon-separated.
+- Coordinates are in **canvas pixel space** (PDF points × 1.5), same convention as `financial_states.csv`.
+
+**Categories** (`data/general_categories.csv`):
+
+| id | name | description |
+|----|------|-------------|
+| 0 | Räkenskapsår | Fiscal year period (e.g. "2024-01-01 – 2024-12-31") |
+| 1 | Ordförande | Chairman |
+| 2 | Vice ordförande | Vice chairman (empty if not listed separately) |
+| 3 | Ledamöter | Board members (semicolon-separated names) |
+
+**Source pages:**
+
+- Board composition is found in the förvaltningsberättelse (management report) section, typically labelled "Styrelsens sammansättning" or "Styrelsen har utgjorts av".
+- For reports with two compositions (before/after stämma), the post-stämma (end-of-year) board is used.
+- **2019–2024** are text-selectable; coordinates extracted via `pdfplumber` × 1.5.
+- **2013–2018** are scanned PDFs; coordinates extracted via OCR (`pytesseract`) × canvas scale.
+
 ## Previewing pages locally
 
 Start a local HTTP server from the project root:
@@ -308,6 +338,7 @@ Then open in your browser:
 |------|-----|
 | Ekonomisk utveckling | [http://localhost:8000/changing_over_time.html](http://localhost:8000/changing_over_time.html) |
 | Kassaflödesdetaljer | [http://localhost:8000/annual_details.html](http://localhost:8000/annual_details.html) |
+| Styrelseledning | [http://localhost:8000/board_leadership.html](http://localhost:8000/board_leadership.html) |
 
 The pages load CSV data and PDF sources via `fetch()`, so they must be served over HTTP (opening the `.html` files directly won't work due to CORS).
 
