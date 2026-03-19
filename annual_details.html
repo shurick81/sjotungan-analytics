@@ -1206,8 +1206,24 @@
                         show: true,
                         formatter: p => '{n|' + p.name + '}\n{v|' + fmtShort(p.value) + '}',
                         rich: {
-                            n: { fontSize: 12, color: '#fff', lineHeight: 16 },
-                            v: { fontSize: 11, color: 'rgba(255,255,255,0.75)', lineHeight: 14 }
+                            n: {
+                                fontSize: 12,
+                                color: '#fff',
+                                lineHeight: 16,
+                                textShadowColor: 'rgba(0,0,0,0.55)',
+                                textShadowBlur: 3,
+                                textShadowOffsetX: 0,
+                                textShadowOffsetY: 1
+                            },
+                            v: {
+                                fontSize: 11,
+                                color: 'rgba(255,255,255,0.9)',
+                                lineHeight: 14,
+                                textShadowColor: 'rgba(0,0,0,0.55)',
+                                textShadowBlur: 3,
+                                textShadowOffsetX: 0,
+                                textShadowOffsetY: 1
+                            }
                         }
                     },
                     upperLabel: {
@@ -1216,6 +1232,11 @@
                         fontSize: 13,
                         fontWeight: 'bold',
                         color: '#fff',
+                        backgroundColor: 'rgba(0,0,0,0.22)',
+                        padding: [2, 6],
+                        borderRadius: 3,
+                        textShadowColor: 'rgba(0,0,0,0.55)',
+                        textShadowBlur: 3,
                         formatter: '{b}'
                     },
                     levels: [
@@ -1266,8 +1287,24 @@
                         show: true,
                         formatter: p => '{n|' + p.name + '}\n{v|' + fmtShort(p.value) + '}',
                         rich: {
-                            n: { fontSize: 13, color: '#fff', lineHeight: 18 },
-                            v: { fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 16 }
+                            n: {
+                                fontSize: 13,
+                                color: '#fff',
+                                lineHeight: 18,
+                                textShadowColor: 'rgba(0,0,0,0.55)',
+                                textShadowBlur: 3,
+                                textShadowOffsetX: 0,
+                                textShadowOffsetY: 1
+                            },
+                            v: {
+                                fontSize: 12,
+                                color: 'rgba(255,255,255,0.9)',
+                                lineHeight: 16,
+                                textShadowColor: 'rgba(0,0,0,0.55)',
+                                textShadowBlur: 3,
+                                textShadowOffsetX: 0,
+                                textShadowOffsetY: 1
+                            }
                         }
                     },
                     upperLabel: {
@@ -1276,6 +1313,11 @@
                         fontSize: 14,
                         fontWeight: 'bold',
                         color: '#fff',
+                        backgroundColor: 'rgba(0,0,0,0.22)',
+                        padding: [2, 6],
+                        borderRadius: 3,
+                        textShadowColor: 'rgba(0,0,0,0.55)',
+                        textShadowBlur: 3,
                         formatter: '{b}'
                     },
                     levels: [
