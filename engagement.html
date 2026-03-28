@@ -163,6 +163,23 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
+        .bar-chart-wrap {
+            position: relative;
+            height: 340px;
+        }
+
+        @media (max-width: 1024px) {
+            .bar-chart-wrap {
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .bar-chart-wrap {
+                height: 250px;
+            }
+        }
+
         .clickable-cell {
             cursor: pointer;
             color: var(--vm-blue);
@@ -351,7 +368,7 @@
 
         <section class="chart-card p-4 mb-6" aria-label="Beslut per ar">
             <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Antal beslut per ar (filtrerat urval)</h2>
-            <div class="w-full">
+            <div class="w-full bar-chart-wrap">
                 <canvas id="resolution-bar-chart" aria-label="Antal positiva, negativa och ovriga beslut per ar" role="img"></canvas>
             </div>
         </section>
@@ -962,6 +979,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         x: {
                             stacked: true,
