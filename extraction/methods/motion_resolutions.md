@@ -51,6 +51,12 @@ Rule of thumb:
    - title (first meaningful heading lines after MOTION N)
    - authors (signer rows like Namn, Adress -> semicolon-separated names)
 5. Emit one normalized row per detected motion recommendation.
+6. Extract word-level bounding box for the resolution token from the evidence page using pdftotext -bbox-layout and store:
+   - resolution_x
+   - resolution_y
+   - resolution_width
+   - resolution_height
+   - if text-layer lookup fails, use OCR word boxes as fallback
 
 ## How To Reuse This Method For Other Documents
 
@@ -134,10 +140,36 @@ Append mode:
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_resolutions.py <YEAR> <PDF_FILE> --append
 ```
 
+Fast mode for text-layer PDFs (skip OCR fallback during resolution-page detection):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_resolutions.py <YEAR> <PDF_FILE> --append --no-ocr-fallback
+```
+
 Example:
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_resolutions.py 2025 stamma2025.pdf --append
+```
+
+Batch example for multiple files:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_resolutions.py 2024 stamma-2024.pdf --append --no-ocr-fallback
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_resolutions.py 2023 stamma-2023.pdf --append --no-ocr-fallback
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_resolutions.py 2022 stamma_kallelse_2022.pdf --append --no-ocr-fallback
+```
+
+Backfill coordinates for rows that already exist in data/motions.csv:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/backfill_motion_coordinates.py
+```
+
+Dry-run mode:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/backfill_motion_coordinates.py --dry-run
 ```
 
 ## Verification checklist
@@ -146,10 +178,14 @@ Example:
 2. Confirm resolution_page contains explicit recommendation wording.
 3. Confirm normalization is correct (Tillstyrker vs Avstyrker).
 4. Re-run append mode and verify idempotency (no duplicate rows appended).
+5. Confirm resolution_x/resolution_y/resolution_width/resolution_height points to the decision word on resolution_page.
 
 ## Limitations and future improvements
 
 - Works best for text-selectable PDFs.
+- For large backfills across many text PDFs, use --no-ocr-fallback to avoid expensive OCR scans on non-matching pages.
 - OCR for title/authors is heuristic and may need manual correction for complex layouts.
-- Coordinate extraction for resolution text (resolution_x...) is currently left blank and can be added later.
+- Resolution coordinates are based on text-layer word boxes from pdftotext -bbox-layout.
+- When text-layer lookup misses, the script falls back to OCR word boxes (slower but broader coverage).
+- For heavily degraded scans, some coordinates can still remain blank and require manual follow-up.
 - A next step is to externalize patterns into per-document YAML files so one generic extractor can run multiple methods.
