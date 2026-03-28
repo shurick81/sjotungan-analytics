@@ -1,0 +1,27 @@
+{
+  "series_name": "Sverige makroindikatorer (lokalt snapshot)",
+  "base_year": 2012,
+  "updated_at": "2026-03-28",
+  "notes": "Arsdata ar manuellt inlagd i projektet for reproducerbar visualisering. Uppdatera vid behov via separat skript och dokumentera andringar i commit.",
+  "sources": {
+    "inflation_yoy_pct": {
+      "name": "SCB - KPI, arsforandring (manuell sammanstallning)",
+      "url": "https://www.scb.se/hitta-statistik/sverige-i-siffror/prisomraknaren/"
+    }
+  },
+  "data": [
+    { "year": 2012, "inflation_yoy_pct": 0.9 },
+    { "year": 2013, "inflation_yoy_pct": 0.0 },
+    { "year": 2014, "inflation_yoy_pct": -0.2 },
+    { "year": 2015, "inflation_yoy_pct": 0.0 },
+    { "year": 2016, "inflation_yoy_pct": 1.0 },
+    { "year": 2017, "inflation_yoy_pct": 1.8 },
+    { "year": 2018, "inflation_yoy_pct": 2.0 },
+    { "year": 2019, "inflation_yoy_pct": 1.8 },
+    { "year": 2020, "inflation_yoy_pct": 0.5 },
+    { "year": 2021, "inflation_yoy_pct": 2.2 },
+    { "year": 2022, "inflation_yoy_pct": 8.4 },
+    { "year": 2023, "inflation_yoy_pct": 8.5 },
+    { "year": 2024, "inflation_yoy_pct": 2.8 }
+  ]
+}
