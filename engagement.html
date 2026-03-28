@@ -283,7 +283,7 @@
         <nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
             <button onclick="showSection('start')" class="hover:text-yellow-400 font-semibold">Start</button>
             <button onclick="showSection('vision')" class="hover:text-yellow-400 font-semibold">Vision</button>
-            <button onclick="showSection('engagement')" class="hover:text-yellow-400 font-semibold">Engagemang</button>
+            <button onclick="showSection('motioner')" class="hover:text-yellow-400 font-semibold">Motioner</button>
             <button onclick="showSection('forum')" class="hover:text-yellow-400 font-semibold">Forum</button>
         </nav>
     </header>
@@ -299,7 +299,7 @@
         <p class="text-gray-700">Sida under utveckling.</p>
     </section>
 
-    <section id="engagement" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+    <section id="motioner" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
         <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Engagemang</h1>
         <p class="mb-6" style="color: var(--vm-muted);">Arsstamma-motioner med ar, motionsnummer, titel och beslut.</p>
 
@@ -609,7 +609,7 @@
             const section = document.getElementById(id);
             if (!section) return;
             section.classList.remove('hidden');
-            if (id === 'engagement') {
+            if (id === 'motioner') {
                 // If charts were initialized while hidden, force a visible re-render.
                 setTimeout(() => {
                     if (allRecords.length) {
@@ -631,11 +631,11 @@
 
         function loadFromHash() {
             const hash = window.location.hash.substring(1);
-            const mappedHash = hash === 'motioner' ? 'engagement' : hash;
+            const mappedHash = hash === 'engagement' ? 'motioner' : hash;
             if (mappedHash && document.getElementById(mappedHash)) {
                 showSection(mappedHash);
             } else {
-                showSection('engagement');
+                showSection('motioner');
             }
         }
 
