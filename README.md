@@ -45,6 +45,57 @@ Driftkostnader,-34361150
 
 ### Extract data from PDF files in structured form
 
+#### Extract to `data/motions.csv`
+
+Board recommendation on member motions ("Styrelsens yttrande" / "Styrelsens slutsats").
+
+**Format:**
+
+```csv
+year,file,motion_number,page,title,authors,resolution,resolution_page,resolution_x,resolution_y,resolution_width,resolution_height
+```
+
+- `year` — motion/meeting year (e.g. 2025 from `stamma2025.pdf`)
+- `file` — PDF filename in `data/annual_reports/`
+- `motion_number` — motion identifier within that meeting document (e.g. `1`, `2`)
+- `page` — page where the motion starts (or closest detected motion header)
+- `title` — motion title (`Motion N` when only motion number is available)
+- `authors` — motion proposers (optional; empty if not reliably extractable)
+- `resolution` — normalized board stance/outcome: `Tillstyrker`, `Avstyrker`, `Delvis tillstyrker`, `Bifalls`, `Avslås`, `Besvarad`, `Oklar`
+- `resolution_page` — page containing the board's explicit recommendation sentence
+- `resolution_x,resolution_y,resolution_width,resolution_height` — optional highlight box coordinates (blank by default)
+
+Use the reusable script:
+
+```bash
+python3 extraction/scripts/extract_motion_resolutions.py 2025 stamma2025.pdf
+```
+
+Append new rows to `data/motions.csv`:
+
+```bash
+python3 extraction/scripts/extract_motion_resolutions.py 2025 stamma2025.pdf --append
+```
+
+Backward-compatible shortcut still exists at project root:
+
+```bash
+python3 extract_motion_resolutions.py 2025 stamma2025.pdf --append
+```
+
+**Method overview:**
+
+1. Extract each page with `pdftotext`.
+2. Detect recommendation phrases (e.g. `yrkar styrelsen ... avslag/avslås` or `... bifall`).
+3. Backtrack to the nearest `MOTION N` heading to attach motion context.
+4. Normalize to a categorical `resolution` value for cross-year comparison.
+
+**Notes for other years:**
+
+- Text-selectable PDFs (newer years) should work directly.
+- Scanned PDFs may require OCR fallback (future extension if needed).
+- Start with dry-run output before appending, then manually verify page references.
+
 #### Extract to `data/financial_states.csv`
 
 Balance sheet snapshot values at year-end, with PDF source coordinates for highlighting.
