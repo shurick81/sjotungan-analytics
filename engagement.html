@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motioner - BRF Sjotungan</title>
+    <title>Engagemang - BRF Sjotungan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         :root {
             --vm-blue: #1f3f95;
@@ -160,11 +162,145 @@
             cursor: pointer;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
+
+        .clickable-cell {
+            cursor: pointer;
+            color: var(--vm-blue);
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .clickable-cell:hover {
+            color: #2c54bf;
+            text-decoration-style: solid;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .pdf-viewer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pdf-controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pdf-controls button {
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .pdf-controls button:hover {
+            background: #2c54bf;
+        }
+
+        .pdf-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pdf-controls span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
-<body class="min-h-screen">
-    <div class="max-w-5xl mx-auto px-4 py-10">
-        <h1 class="font-bold mb-2" style="color: var(--vm-blue);">Motioner</h1>
+<body class="bg-gray-100 text-gray-800">
+    <header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+        <nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+            <button onclick="showSection('start')" class="hover:text-yellow-400 font-semibold">Start</button>
+            <button onclick="showSection('vision')" class="hover:text-yellow-400 font-semibold">Vision</button>
+            <button onclick="showSection('engagement')" class="hover:text-yellow-400 font-semibold">Engagemang</button>
+            <button onclick="showSection('forum')" class="hover:text-yellow-400 font-semibold">Forum</button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto mt-8 p-4">
+    <section id="start" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+        <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Start</h1>
+        <p class="text-gray-700">Anvand menyn ovan och oppna avsnittet Engagemang for att se analyser och detaljer.</p>
+    </section>
+
+    <section id="vision" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+        <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Vision</h1>
+        <p class="text-gray-700">Sida under utveckling.</p>
+    </section>
+
+    <section id="engagement" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+        <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Engagemang</h1>
         <p class="mb-6" style="color: var(--vm-muted);">Arsstamma-motioner med ar, motionsnummer, titel och beslut.</p>
 
         <section class="filter-card p-4 mb-6" aria-label="Filtrera pa ar">
@@ -220,15 +356,44 @@
             </div>
         </section>
 
+        <section class="filter-card p-4 mb-4" aria-label="Visa eller dolj tabellkolumner">
+            <div class="text-xs uppercase tracking-wide mb-2" style="color: var(--vm-muted);">Kolumner i tabellen</div>
+            <div class="flex flex-wrap gap-4" id="column-filters">
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="year" checked style="accent-color: var(--vm-blue);">
+                    Ar
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="motionNumber" checked style="accent-color: var(--vm-blue);">
+                    Motion nr
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="title" checked style="accent-color: var(--vm-blue);">
+                    Titel
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="resolution" checked style="accent-color: var(--vm-blue);">
+                    Beslut
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="authors" style="accent-color: var(--vm-blue);">
+                    Forfattare
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="file" style="accent-color: var(--vm-blue);">
+                    Fil
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="page" style="accent-color: var(--vm-blue);">
+                    Sida
+                </label>
+            </div>
+        </section>
+
         <div class="overflow-x-auto rounded-lg">
             <table class="motions-table" id="motions-table">
                 <thead>
-                    <tr>
-                        <th class="col-year">Ar</th>
-                        <th class="col-motion">Motion nr</th>
-                        <th>Titel</th>
-                        <th>Beslut</th>
-                    </tr>
+                    <tr id="motions-head-row"></tr>
                 </thead>
                 <tbody id="motions-body"></tbody>
             </table>
@@ -237,10 +402,213 @@
         <div id="empty-state" class="empty-state mt-4 p-4 text-sm hidden">
             Inga motioner hittades i data/motions.csv.
         </div>
+    </section>
+
+    <section id="forum" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+        <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Forum</h1>
+        <p class="text-gray-700">Sida under utveckling.</p>
+    </section>
+    </main>
+
+    <section class="max-w-6xl mx-auto mt-10 mb-4 px-6">
+        <h2 class="text-lg font-semibold text-gray-600 mb-3">Källdokument (PDF)</h2>
+        <ul id="pdf-source-list" class="space-y-1 text-sm text-gray-600"></ul>
+    </section>
+
+    <footer class="text-center text-gray-500 text-sm py-4 mt-8">
+        &copy; 2026 Vision Myggan - En medlemsrorelse i BRF Sjotungan
+    </footer>
+
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Källdokument</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="pdf-viewer">
+                <div class="pdf-controls">
+                    <button id="prev-page" onclick="changePage(-1)">← Föregående</button>
+                    <span>Sida <span id="page-num">1</span> av <span id="page-count">-</span></span>
+                    <button id="next-page" onclick="changePage(1)">Nästa →</button>
+                </div>
+                <canvas id="pdf-canvas"></canvas>
+                <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
+                    <a href="#" target="_blank" id="pdf-url" style="color: var(--vm-blue); text-decoration: none; font-size: 12px; word-wrap: break-word;"></a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        const pdfScale = 1.5;
+        const pdfSources = {};
+
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        async function loadPDFSources() {
+            try {
+                const response = await fetch('sources.yaml');
+                const yamlText = await response.text();
+                const data = jsyaml.load(yamlText);
+                if (data && data.annual_reports) {
+                    data.annual_reports.forEach(source => {
+                        const filename = source.local_path.split('/').pop();
+                        pdfSources[filename] = source.url;
+                    });
+                    renderPDFSourceList(data.annual_reports);
+                }
+            } catch (error) {
+                console.error('Error loading PDF sources:', error);
+            }
+        }
+
+        function renderPDFSourceList(reports) {
+            const list = document.getElementById('pdf-source-list');
+            if (!list || !Array.isArray(reports)) return;
+            const sorted = [...reports].sort((a, b) => b.finance_period - a.finance_period);
+            list.innerHTML = sorted.map(r => {
+                return `<li>${r.finance_period} - <a href="${r.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${r.url}</a></li>`;
+            }).join('');
+        }
+
+        function openMotionPdf(file, page, label) {
+            if (!file) return;
+            const safePage = Number(page) || 1;
+            const modal = document.getElementById('pdfModal');
+            const title = document.getElementById('modal-title');
+            const urlLink = document.getElementById('pdf-url');
+            title.textContent = `Källdokument: ${file} - ${label}`;
+
+            if (pdfSources[file]) {
+                urlLink.href = pdfSources[file];
+                urlLink.textContent = pdfSources[file];
+                document.getElementById('pdf-source-link').style.display = 'block';
+            } else {
+                document.getElementById('pdf-source-link').style.display = 'none';
+            }
+
+            modal.style.display = 'block';
+            loadPDF('data/annual_reports/' + file, safePage);
+        }
+
+        function closeModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+            pdfDoc = null;
+        }
+
+        window.addEventListener('click', (event) => {
+            if (event.target === document.getElementById('pdfModal')) {
+                closeModal();
+            }
+        });
+
+        async function loadPDF(pdfPath, targetPage) {
+            try {
+                pageNum = targetPage || 1;
+                const loadingTask = pdfjsLib.getDocument(pdfPath);
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+            }
+        }
+
+        async function renderPage(num) {
+            if (!pdfDoc) return;
+            pageRendering = true;
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: pdfScale });
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+            pageRendering = false;
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+
+            document.getElementById('page-num').textContent = num;
+            updatePdfButtons();
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function changePage(offset) {
+            if (!pdfDoc) return;
+            pageNum += offset;
+            if (pageNum < 1) pageNum = 1;
+            if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+            queueRenderPage(pageNum);
+        }
+
+        function updatePdfButtons() {
+            if (!pdfDoc) return;
+            document.getElementById('prev-page').disabled = (pageNum <= 1);
+            document.getElementById('next-page').disabled = (pageNum >= pdfDoc.numPages);
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            const section = document.getElementById(id);
+            if (!section) return;
+            section.classList.remove('hidden');
+            if (id === 'engagement') {
+                // If charts were initialized while hidden, force a visible re-render.
+                setTimeout(() => {
+                    if (allRecords.length) {
+                        applyFilters();
+                    }
+                    if (resolutionPieChart) {
+                        resolutionPieChart.resize();
+                        resolutionPieChart.update();
+                    }
+                    if (resolutionBarChart) {
+                        resolutionBarChart.resize();
+                        resolutionBarChart.update();
+                    }
+                }, 0);
+            }
+            section.scrollIntoView({ behavior: 'smooth' });
+            history.replaceState(null, null, '#' + id);
+        }
+
+        function loadFromHash() {
+            const hash = window.location.hash.substring(1);
+            const mappedHash = hash === 'motioner' ? 'engagement' : hash;
+            if (mappedHash && document.getElementById(mappedHash)) {
+                showSection(mappedHash);
+            } else {
+                showSection('engagement');
+            }
+        }
+
         const MOTIONS_URL = 'data/motions.csv';
+        const TABLE_COLUMNS = [
+            { key: 'year', label: 'Ar', className: 'col-year' },
+            { key: 'motionNumber', label: 'Motion nr', className: 'col-motion' },
+            { key: 'title', label: 'Titel', className: '' },
+            { key: 'resolution', label: 'Beslut', className: '' },
+            { key: 'authors', label: 'Forfattare', className: '' },
+            { key: 'file', label: 'Fil', className: '' },
+            { key: 'page', label: 'Sida', className: 'col-motion' }
+        ];
         let allRecords = [];
         let resolutionPieChart = null;
         let resolutionBarChart = null;
@@ -312,7 +680,15 @@
 
         function renderRows(records) {
             const tbody = document.getElementById('motions-body');
+            const headRow = document.getElementById('motions-head-row');
             const emptyState = document.getElementById('empty-state');
+            const visibleColumns = getVisibleColumns();
+
+            headRow.innerHTML = visibleColumns.map(col => {
+                const classAttr = col.className ? ` class="${col.className}"` : '';
+                return `<th${classAttr}>${col.label}</th>`;
+            }).join('');
+
             tbody.innerHTML = '';
 
             if (!records.length) {
@@ -324,14 +700,45 @@
 
             for (const record of records) {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="col-year">${record.year || '-'}</td>
-                    <td class="col-motion">${record.motionNumber || '-'}</td>
-                    <td>${record.title || '-'}</td>
-                    <td>${record.resolution || '-'}</td>
-                `;
+
+                for (const col of visibleColumns) {
+                    const td = document.createElement('td');
+                    if (col.className) td.className = col.className;
+
+                    const value = record[col.key] || '-';
+                    const isClickable = (col.key === 'motionNumber' || col.key === 'title' || col.key === 'file' || col.key === 'page') && record.file;
+
+                    if (isClickable) {
+                        const span = document.createElement('span');
+                        span.className = 'clickable-cell';
+                        span.textContent = value;
+
+                        let label = 'Motion';
+                        if (col.key === 'motionNumber') label = `Motion ${record.motionNumber || ''}`;
+                        if (col.key === 'title') label = record.title || 'Motion';
+                        if (col.key === 'file') label = `Fil ${record.file}`;
+                        if (col.key === 'page') label = `Sida ${record.page || ''}`;
+
+                        span.addEventListener('click', () => {
+                            openMotionPdf(record.file, Number(record.page) || 1, label);
+                        });
+                        td.appendChild(span);
+                    } else {
+                        td.textContent = value;
+                    }
+
+                    tr.appendChild(td);
+                }
+
                 tbody.appendChild(tr);
             }
+        }
+
+        function getVisibleColumns() {
+            const selected = new Set(
+                [...document.querySelectorAll('#column-filters input:checked')].map(el => el.value)
+            );
+            return TABLE_COLUMNS.filter(col => selected.has(col.key));
         }
 
         function normalizeResolution(value) {
@@ -632,9 +1039,25 @@
             });
         }
 
+        function setupColumnFilters() {
+            const filters = document.querySelectorAll('#column-filters input[type="checkbox"]');
+            filters.forEach(filter => {
+                filter.addEventListener('change', () => {
+                    // Keep at least one table column selected.
+                    const selectedCount = document.querySelectorAll('#column-filters input:checked').length;
+                    if (selectedCount === 0) {
+                        filter.checked = true;
+                        return;
+                    }
+                    applyFilters();
+                });
+            });
+        }
+
         async function loadMotions() {
             try {
-                const resp = await fetch(MOTIONS_URL);
+                const csvUrl = `${MOTIONS_URL}?t=${Date.now()}`;
+                const resp = await fetch(csvUrl, { cache: 'no-store' });
                 if (!resp.ok) {
                     throw new Error(`Failed to load ${MOTIONS_URL}: ${resp.status}`);
                 }
@@ -654,8 +1077,11 @@
 
                 const records = rows.slice(1).map(cells => ({
                     year: getCell(cells, indexMap, 'year'),
+                    file: getCell(cells, indexMap, 'file'),
                     motionNumber: getCell(cells, indexMap, 'motion_number'),
+                    page: getCell(cells, indexMap, 'page'),
                     title: getCell(cells, indexMap, 'title'),
+                    authors: getCell(cells, indexMap, 'authors'),
                     resolution: getCell(cells, indexMap, 'resolution')
                 }));
 
@@ -667,6 +1093,7 @@
 
                 setupYearRange(allRecords);
                 setupOutcomeFilters();
+                setupColumnFilters();
                 applyFilters();
             } catch (error) {
                 console.error(error);
@@ -676,6 +1103,9 @@
         }
 
         loadMotions();
+        loadPDFSources();
+        loadFromHash();
+        window.addEventListener('hashchange', loadFromHash);
     </script>
 </body>
 </html>
