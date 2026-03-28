@@ -1,21 +1,32 @@
 year,file,motion_number,page,title,authors,resolution,resolution_page,resolution_x,resolution_y,resolution_width,resolution_height
-2025,stamma2025.pdf,1,47,Förslag på åtgärder för att öka intäkter och minska kostnader för föreningen,Anni Henriksson;Sofia Norelöv;Emma Bergemalm;Susanne Sjöblom;Henrik Nieciecki,Avslås,49,,,,
-2024,stamma-2024.pdf,1,27,Avskaffande av den digitala cykelregistreringen för förvaring i cykelrummen,O. Bueno-Martinez,Avslås,27,,,,
-2024,stamma-2024.pdf,2,28,Matavfallsåtervinningen — redogörelse varför den fortfarande inte fungerar och kostnaderna,O. Bueno-Martinez,Besvarad,29,,,,
-2023,stamma-2023.pdf,1,21,Ökning av hyreskostnad för uteplats,,Avslås,21,,,,
-2023,stamma-2023.pdf,2,22,Trädfällning och fruktträd mellan port 56-58 och 66-68,,Besvarad,22,,,,
-2022,stamma_kallelse_2022.pdf,2,28,Ang Soprummen och Matavfalls sopor 1,Eva Keith Rosander,Avstyrker,28,,,,
-2022,stamma_kallelse_2022.pdf,3,29,Ang Elbils platser,Eva Keith Rosander,Avstyrker,29,,,,
-2022,stamma_kallelse_2022.pdf,4,30,Önskar fler laddstolpar i garagen,expansionen fortsätter.;Marie Jensing,Avstyrker,30,,,,
-2022,stamma_kallelse_2022.pdf,5,31,Handlingsplan för sortering av matavfall,,Tillstyrker,32,,,,
-2021,stamma_kallelse-2021.pdf,2,27,Fler cykelplatser i området,Fredrik och Marie Högmark,Avslås,27,,,,
-2021,stamma_kallelse-2021.pdf,3,28,Hyra inkluderar el Många bostadsrättsföreningar inom bla hsb har idag elen inbakad i hyran,Elisabet Wikström,Avslås,28,,,,
-2021,stamma_kallelse-2021.pdf,4,29,Individuell reglering av värme,Elisabet Wikström,Avslås,29,,,,
-2021,stamma_kallelse-2021.pdf,5,30,"Rökfri bostadsrättförening Införa rökförbud inom hela området HSB Sjötungan, även inkluderat den egna balkongen",Elisabet Wikström,Avslås,30,,,,
-2021,stamma_kallelse-2021.pdf,1,26,Uppmuntra till bättre hälsa genom att tillhandahålla cykelförråd,Marie Jensing,Avslås,26,,,,
-2020,BRF_Sjotungan_arsredovisning_2019.pdf,1,21,Till årsstämman i Sjötungan bostadsrättsförening år 2020 Motion angående solceller,Hans Rosander,Avslås,21,,,,
-2020,BRF_Sjotungan_arsredovisning_2019.pdf,3,22,Parkeringsplatser för husbilar och husvagnar,Anni Henriksson,Avslås,22,,,,
-2020,BRF_Sjotungan_arsredovisning_2019.pdf,4,23,sortering av matavfall,Anders Söderbärj,Avslås,23,,,,
-2020,BRF_Sjotungan_arsredovisning_2019.pdf,5,24,uppförane av carport,erfarenheter kunde kanske inhämtas.;Anders Söderbärj,Avslås,24,,,,
-2020,BRF_Sjotungan_arsredovisning_2019.pdf,6,25,"För att öka trivseln, sänka kostnaderna för medlemmarna, göra föreningen mer miljöanpassad och därigenom...",Anders Söderbärj,Avslås,26,,,,
-2020,BRF_Sjotungan_arsredovisning_2019.pdf,2,22,Individuell mätning av tappvarmvatten,Hans Rosander,Bifalls,22,,,,
+2025,stamma2025.pdf,1,47,Förslag på åtgärder för att öka intäkter och minska kostnader för föreningen,Anni Henriksson;Sofia Norelöv;Emma Bergemalm;Susanne Sjöblom;Henrik Nieciecki,Avslås,49,304,264,34,15
+2024,stamma-2024.pdf,1,27,Avskaffande av den digitala cykelregistreringen för förvaring i cykelrummen,O. Bueno-Martinez,Avslås,27,232,773,44,19
+2024,stamma-2024.pdf,2,28,Matavfallsåtervinningen — redogörelse varför den fortfarande inte fungerar och kostnaderna,O. Bueno-Martinez,Besvarad,29,284,648,61,19
+2023,stamma-2023.pdf,1,21,Ökning av hyreskostnad för uteplats,Martin J Brandfors,Avslås,21,186,797,34,15
+2023,stamma-2023.pdf,2,22,Trädfällning och fruktträd mellan port 56-58 och 66-68,Henrik Nieciecki,Besvarad,22,227,470,48,15
+2022,stamma_kallelse_2022.pdf,2,28,Soprummen och Matavfalls sopor 1,Eva Keith Rosander,Avstyrker,28,48,448,38,16
+2022,stamma_kallelse_2022.pdf,3,29,Elbils platser,Eva Keith Rosander,Avstyrker,29,48,585,38,16
+2022,stamma_kallelse_2022.pdf,4,30,Önskar fler laddstolpar i garagen,Marie Jensing,Avstyrker,30,357,614,38,16
+2022,stamma_kallelse_2022.pdf,5,31,Handlingsplan för sortering av matavfall,Henrik Larsson,Tillstyrker,32,159,441,25,16
+2021,stamma_kallelse-2021.pdf,2,27,Fler cykelplatser i området,,Avslås,27,311,299,34,16
+2021,stamma_kallelse-2021.pdf,3,28,Hyra inkluderar el Många bostadsrättsföreningar inom bla hsb har idag elen inbakad i hyran,Elisabet Wikström,Avslås,28,397,529,37,16
+2021,stamma_kallelse-2021.pdf,4,29,Individuell reglering av värme,Elisabet Wikström,Avslås,29,242,529,37,16
+2021,stamma_kallelse-2021.pdf,5,30,"Rökfri bostadsrättförening Införa rökförbud inom hela området HSB Sjötungan, även inkluderat den egna balkongen",Elisabet Wikström,Avslås,30,242,471,37,16
+2021,stamma_kallelse-2021.pdf,1,26,Uppmuntra till bättre hälsa genom att tillhandahålla cykelförråd,Marie Jensing,Avslås,26,442,702,37,16
+2020,BRF_Sjotungan_arsredovisning_2019.pdf,1,21,Till årsstämman i Sjötungan bostadsrättsförening år 2020 Motion angående solceller,Hans Rosander,Avslås,21,252,520,37,16
+2020,BRF_Sjotungan_arsredovisning_2019.pdf,2,22,Individuell mätning av tappvarmvatten,Hans Rosander,Bifalls,22,207,341,41,16
+2020,BRF_Sjotungan_arsredovisning_2019.pdf,3,22,Parkeringsplatser för husbilar och husvagnar,Anni Henriksson,Avslås,22,252,768,37,16
+2020,BRF_Sjotungan_arsredovisning_2019.pdf,4,23,sortering av matavfall,Anders Söderbärj,Avslås,23,252,757,37,16
+2020,BRF_Sjotungan_arsredovisning_2019.pdf,5,24,uppförane av carport,Anders Söderbärj,Avslås,24,252,633,37,16
+2020,BRF_Sjotungan_arsredovisning_2019.pdf,6,25,"För att öka trivseln, sänka kostnaderna för medlemmarna, göra föreningen mer miljöanpassad och därigenom...",Anders Söderbärj,Avslås,26,87,399,37,16
+2019,kallelse_stamma_2019.pdf,1,20,Till årsstämman i Sjötungan bostadsrättsförening år 2019 Motion angående ”tv-kanaler och bredband,Mikael Forsberg,Avslås,20,242,489,32,9
+2018,kallelse_stamma2018.pdf,1,20,har bara plats för att hänga upp 12 cyklar i cykelförrådet,Ingegerd Green,Avstyrker,20,196,626,27,10
+2017,arsredovisning_2016.pdf,2,21,Renovering av persienner - de börjar bli till åren och behöver renoveras eller bytas...,Oscar Bueno-Martinez,Avslås,21,240,222,32,8
+2017,arsredovisning_2016.pdf,3,22,Garagerenoveringen - aktuell status och åtgärdspaket för att förhindra ytterligare fördyringar,Oscar Bueno-Martinez,Avslås,22,255,587,29,8
+2017,arsredovisning_2016.pdf,5,23,"Offentliga styrelseprotokoll - en demokratifråga Det finns inget, varken i lag eller i stadgar...",Oscar Bueno-Martinez,Avstyrker,24,264,397,26,9
+2017,arsredovisning_2016.pdf,6,24,Det är svårt att hitta information om brandskyddet i föreningen,Christina Björk,Besvarad,25,249,145,48,9
+2017,arsredovisning_2016.pdf,8,25,Hissar återgår till bottenplan,Lennarth Gure,Avslås,25,261,645,31,9
+2017,arsredovisning_2016.pdf,1,20,Inköp och installation av postboxar i föreningen - PostNord skall stå för kostnaden Mot...,Oscar Bueno-Martinez,Avslås,21,240,222,32,8
+2017,arsredovisning_2016.pdf,4,22,Lånestopp i föreningen i fem år,Oscar Bueno-Martinez,Avslås,23,244,456,29,8
+2017,arsredovisning_2016.pdf,7,25,Längre bastupass eller extra bastutagg,Anni Henriksson,Besvarad,25,249,145,48,9
+2022,stamma_kallelse_2022.pdf,1,28,trappbelysning i höghusen i Sjötungan,Ingegerd Green,Avstyrker,28,48,448,38,16

@@ -16,9 +16,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import html
 import re
 import subprocess
 import sys
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -96,6 +98,171 @@ def normalize_space(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def normalize_token(text: str) -> str:
+    lowered = text.strip().lower()
+    decomposed = unicodedata.normalize("NFD", lowered)
+    no_marks = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
+    return re.sub(r"[^0-9a-z]+", "", no_marks)
+
+
+def extract_page_words_bbox(pdf_path: Path, page: int) -> List[Tuple[float, float, float, float, str, str]]:
+    xml = run_command(
+        [
+            "pdftotext",
+            "-f",
+            str(page),
+            "-l",
+            str(page),
+            "-bbox-layout",
+            str(pdf_path),
+            "-",
+        ]
+    )
+
+    word_pattern = re.compile(
+        r'<word xMin="([0-9.]+)" yMin="([0-9.]+)" xMax="([0-9.]+)" yMax="([0-9.]+)">(.*?)</word>'
+    )
+
+    words: List[Tuple[float, float, float, float, str, str]] = []
+    for m in word_pattern.finditer(xml):
+        x0, y0, x1, y1, raw_word = m.groups()
+        decoded = html.unescape(raw_word).strip()
+        if not decoded:
+            continue
+        words.append((float(x0), float(y0), float(x1), float(y1), decoded, normalize_token(decoded)))
+    return words
+
+
+def extract_page_words_bbox_ocr(
+    pdf_path: Path,
+    page: int,
+    dpi: int = 300,
+) -> List[Tuple[float, float, float, float, str, str]]:
+    if not HAS_OCR:
+        return []
+
+    try:
+        image = convert_from_path(str(pdf_path), dpi=dpi, first_page=page, last_page=page)[0]
+    except Exception:
+        return []
+
+    try:
+        data = pytesseract.image_to_data(image, lang="swe", output_type=pytesseract.Output.DICT)
+    except Exception:
+        return []
+
+    # OCR outputs pixel coordinates. Convert to PDF point space used by pdftotext.
+    px_to_pt = 72.0 / float(dpi)
+    words: List[Tuple[float, float, float, float, str, str]] = []
+    total = len(data.get("text", []))
+
+    for i in range(total):
+        raw = (data["text"][i] or "").strip()
+        if not raw:
+            continue
+
+        left = float(data["left"][i])
+        top = float(data["top"][i])
+        width = float(data["width"][i])
+        height = float(data["height"][i])
+
+        x0 = left * px_to_pt
+        y0 = top * px_to_pt
+        x1 = (left + width) * px_to_pt
+        y1 = (top + height) * px_to_pt
+        words.append((x0, y0, x1, y1, raw, normalize_token(raw)))
+
+    return words
+
+
+def find_resolution_bbox(
+    pdf_path: Path,
+    page: int,
+    resolution: str,
+    bbox_cache: Dict[int, List[Tuple[float, float, float, float, str, str]]],
+    ocr_bbox_cache: Optional[Dict[int, List[Tuple[float, float, float, float, str, str]]]] = None,
+) -> Tuple[str, str, str, str]:
+    token = normalize_token(resolution)
+
+    candidate_tokens = {
+        "avslas": ["avslas", "avslag", "avsla"],
+        "avstyrker": ["avstyrker", "avstyrks", "avstyrka", "avslag", "avslas", "avsla"],
+        "tillstyrker": ["tillstyrker", "bifall", "bifalles"],
+        "bifalls": ["bifalls", "bifall", "bifalles"],
+        "besvarad": ["besvarad", "besvaras", "besvarat"],
+        "delvis tillstyrker": ["delvis", "bifall", "tillstyrker"],
+    }.get(token, [token])
+
+    words = bbox_cache.get(page)
+    if words is None:
+        words = extract_page_words_bbox(pdf_path, page)
+        bbox_cache[page] = words
+
+    # Prefer exact-word hit for readability in highlights.
+    for x0, y0, x1, y1, _raw, norm in words:
+        if norm in candidate_tokens:
+            return (
+                str(int(round(x0))),
+                str(int(round(y0))),
+                str(int(round(x1 - x0))),
+                str(int(round(y1 - y0))),
+            )
+
+    # Fallback: support two-word patterns like "delvis bifall".
+    if token == "delvis tillstyrker":
+        for i in range(len(words) - 1):
+            w1 = words[i]
+            w2 = words[i + 1]
+            if w1[5] == "delvis" and w2[5] in ("bifall", "avslag"):
+                x0 = min(w1[0], w2[0])
+                y0 = min(w1[1], w2[1])
+                x1 = max(w1[2], w2[2])
+                y1 = max(w1[3], w2[3])
+                return (
+                    str(int(round(x0))),
+                    str(int(round(y0))),
+                    str(int(round(x1 - x0))),
+                    str(int(round(y1 - y0))),
+                )
+
+    # Fallback to OCR word boxes for scanned/older PDFs with weak text layer.
+    if HAS_OCR:
+        if ocr_bbox_cache is None:
+            ocr_bbox_cache = {}
+
+        ocr_words = ocr_bbox_cache.get(page)
+        if ocr_words is None:
+            ocr_words = extract_page_words_bbox_ocr(pdf_path, page)
+            ocr_bbox_cache[page] = ocr_words
+
+        for x0, y0, x1, y1, _raw, norm in ocr_words:
+            if norm in candidate_tokens:
+                return (
+                    str(int(round(x0))),
+                    str(int(round(y0))),
+                    str(int(round(x1 - x0))),
+                    str(int(round(y1 - y0))),
+                )
+
+        if token == "delvis tillstyrker":
+            for i in range(len(ocr_words) - 1):
+                w1 = ocr_words[i]
+                w2 = ocr_words[i + 1]
+                if w1[5] == "delvis" and w2[5] in ("bifall", "avslag"):
+                    x0 = min(w1[0], w2[0])
+                    y0 = min(w1[1], w2[1])
+                    x1 = max(w1[2], w2[2])
+                    y1 = max(w1[3], w2[3])
+                    return (
+                        str(int(round(x0))),
+                        str(int(round(y0))),
+                        str(int(round(x1 - x0))),
+                        str(int(round(y1 - y0))),
+                    )
+
+    return "", "", "", ""
+
+
 def find_motion_context(
     pages: Dict[int, str],
     resolution_page: int,
@@ -111,6 +278,15 @@ def find_motion_context(
         if prior_matches:
             number = int(prior_matches[-1].group(1))
             return MotionContext(number=number, title=f"Motion {number}", page=resolution_page)
+
+        # Match appears before the first motion header on this page.
+        # In that case, context belongs to a motion started on a previous page.
+        for page in range(resolution_page - 1, 0, -1):
+            text = pages.get(page, "")
+            page_matches = list(motion_pattern.finditer(text))
+            if page_matches:
+                number = int(page_matches[-1].group(1))
+                return MotionContext(number=number, title=f"Motion {number}", page=page)
 
     for page in range(resolution_page, 0, -1):
         text = pages.get(page, "")
@@ -133,6 +309,10 @@ def _extract_authors_from_lines(lines: List[str]) -> str:
         r"(myggdals|v[aä]gen|v\.|gatan|gr[aä]nd|all[eé]|torg)",
         flags=re.IGNORECASE,
     )
+    signoff_hint_pattern = re.compile(r"med\s+v[aä]nlig", flags=re.IGNORECASE)
+    board_reply_pattern = re.compile(r"^styrelsens\s+svar", flags=re.IGNORECASE)
+    signoff_inline_pattern = re.compile(r"^(?:med\s+v[aä]nlig\s+h[aä]lsning|mvh)\s+(.+)$", flags=re.IGNORECASE)
+    address_split_pattern = re.compile(r"\bmyggdalsv[aä]gen\b|\b\d{2,3}\b", flags=re.IGNORECASE)
 
     def is_likely_name(candidate: str) -> bool:
         if not name_only_pattern.match(candidate):
@@ -147,7 +327,8 @@ def _extract_authors_from_lines(lines: List[str]) -> str:
         if len(tokens) < 2 or len(tokens) > 4:
             return False
 
-        token_pattern = re.compile(r"^([A-ZÅÄÖ]\.|[A-Za-zÅÄÖåäöÉé][A-Za-zÅÄÖåäöÉé\-]*\.?)$")
+        # Require name-shaped tokens that start with uppercase (or initials like "A.").
+        token_pattern = re.compile(r"^([A-ZÅÄÖ]\.|[A-ZÅÄÖÉ][A-Za-zÅÄÖåäöÉé\-]*\.?)$")
         return all(token_pattern.match(t) for t in tokens)
 
     authors: List[str] = []
@@ -155,6 +336,21 @@ def _extract_authors_from_lines(lines: List[str]) -> str:
         c = _clean_line(line)
         if not c:
             continue
+
+        # Handle sign-off rows where greeting and name are on the same line.
+        # Examples: "Med vänlig hälsning Anni Henriksson, Myggdalsvägen 82"
+        #           "MVH Lennarth Gure Myggdalsvägen 96"
+        m_signoff_inline = signoff_inline_pattern.match(c)
+        if m_signoff_inline:
+            tail = normalize_space(m_signoff_inline.group(1))
+            candidate = tail.split(",", 1)[0].strip()
+            split_match = address_split_pattern.search(candidate)
+            if split_match:
+                candidate = candidate[: split_match.start()].strip(" ,;:-/")
+            if is_likely_name(candidate):
+                authors.append(candidate)
+                continue
+
         if signer_pattern.match(c):
             name_part = c.split(",", 1)[0].strip()
             if is_likely_name(name_part):
@@ -164,9 +360,19 @@ def _extract_authors_from_lines(lines: List[str]) -> str:
         # Also support signatures written as a name line followed by an address line.
         if is_likely_name(c):
             next_line = ""
+            prev_line = ""
             if idx + 1 < len(lines):
                 next_line = _clean_line(lines[idx + 1])
+            if idx - 1 >= 0:
+                prev_line = _clean_line(lines[idx - 1])
             if next_line and address_hint_pattern.search(next_line):
+                authors.append(c)
+                continue
+
+            # Some PDFs only have a sign-off + name line (no address row).
+            if (prev_line and signoff_hint_pattern.search(prev_line)) or (
+                next_line and board_reply_pattern.search(next_line)
+            ):
                 authors.append(c)
 
     # De-duplicate while preserving order
@@ -185,7 +391,7 @@ def _slice_motion_block(lines: List[str], motion_number: Optional[int]) -> List[
     if motion_number is None:
         return lines
 
-    motion_header = re.compile(r"\bmotion\s*(\d+)\b", flags=re.IGNORECASE)
+    motion_header = re.compile(r"^\s*(?:MOTION|Motion)\s*(\d+)\s*:?\s*$")
     header_positions: List[Tuple[int, int]] = []
     for i, line in enumerate(lines):
         m = motion_header.search(line)
@@ -318,6 +524,18 @@ def _extract_title_from_lines(lines: List[str], motion_number: Optional[int]) ->
             "element" in low_title and "värme" in low_title
         ):
             title = "Individuell reglering av värme"
+        elif "den som är satt i skuld är inte fri" in low_title or (
+            "lånestopp" in low_title and "föreningen" in low_title
+        ):
+            title = "Lånestopp i föreningen i fem år"
+        elif "bastu" in low_title and ("tag" in low_title or "pass" in low_title):
+            title = "Längre bastupass eller extra bastutagg"
+        elif "hiss" in low_title and (
+            "återgår" in low_title
+            or "bottenplanet" in low_title
+            or "höghusen" in low_title
+        ):
+            title = "Hissar återgår till bottenplan"
 
         # Prefer first clause as display title.
         first_clause = re.split(r"[\.!?]", title, maxsplit=1)[0].strip()
@@ -384,10 +602,38 @@ def extract_motion_metadata_ocr(pdf_path: Path, page: int, motion_number: Option
         return "Motion (okänd)", ""
 
     lines = [ln for ln in (l.strip() for l in text.splitlines()) if ln]
+
+    # Motions often span to the next page where signer lines appear.
+    # Include one look-ahead OCR page so author extraction can see signatures.
+    if motion_number is not None:
+        try:
+            next_image = convert_from_path(
+                str(pdf_path),
+                dpi=300,
+                first_page=page + 1,
+                last_page=page + 1,
+            )[0]
+            next_text = pytesseract.image_to_string(next_image, lang="swe")
+            next_lines = [ln for ln in (l.strip() for l in next_text.splitlines()) if ln]
+            if next_lines:
+                lines.extend(next_lines)
+        except Exception:
+            pass
+
     motion_lines = _slice_motion_block(lines, motion_number)
     title = _extract_title_from_lines(motion_lines, motion_number)
     authors = _extract_authors_from_lines(motion_lines)
     return title, authors
+
+
+def extract_page_text_ocr(pdf_path: Path, page: int) -> str:
+    if not HAS_OCR:
+        return ""
+    try:
+        image = convert_from_path(str(pdf_path), dpi=300, first_page=page, last_page=page)[0]
+        return pytesseract.image_to_string(image, lang="swe")
+    except Exception:
+        return ""
 
 
 def detect_resolutions(text: str) -> List[Tuple[str, str, int]]:
@@ -403,11 +649,16 @@ def detect_resolutions(text: str) -> List[Tuple[str, str, int]]:
         # Keep explicit "motionen avslas" as outcome label Avslås instead of Avstyrker.
         (rf"{yrkar_styrelsen}\s+.*?\bavslag\b", "Avstyrker"),
         (rf"{foreslar_styrelsen}\s+.*?\bbifall\b", "Tillstyrker"),
+        (rf"{foreslar_styrelsen}\s+.*?\bbifall[aer]\b", "Tillstyrker"),
         (rf"{foreslar_styrelsen}\s+.*?\bavslag\b", "Avstyrker"),
+        (rf"{foreslar_styrelsen}\s+.*?\bavsl[aå]\b", "Avstyrker"),
         # Keep passive outcome wording when stated explicitly in the source text.
         (r"motionen\s+bifalles", "Bifalls"),
         (r"motionen\s+avsl[aå]s", "Avslås"),
         (r"motionen\s+[aä]r\s+besvarad", "Besvarad"),
+        (r"fr[aå]gan\s+[aä]r\s+besvarad", "Besvarad"),
+        (r"st[aä]mman\s+besl[oö]t\s+att\s+bifall[a-z]*", "Bifalls"),
+        (r"st[aä]mman\s+besl[oö]t\s+att\s+avsl[aå][a-z]*", "Avslås"),
     ]
 
     found: List[Tuple[int, int, str]] = []
@@ -434,20 +685,66 @@ def detect_resolutions(text: str) -> List[Tuple[str, str, int]]:
     return results
 
 
-def build_rows(year: int, pdf_file: str) -> List[ResolutionRow]:
+def detect_motion_numbers_in_pages(pages: Dict[int, str]) -> List[int]:
+    motion_header = re.compile(r"^\s*(?:MOTION|Motion)\s*(\d+)\b")
+    numbers = set()
+
+    for text in pages.values():
+        for line in text.splitlines():
+            m = motion_header.search(line)
+            if not m:
+                continue
+            try:
+                numbers.add(int(m.group(1)))
+            except ValueError:
+                continue
+
+    return sorted(numbers)
+
+
+def find_missing_extracted_motions(rows: List[ResolutionRow], expected_motion_numbers: List[int]) -> List[int]:
+    extracted = set()
+    for row in rows:
+        raw = normalize_space(row.motion_number)
+        if not raw.isdigit():
+            continue
+        extracted.add(int(raw))
+    expected = set(expected_motion_numbers)
+    return sorted(expected - extracted)
+
+
+def build_rows(
+    year: int,
+    pdf_file: str,
+    enable_ocr_fallback: bool = True,
+) -> Tuple[List[ResolutionRow], List[int]]:
     pdf_path = PDF_DIR / pdf_file
     if not pdf_path.exists():
         raise RuntimeError(f"PDF file not found: {pdf_path}")
 
     page_count = get_pdf_page_count(pdf_path)
     pages: Dict[int, str] = {}
+    ocr_pages: Dict[int, str] = {}
     rows: List[ResolutionRow] = []
     seen_motion_keys = set()
+    bbox_cache: Dict[int, List[Tuple[float, float, float, float, str, str]]] = {}
+    ocr_bbox_cache: Dict[int, List[Tuple[float, float, float, float, str, str]]] = {}
 
     for page in range(1, page_count + 1):
         text = extract_page_text(pdf_path, page)
-        pages[page] = text
-        matches = detect_resolutions(text)
+        working_text = text
+        matches = detect_resolutions(working_text)
+
+        if not matches and HAS_OCR and enable_ocr_fallback:
+            ocr_text = ocr_pages.get(page)
+            if ocr_text is None:
+                ocr_text = extract_page_text_ocr(pdf_path, page)
+                ocr_pages[page] = ocr_text
+            if ocr_text:
+                working_text = ocr_text
+                matches = detect_resolutions(working_text)
+
+        pages[page] = working_text
         if not matches:
             continue
 
@@ -459,6 +756,9 @@ def build_rows(year: int, pdf_file: str) -> List[ResolutionRow]:
             seen_motion_keys.add(motion_key)
 
             title, authors = extract_motion_metadata_ocr(pdf_path, ctx.page, ctx.number)
+            resolution_x, resolution_y, resolution_width, resolution_height = find_resolution_bbox(
+                pdf_path, page, resolution, bbox_cache, ocr_bbox_cache
+            )
 
             rows.append(
                 ResolutionRow(
@@ -470,14 +770,15 @@ def build_rows(year: int, pdf_file: str) -> List[ResolutionRow]:
                     authors=authors,
                     resolution=resolution,
                     resolution_page=page,
-                    resolution_x="",
-                    resolution_y="",
-                    resolution_width="",
-                    resolution_height="",
+                    resolution_x=resolution_x,
+                    resolution_y=resolution_y,
+                    resolution_width=resolution_width,
+                    resolution_height=resolution_height,
                 )
             )
 
-    return rows
+    expected_motion_numbers = detect_motion_numbers_in_pages(pages)
+    return rows, expected_motion_numbers
 
 
 def print_rows(rows: List[ResolutionRow]) -> None:
@@ -571,7 +872,8 @@ def append_rows(output_path: Path, rows: List[ResolutionRow]) -> int:
         compressed[key] = r
     existing = [compressed[k] for k in order]
 
-    # Secondary dedupe for legacy collisions that differ only by missing motion_number.
+    # Secondary dedupe for legacy collisions, but only for truly legacy rows.
+    # Important: do NOT collapse distinct numbered motions that share page/resolution_page.
     by_legacy: Dict[Tuple[str, str, str, str], Dict[str, str]] = {}
     legacy_order: List[Tuple[str, str, str, str]] = []
     for r in existing:
@@ -581,12 +883,28 @@ def append_rows(output_path: Path, rows: List[ResolutionRow]) -> int:
             legacy_order.append(lk)
             continue
         prev = by_legacy[lk]
-        prev_has_num = bool(infer_motion_number(prev))
-        curr_has_num = bool(infer_motion_number(r))
-        if curr_has_num and not prev_has_num:
+        prev_num = infer_motion_number(prev)
+        curr_num = infer_motion_number(r)
+
+        # If both are numbered and represent different motions, keep both rows.
+        if prev_num and curr_num and prev_num != curr_num:
+            alt_lk = (lk[0], lk[1], lk[2], f"{lk[3]}#m{curr_num}")
+            if alt_lk not in by_legacy:
+                by_legacy[alt_lk] = r
+                legacy_order.append(alt_lk)
+            else:
+                by_legacy[alt_lk] = r
+            continue
+
+        # If only one row has a motion number, prefer that row.
+        if curr_num and not prev_num:
             by_legacy[lk] = r
-        else:
-            by_legacy[lk] = r
+            continue
+        if prev_num and not curr_num:
+            continue
+
+        # Same motion number or both unnumbered: keep latest row.
+        by_legacy[lk] = r
     existing = [by_legacy[k] for k in legacy_order]
 
     existing_idx = {make_key(r): i for i, r in enumerate(existing)}
@@ -648,12 +966,58 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUTPUT,
         help="Output CSV path for --append mode",
     )
+    parser.add_argument(
+        "--skip-motion-coverage-check",
+        action="store_true",
+        help="Disable verification that all detected motion headers have extracted rows",
+    )
+    parser.add_argument(
+        "--strict-motion-coverage",
+        action="store_true",
+        help="Fail the run when any detected motion header is missing from extracted rows",
+    )
+    parser.add_argument(
+        "--no-ocr-fallback",
+        action="store_true",
+        help=(
+            "Skip OCR fallback for resolution detection pages. "
+            "Use this for faster runs on text-layer PDFs when OCR is not needed."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    rows = build_rows(args.year, args.pdf_file)
+    rows, expected_motion_numbers = build_rows(
+        args.year,
+        args.pdf_file,
+        enable_ocr_fallback=not args.no_ocr_fallback,
+    )
+
+    if not args.skip_motion_coverage_check:
+        missing_motion_numbers = find_missing_extracted_motions(rows, expected_motion_numbers)
+        if expected_motion_numbers:
+            print(
+                (
+                    "Coverage check: found motion headers "
+                    f"{expected_motion_numbers[0]}-{expected_motion_numbers[-1]} "
+                    f"({len(expected_motion_numbers)} total)."
+                ),
+                file=sys.stderr,
+            )
+        if missing_motion_numbers:
+            print(
+                "WARNING: Missing extracted rows for motion number(s): "
+                + ", ".join(str(n) for n in missing_motion_numbers),
+                file=sys.stderr,
+            )
+            if args.strict_motion_coverage:
+                print(
+                    "Coverage check failed in strict mode. No output written.",
+                    file=sys.stderr,
+                )
+                return 2
 
     if not rows:
         print("No motion resolution rows were detected.", file=sys.stderr)

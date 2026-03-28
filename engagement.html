@@ -364,10 +364,6 @@
                     Ar
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
-                    <input type="checkbox" value="motionNumber" checked style="accent-color: var(--vm-blue);">
-                    Motion nr
-                </label>
-                <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="title" checked style="accent-color: var(--vm-blue);">
                     Titel
                 </label>
@@ -386,6 +382,10 @@
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="page" style="accent-color: var(--vm-blue);">
                     Sida
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="motionNumber" style="accent-color: var(--vm-blue);">
+                    Motion nr
                 </label>
             </div>
         </section>
@@ -448,6 +448,7 @@
         let pageNumPending = null;
         const pdfScale = 1.5;
         const pdfSources = {};
+        let currentHighlight = null;
 
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
@@ -472,19 +473,38 @@
         function renderPDFSourceList(reports) {
             const list = document.getElementById('pdf-source-list');
             if (!list || !Array.isArray(reports)) return;
-            const sorted = [...reports].sort((a, b) => b.finance_period - a.finance_period);
+            const minYear = 2015;
+            const sorted = [...reports]
+                .filter(r => Number(r.finance_period) >= minYear)
+                .sort((a, b) => b.finance_period - a.finance_period);
             list.innerHTML = sorted.map(r => {
                 return `<li>${r.finance_period} - <a href="${r.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${r.url}</a></li>`;
             }).join('');
         }
 
-        function openMotionPdf(file, page, label) {
+        function openMotionPdf(file, page, label, highlight = null) {
             if (!file) return;
             const safePage = Number(page) || 1;
             const modal = document.getElementById('pdfModal');
             const title = document.getElementById('modal-title');
             const urlLink = document.getElementById('pdf-url');
             title.textContent = `Källdokument: ${file} - ${label}`;
+
+            const hasHighlight = highlight
+                && Number.isFinite(Number(highlight.page))
+                && Number.isFinite(Number(highlight.x))
+                && Number.isFinite(Number(highlight.y))
+                && Number.isFinite(Number(highlight.width))
+                && Number.isFinite(Number(highlight.height))
+                && Number(highlight.width) > 0
+                && Number(highlight.height) > 0;
+            currentHighlight = hasHighlight ? {
+                page: Number(highlight.page),
+                x: Number(highlight.x),
+                y: Number(highlight.y),
+                width: Number(highlight.width),
+                height: Number(highlight.height)
+            } : null;
 
             if (pdfSources[file]) {
                 urlLink.href = pdfSources[file];
@@ -501,6 +521,7 @@
         function closeModal() {
             document.getElementById('pdfModal').style.display = 'none';
             pdfDoc = null;
+            currentHighlight = null;
         }
 
         window.addEventListener('click', (event) => {
@@ -531,6 +552,7 @@
             canvas.width = viewport.width;
 
             await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            drawHighlightForPage(num, viewport);
 
             pageRendering = false;
             if (pageNumPending !== null) {
@@ -540,6 +562,24 @@
 
             document.getElementById('page-num').textContent = num;
             updatePdfButtons();
+        }
+
+        function drawHighlightForPage(num, viewport) {
+            if (!currentHighlight) return;
+            if (Number(currentHighlight.page) !== Number(num)) return;
+
+            const x = currentHighlight.x * viewport.scale;
+            const y = currentHighlight.y * viewport.scale;
+            const width = currentHighlight.width * viewport.scale;
+            const height = currentHighlight.height * viewport.scale;
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 214, 10, 0.35)';
+            ctx.strokeStyle = 'rgba(180, 40, 0, 0.95)';
+            ctx.lineWidth = Math.max(2, viewport.scale);
+            ctx.fillRect(x, y, width, height);
+            ctx.strokeRect(x, y, width, height);
+            ctx.restore();
         }
 
         function queueRenderPage(num) {
@@ -602,12 +642,12 @@
         const MOTIONS_URL = 'data/motions.csv';
         const TABLE_COLUMNS = [
             { key: 'year', label: 'Ar', className: 'col-year' },
-            { key: 'motionNumber', label: 'Motion nr', className: 'col-motion' },
             { key: 'title', label: 'Titel', className: '' },
             { key: 'resolution', label: 'Beslut', className: '' },
             { key: 'authors', label: 'Forfattare', className: '' },
             { key: 'file', label: 'Fil', className: '' },
-            { key: 'page', label: 'Sida', className: 'col-motion' }
+            { key: 'page', label: 'Sida', className: 'col-motion' },
+            { key: 'motionNumber', label: 'Motion nr', className: 'col-motion' }
         ];
         let allRecords = [];
         let resolutionPieChart = null;
@@ -706,7 +746,13 @@
                     if (col.className) td.className = col.className;
 
                     const value = record[col.key] || '-';
-                    const isClickable = (col.key === 'motionNumber' || col.key === 'title' || col.key === 'file' || col.key === 'page') && record.file;
+                    const isClickable = (
+                        col.key === 'motionNumber'
+                        || col.key === 'title'
+                        || col.key === 'file'
+                        || col.key === 'page'
+                        || col.key === 'resolution'
+                    ) && record.file;
 
                     if (isClickable) {
                         const span = document.createElement('span');
@@ -718,9 +764,24 @@
                         if (col.key === 'title') label = record.title || 'Motion';
                         if (col.key === 'file') label = `Fil ${record.file}`;
                         if (col.key === 'page') label = `Sida ${record.page || ''}`;
+                        if (col.key === 'resolution') label = `Beslut: ${record.resolution || ''}`;
 
                         span.addEventListener('click', () => {
-                            openMotionPdf(record.file, Number(record.page) || 1, label);
+                            const targetPage = col.key === 'resolution'
+                                ? (Number(record.resolutionPage) || Number(record.page) || 1)
+                                : (Number(record.page) || 1);
+
+                            const highlight = col.key === 'resolution'
+                                ? {
+                                    page: Number(record.resolutionPage) || targetPage,
+                                    x: Number(record.resolutionX),
+                                    y: Number(record.resolutionY),
+                                    width: Number(record.resolutionWidth),
+                                    height: Number(record.resolutionHeight)
+                                }
+                                : null;
+
+                            openMotionPdf(record.file, targetPage, label, highlight);
                         });
                         td.appendChild(span);
                     } else {
@@ -1082,7 +1143,12 @@
                     page: getCell(cells, indexMap, 'page'),
                     title: getCell(cells, indexMap, 'title'),
                     authors: getCell(cells, indexMap, 'authors'),
-                    resolution: getCell(cells, indexMap, 'resolution')
+                    resolution: getCell(cells, indexMap, 'resolution'),
+                    resolutionPage: getCell(cells, indexMap, 'resolution_page'),
+                    resolutionX: getCell(cells, indexMap, 'resolution_x'),
+                    resolutionY: getCell(cells, indexMap, 'resolution_y'),
+                    resolutionWidth: getCell(cells, indexMap, 'resolution_width'),
+                    resolutionHeight: getCell(cells, indexMap, 'resolution_height')
                 }));
 
                 allRecords = records.sort((a, b) => {
