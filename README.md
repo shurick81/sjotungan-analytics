@@ -2,6 +2,29 @@
 
 ## Preparation
 
+## Sweden Macro Inflation Data (KPI)
+
+Inflation data used by the visualizations is stored locally in `data/macro_sweden.json`.
+
+- Current local snapshot in this repo: **1980-2024** (`inflation_yoy_pct`).
+- Source: **SCB KPI (year-over-year %)**, manually compiled into the JSON file.
+- Why local: reproducible charts without runtime dependency on external APIs.
+
+### Historical coverage policy
+
+- The 2012 start year is a project choice, not a source limitation.
+- We can extend the series to at least **1980** using the same SCB KPI source.
+- If extended, keep the same schema and add yearly rows in ascending order.
+
+### Update checklist
+
+When updating `data/macro_sweden.json`:
+
+1. Add or revise yearly `inflation_yoy_pct` values.
+2. Keep `sources.inflation_yoy_pct` filled with name + URL.
+3. Update `updated_at` to the change date.
+4. Mention the year range change in the commit message.
+
 ### Provisioning sources file
 
 Add PDF sources to `sources.yaml` file
