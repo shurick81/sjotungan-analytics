@@ -419,6 +419,32 @@
         <div id="empty-state" class="empty-state mt-4 p-4 text-sm hidden">
             Inga motioner hittades i data/motions.csv.
         </div>
+
+        <section class="chart-card p-4 mb-4" aria-label="Narvaro pa arsstamma">
+            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Narvaro pa arsstamma</h2>
+            <div class="w-full bar-chart-wrap">
+                <canvas id="attendance-bar-chart" aria-label="Narvarande medlemmar och fullmakter per ar" role="img"></canvas>
+            </div>
+        </section>
+
+        <section class="chart-card p-4 mb-6" aria-label="Tabell med arsstamma-narvaro">
+            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Arsstamma narvaro per ar</h2>
+            <div class="overflow-x-auto rounded-lg">
+                <table class="motions-table" id="attendance-table">
+                    <thead>
+                        <tr>
+                            <th class="col-year">Ar</th>
+                            <th>Medlemmar</th>
+                            <th>Fullmakter</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-body"></tbody>
+                </table>
+            </div>
+            <div id="attendance-empty-state" class="empty-state mt-4 p-4 text-sm hidden">
+                Inga uppgifter hittades i data/general_states.csv for kategorierna narvaro/fullmakter.
+            </div>
+        </section>
     </section>
 
     <section id="forum" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
@@ -482,6 +508,12 @@
                     });
                     renderPDFSourceList(data.annual_reports);
                 }
+                if (data && data.stamma_protocols) {
+                    data.stamma_protocols.forEach(source => {
+                        const filename = source.local_path.split('/').pop();
+                        pdfSources[filename] = source.url;
+                    });
+                }
             } catch (error) {
                 console.error('Error loading PDF sources:', error);
             }
@@ -499,7 +531,7 @@
             }).join('');
         }
 
-        function openMotionPdf(file, page, label, highlight = null) {
+        function openMotionPdf(file, page, label, highlight = null, folder = 'annual_reports') {
             if (!file) return;
             const safePage = Number(page) || 1;
             const modal = document.getElementById('pdfModal');
@@ -532,7 +564,7 @@
             }
 
             modal.style.display = 'block';
-            loadPDF('data/annual_reports/' + file, safePage);
+            loadPDF(`data/${folder}/` + file, safePage);
         }
 
         function closeModal() {
@@ -640,6 +672,10 @@
                         resolutionBarChart.resize();
                         resolutionBarChart.update();
                     }
+                    if (attendanceBarChart) {
+                        attendanceBarChart.resize();
+                        attendanceBarChart.update();
+                    }
                 }, 0);
             }
             section.scrollIntoView({ behavior: 'smooth' });
@@ -657,6 +693,9 @@
         }
 
         const MOTIONS_URL = 'data/motions.csv';
+        const GENERAL_STATES_URL = 'data/general_states.csv';
+        const ATTENDANCE_MEMBERS_CATEGORY_ID = '6';
+        const ATTENDANCE_PROXIES_CATEGORY_ID = '7';
         const TABLE_COLUMNS = [
             { key: 'year', label: 'Ar', className: 'col-year' },
             { key: 'title', label: 'Titel', className: '' },
@@ -669,6 +708,7 @@
         let allRecords = [];
         let resolutionPieChart = null;
         let resolutionBarChart = null;
+        let attendanceBarChart = null;
 
         // Parse CSV with support for quoted fields and escaped quotes.
         function parseCsv(text) {
@@ -1133,6 +1173,239 @@
             });
         }
 
+        function buildAttendanceRows(records) {
+            const perYear = new Map();
+
+            for (const row of records) {
+                const year = Number(row.year);
+                if (!Number.isFinite(year)) continue;
+
+                if (!perYear.has(year)) {
+                    perYear.set(year, {
+                        year,
+                        members: null,
+                        proxies: null,
+                        membersRef: null,
+                        proxiesRef: null
+                    });
+                }
+
+                const item = perYear.get(year);
+                const value = Number(row.value);
+                const ref = {
+                    file: row.file,
+                    page: Number(row.page) || 1,
+                    x: Number(row.x),
+                    y: Number(row.y),
+                    width: Number(row.width),
+                    height: Number(row.height)
+                };
+
+                if (row.categoryId === ATTENDANCE_MEMBERS_CATEGORY_ID) {
+                    item.members = Number.isFinite(value) ? value : null;
+                    item.membersRef = ref;
+                } else if (row.categoryId === ATTENDANCE_PROXIES_CATEGORY_ID) {
+                    item.proxies = Number.isFinite(value) ? value : null;
+                    item.proxiesRef = ref;
+                }
+            }
+
+            return [...perYear.values()]
+                .filter(item => item.members !== null || item.proxies !== null)
+                .sort((a, b) => a.year - b.year);
+        }
+
+        function hasValidHighlightRef(ref) {
+            if (!ref) return false;
+            return Number.isFinite(Number(ref.page))
+                && Number.isFinite(Number(ref.x))
+                && Number.isFinite(Number(ref.y))
+                && Number.isFinite(Number(ref.width))
+                && Number.isFinite(Number(ref.height))
+                && Number(ref.width) > 0
+                && Number(ref.height) > 0;
+        }
+
+        function renderAttendanceChart(rows) {
+            const canvas = document.getElementById('attendance-bar-chart');
+            if (!canvas || typeof Chart === 'undefined') return;
+
+            const labels = rows.map(r => String(r.year));
+            const members = rows.map(r => Number.isFinite(r.members) ? r.members : 0);
+            const proxies = rows.map(r => Number.isFinite(r.proxies) ? r.proxies : 0);
+
+            if (attendanceBarChart) {
+                attendanceBarChart.data.labels = labels;
+                attendanceBarChart.data.datasets[0].data = members;
+                attendanceBarChart.data.datasets[1].data = proxies;
+                attendanceBarChart.update();
+                return;
+            }
+
+            attendanceBarChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Narvarande medlemmar',
+                            data: members,
+                            backgroundColor: '#1d4ed8'
+                        },
+                        {
+                            label: 'Fullmakter',
+                            data: proxies,
+                            backgroundColor: '#dc2626'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Ar'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            title: {
+                                display: true,
+                                text: 'Antal'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderAttendanceTable(rows) {
+            const tbody = document.getElementById('attendance-body');
+            const emptyState = document.getElementById('attendance-empty-state');
+            if (!tbody || !emptyState) return;
+
+            tbody.innerHTML = '';
+            if (!rows.length) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            for (const row of rows) {
+                const tr = document.createElement('tr');
+
+                const yearCell = document.createElement('td');
+                yearCell.className = 'col-year';
+                yearCell.textContent = String(row.year);
+                tr.appendChild(yearCell);
+
+                const membersCell = document.createElement('td');
+                const membersLabel = Number.isFinite(row.members) ? String(row.members) : '-';
+                if (membersLabel !== '-' && row.membersRef?.file && hasValidHighlightRef(row.membersRef)) {
+                    const span = document.createElement('span');
+                    span.className = 'clickable-cell';
+                    span.textContent = membersLabel;
+                    span.title = 'Visa markering i protokoll-PDF';
+                    span.addEventListener('click', () => {
+                        openMotionPdf(
+                            row.membersRef.file,
+                            row.membersRef.page,
+                            `Arsstamma ${row.year} - medlemmar`,
+                            row.membersRef,
+                            'stamma_protocols'
+                        );
+                    });
+                    membersCell.appendChild(span);
+                } else {
+                    membersCell.textContent = membersLabel;
+                }
+                tr.appendChild(membersCell);
+
+                const proxiesCell = document.createElement('td');
+                const proxiesLabel = Number.isFinite(row.proxies) ? String(row.proxies) : '-';
+                if (proxiesLabel !== '-' && row.proxiesRef?.file && hasValidHighlightRef(row.proxiesRef)) {
+                    const span = document.createElement('span');
+                    span.className = 'clickable-cell';
+                    span.textContent = proxiesLabel;
+                    span.title = 'Visa markering i protokoll-PDF';
+                    span.addEventListener('click', () => {
+                        openMotionPdf(
+                            row.proxiesRef.file,
+                            row.proxiesRef.page,
+                            `Arsstamma ${row.year} - fullmakter`,
+                            row.proxiesRef,
+                            'stamma_protocols'
+                        );
+                    });
+                    proxiesCell.appendChild(span);
+                } else {
+                    proxiesCell.textContent = proxiesLabel;
+                }
+                tr.appendChild(proxiesCell);
+
+                tbody.appendChild(tr);
+            }
+        }
+
+        async function loadAttendance() {
+            try {
+                const csvUrl = `${GENERAL_STATES_URL}?t=${Date.now()}`;
+                const resp = await fetch(csvUrl, { cache: 'no-store' });
+                if (!resp.ok) {
+                    throw new Error(`Failed to load ${GENERAL_STATES_URL}: ${resp.status}`);
+                }
+
+                const text = await resp.text();
+                const rows = parseCsv(text);
+                if (!rows.length) {
+                    renderAttendanceChart([]);
+                    renderAttendanceTable([]);
+                    return;
+                }
+
+                const header = rows[0].map(norm);
+                const indexMap = {};
+                header.forEach((name, idx) => {
+                    indexMap[name] = idx;
+                });
+
+                const parsed = rows.slice(1).map(cells => ({
+                    year: getCell(cells, indexMap, 'year'),
+                    categoryId: getCell(cells, indexMap, 'category_id'),
+                    value: getCell(cells, indexMap, 'value'),
+                    file: getCell(cells, indexMap, 'file'),
+                    page: getCell(cells, indexMap, 'page'),
+                    x: getCell(cells, indexMap, 'x'),
+                    y: getCell(cells, indexMap, 'y'),
+                    width: getCell(cells, indexMap, 'width'),
+                    height: getCell(cells, indexMap, 'height')
+                }));
+
+                const attendanceRows = buildAttendanceRows(
+                    parsed.filter(r => r.categoryId === ATTENDANCE_MEMBERS_CATEGORY_ID || r.categoryId === ATTENDANCE_PROXIES_CATEGORY_ID)
+                );
+
+                renderAttendanceChart(attendanceRows);
+                renderAttendanceTable(attendanceRows);
+            } catch (error) {
+                console.error(error);
+                renderAttendanceChart([]);
+                renderAttendanceTable([]);
+            }
+        }
+
         async function loadMotions() {
             try {
                 const csvUrl = `${MOTIONS_URL}?t=${Date.now()}`;
@@ -1187,6 +1460,7 @@
         }
 
         loadMotions();
+        loadAttendance();
         loadPDFSources();
         loadFromHash();
         window.addEventListener('hashchange', loadFromHash);

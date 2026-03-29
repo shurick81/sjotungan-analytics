@@ -6,7 +6,7 @@ Download files from sources.yaml to local paths.
 import yaml
 import requests
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Iterable, List, Tuple
 import sys
 
 
@@ -58,6 +58,21 @@ def download_file(url: str, local_path: str) -> bool:
         return False
 
 
+def iter_source_items(sources: Dict) -> Iterable[Tuple[str, Dict]]:
+    """Yield (category, item) pairs from supported source groups.
+
+    Prioritize known categories, but keep support for any top-level list category.
+    """
+    preferred_order = ["annual_reports", "stamma_protocols"]
+    remaining = [k for k in sources.keys() if k not in preferred_order]
+
+    for category in preferred_order + remaining:
+        items = sources.get(category)
+        if isinstance(items, list):
+            for item in items:
+                yield category, item
+
+
 def main():
     """Main function to download all files from sources.yaml."""
     print("🚀 Starting download of source files...\n")
@@ -79,34 +94,37 @@ def main():
     skipped = 0
     
     # Process each category
-    for category, items in sources.items():
-        print(f"📁 Category: {category}")
-        
-        if not isinstance(items, list):
-            print(f"  ⚠️  Skipping non-list category: {category}")
+    current_category = None
+    for category, item in iter_source_items(sources):
+        if category != current_category:
+            if current_category is not None:
+                print()  # Empty line between categories
+            print(f"📁 Category: {category}")
+            current_category = category
+
+        total_files += 1
+
+        if 'url' not in item or 'local_path' not in item:
+            print(f"  ⚠️  Skipping item with missing url or local_path: {item}")
+            failed += 1
             continue
-        
-        for item in items:
-            total_files += 1
-            
-            if 'url' not in item or 'local_path' not in item:
-                print(f"  ⚠️  Skipping item with missing url or local_path: {item}")
-                failed += 1
-                continue
-            
-            url = item['url']
-            local_path = item['local_path']
-            
-            # Check if already exists
-            if Path(local_path).exists():
-                skipped += 1
-                print(f"  ⏭️  Already exists: {local_path}")
-            elif download_file(url, local_path):
-                successful += 1
-            else:
-                failed += 1
-        
-        print()  # Empty line between categories
+
+        url = item['url']
+        local_path = item['local_path']
+
+        # Check if already exists
+        if Path(local_path).exists():
+            skipped += 1
+            print(f"  ⏭️  Already exists: {local_path}")
+        elif download_file(url, local_path):
+            successful += 1
+        else:
+            failed += 1
+
+    # Report unsupported category shapes so YAML issues are visible
+    for category, items in sources.items():
+        if not isinstance(items, list):
+            print(f"⚠️  Skipping non-list category: {category}")
     
     # Print summary
     print("=" * 60)
