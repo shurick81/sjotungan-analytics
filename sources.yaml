@@ -35,3 +35,95 @@ annual_reports:
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2014/arsredovisning%202013.pdf"
     finance_period: 2013
     local_path: "data/annual_reports/arsredovisning_2013.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2013.pdf"
+    finance_period: 2012
+    local_path: "data/annual_reports/arsredovisning2013.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2012.pdf"
+    finance_period: 2011
+    local_path: "data/annual_reports/arsredovisning2012.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2010.pdf"
+    finance_period: 2010
+    local_path: "data/annual_reports/arsredovisning2010.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning%202009.pdf"
+    finance_period: 2009
+    local_path: "data/annual_reports/arsredovisning_2009.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning%202008.pdf"
+    finance_period: 2008
+    local_path: "data/annual_reports/Arsredovisning_2008.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning%202007.pdf"
+    finance_period: 2007
+    local_path: "data/annual_reports/Arsredovisning_2007.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning_2006.pdf"
+    finance_period: 2006
+    local_path: "data/annual_reports/Arsredovisning_2006.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning_2004.pdf"
+    finance_period: 2004
+    local_path: "data/annual_reports/Arsredovisning_2004.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning_03_B.pdf"
+    finance_period: 2003
+    local_path: "data/annual_reports/arsredovisning_03_B.pdf"
+
+stamma_protocols:
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/stamma2025-protokoll.pdf"
+    meeting_year: 2025
+    local_path: "data/stamma_protocols/stamma2025-protokoll.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2024/protokoll2024.pdf"
+    meeting_year: 2024
+    local_path: "data/stamma_protocols/protokoll2024.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2023/Protokoll2023.pdf"
+    meeting_year: 2023
+    local_path: "data/stamma_protocols/Protokoll2023.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2022/Protokoll2022.pdf"
+    meeting_year: 2022
+    local_path: "data/stamma_protocols/Protokoll2022.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2021/Protokoll2021.pdf"
+    meeting_year: 2021
+    local_path: "data/stamma_protocols/Protokoll2021.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2020/Protokoll_stamma_2020.pdf"
+    meeting_year: 2020
+    local_path: "data/stamma_protocols/Protokoll_stamma_2020.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2019/arsstamma2019.pdf"
+    meeting_year: 2019
+    local_path: "data/stamma_protocols/arsstamma2019.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2018/extraforeringsstamma20180705.pdf"
+    meeting_year: 2018
+    local_path: "data/stamma_protocols/extraforeringsstamma20180705.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2018/Protokoll-2018.pdf"
+    meeting_year: 2018
+    local_path: "data/stamma_protocols/Protokoll-2018.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2017/protokollarsstamma%202017.pdf"
+    meeting_year: 2017
+    local_path: "data/stamma_protocols/protokollarsstamma_2017.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2016/arsmotesprotokoll%202016.pdf"
+    meeting_year: 2016
+    local_path: "data/stamma_protocols/arsmotesprotokoll_2016.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2015/arsmotesprotokoll2015.pdf"
+    meeting_year: 2015
+    local_path: "data/stamma_protocols/arsmotesprotokoll2015.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2014/arsmotesprotokoll2014.pdf"
+    meeting_year: 2014
+    local_path: "data/stamma_protocols/arsmotesprotokoll2014.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2014/extrastamma20140304.pdf"
+    meeting_year: 2014
+    local_path: "data/stamma_protocols/extrastamma20140304.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsmotesprotokoll%202013.pdf"
+    meeting_year: 2013
+    local_path: "data/stamma_protocols/arsmotesprotokoll_2013.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsmotesprotokoll2012.pdf"
+    meeting_year: 2012
+    local_path: "data/stamma_protocols/arsmotesprotokoll2012.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsmotesprotokoll2011.pdf"
+    meeting_year: 2011
+    local_path: "data/stamma_protocols/arsmotesprotokoll2011.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsmotesprotokoll2010.pdf"
+    meeting_year: 2010
+    local_path: "data/stamma_protocols/arsmotesprotokoll2010.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsmotesprotokoll%202009.pdf"
+    meeting_year: 2009
+    local_path: "data/stamma_protocols/Arsmotesprotokoll_2009.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsmotesprotokoll%202008.pdf"
+    meeting_year: 2008
+    local_path: "data/stamma_protocols/arsmotesprotokoll_2008.pdf"
+  - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/e-xtrastamma27nov2007.pdf"
+    meeting_year: 2007
+    local_path: "data/stamma_protocols/e-xtrastamma27nov2007.pdf"
