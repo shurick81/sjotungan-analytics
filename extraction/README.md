@@ -13,6 +13,18 @@ This folder groups reusable data-extraction assets in one place.
 - Method doc: `methods/motion_resolutions.md`
 - Script: `scripts/extract_stamma_attendance.py`
 - Method doc: `methods/stamma_attendance.md`
+- Script: `scripts/extract_legacy_states.py`
+- Script: `scripts/extract_legacy_events_candidates.py`
+- Script: `scripts/extract_pre2009_states_events.py`
+- Method doc: `methods/financial_states_events_legacy.md`
+
+## Macro data note (inflation)
+
+Inflation (KPI) is not extracted from Sjotungan PDFs. It is maintained as a local macro snapshot in `data/macro_sweden.json` at repo root.
+
+- Current range: 1980-2024.
+- Feasible extension: at least back to 1980 from SCB annual KPI data.
+- Keep source attribution and `updated_at` in the JSON file whenever the range is expanded.
 
 ## Reusing the method for other documents
 
@@ -59,3 +71,44 @@ The script writes directly to `data/general_states.csv` as:
 - category `7`: Fullmakter
 
 For older scanned protocols without a text layer, `extract_stamma_attendance.py` now uses OCR fallback (`pdftoppm` + `tesseract`) before writing results.
+
+## Legacy financial extraction (states/events)
+
+The reusable method for backfilling older financial years is documented in:
+
+- `methods/financial_states_events_legacy.md`
+
+It describes a two-phase approach:
+
+1. OCR extraction with per-year config.
+2. Invariant-based verification before append.
+
+Extract legacy states (dry run):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_legacy_states.py
+```
+
+Append legacy states:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_legacy_states.py --append
+```
+
+Extract legacy event candidates (dry run):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_legacy_events_candidates.py
+```
+
+Append legacy events (only after verification):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_legacy_events_candidates.py --append
+```
+
+Extract pre-2009 core states/events (2003, 2004, 2006, 2007, 2008):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_pre2009_states_events.py --append
+```

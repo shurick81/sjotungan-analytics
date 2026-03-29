@@ -383,7 +383,7 @@
     <!-- Inflation / purchasing power chart -->
     <div class="chart-container" id="inflation-section">
         <h2 class="chart-title">Inflation och kronans köpkraft</h2>
-        <p class="chart-conclusion">Lokalt sparad årsdata för inflation (KPI, procent). Tabellen visar även hur mycket som återstår av 1 kronas köpkraft i 2012 års penningvärde.</p>
+        <p class="chart-conclusion">Lokalt sparad årsdata för inflation (KPI, procent). Tabellen visar även hur mycket som återstår av 1 kronas köpkraft i <span id="inflationBaseYearText">basårets</span> penningvärde.</p>
         <div id="inflationChart"></div>
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
 
@@ -393,8 +393,8 @@
                 <tr>
                     <th>År</th>
                     <th class="number">Inflation (KPI, %)</th>
-                    <th class="number">Prisnivå (2012 = 100)</th>
-                    <th class="number">Kvar av 1 kr (2012 års köpkraft)</th>
+                    <th class="number" id="inflationPriceIndexHeader">Prisnivå (basår = 100)</th>
+                    <th class="number" id="inflationPurchasingPowerHeader">Kvar av 1 kr (basårets köpkraft)</th>
                 </tr>
             </thead>
             <tbody id="inflationTableBody"></tbody>
@@ -583,7 +583,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         let currentFlowsData = null;
         let adjustForInflation = false;
         let macroPriceIndexByYear = {};
-        let macroBaseYear = '2012';
+        let macroBaseYear = '';
         let currentDebtData = [];
         let currentCashData = [];
         let currentInterestData = {};
@@ -710,9 +710,14 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 return { meta: payload, rows: [] };
             }
 
-            const baseYear = String(payload.base_year || rows[0].year);
+            return { meta: payload, rows };
+        }
+
+        function buildMacroIndexedRows(rows, baseYear) {
+            if (!rows.length) return [];
+            const normalizedBaseYear = String(baseYear);
             const baseIndex = 100;
-            const baseIdx = Math.max(0, rows.findIndex(r => r.year === baseYear));
+            const baseIdx = Math.max(0, rows.findIndex(r => r.year === normalizedBaseYear));
             const indexedRows = rows.map(r => ({ ...r, priceIndex: null }));
 
             // Set base year index and move forward in time.
@@ -733,7 +738,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 purchasingPowerOre: 10000 / row.priceIndex
             }));
 
-            return { meta: payload, rows: enriched };
+            return enriched;
         }
 
         // Load flows data (insättning, driftkostnad, investeringar)
@@ -854,6 +859,18 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             } else {
                 help.innerHTML = `Belopp visas exakt som nominella arssiffror (lopande priser) fran underlagen. Aktivera valet ovan for att se samma belopp omraknade till ett gemensamt penningvarde (${macroBaseYear} ars kronvarde). Se avsnittet ${sectionLink} langre ner for metod och underlag.`;
             }
+        }
+
+        function updateInflationStaticLabels() {
+            const baseYear = macroBaseYear || 'basar';
+            const sectionText = document.getElementById('inflationBaseYearText');
+            if (sectionText) sectionText.textContent = `${baseYear} ars`;
+
+            const idxHeader = document.getElementById('inflationPriceIndexHeader');
+            if (idxHeader) idxHeader.textContent = `Prisniva (${baseYear} = 100)`;
+
+            const powerHeader = document.getElementById('inflationPurchasingPowerHeader');
+            if (powerHeader) powerHeader.textContent = `Kvar av 1 kr (${baseYear} ars kopkraft)`;
         }
 
         // Load cash / liquid assets data
@@ -1732,11 +1749,29 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 const interestData = await loadInterestData();
                 const flowsData = await loadFlowsData();
                 const macroPayload = await loadMacroData();
-                macroBaseYear = String(macroPayload.meta.base_year || '2012');
+                const macroYears = new Set(macroPayload.rows.map(row => String(row.year)));
+                const financialYears = new Set(debtData.map(item => String(item.year)));
+                const commonYears = [...financialYears]
+                    .filter(year => macroYears.has(year))
+                    .sort((a, b) => a.localeCompare(b));
+                const eventYears = new Set(flowsData.map(item => String(item.year)));
+
+                const latestMacroYear = macroPayload.rows.length
+                    ? String(macroPayload.rows[macroPayload.rows.length - 1].year)
+                    : '';
+
+                // Use the latest year that exists in both financial and macro datasets.
+                macroBaseYear = commonYears.length
+                    ? commonYears[commonYears.length - 1]
+                    : latestMacroYear;
+
+                const indexedMacroRows = buildMacroIndexedRows(macroPayload.rows, macroBaseYear);
                 macroPriceIndexByYear = {};
-                macroPayload.rows.forEach(row => {
+                indexedMacroRows.forEach(row => {
                     macroPriceIndexByYear[row.year] = row.priceIndex;
                 });
+                const inflationDisplayRows = indexedMacroRows.filter(row => eventYears.has(String(row.year)));
+                updateInflationStaticLabels();
                 currentFlowsData = flowsData;
                 const cashData = await loadCashData();
                 renderChart(debtData, cashData);
@@ -1744,8 +1779,8 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 renderDebtPerApartmentChart(debtData);
                 renderInterestChart(debtData, interestData);
                 renderInterestRatioChart(interestData, flowsData);
-                renderMacroChart(macroPayload.rows);
-                renderMacroTable(macroPayload.rows);
+                renderMacroChart(inflationDisplayRows);
+                renderMacroTable(inflationDisplayRows);
                 renderMacroSourceInfo(macroPayload.meta);
                 renderCashChart(cashData);
                 renderCashTable(cashData);

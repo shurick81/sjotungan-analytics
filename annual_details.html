@@ -647,7 +647,8 @@
         /* ── Load PDF sources from YAML ────────────────── */
         async function loadPDFSources() {
             try {
-                const response = await fetch('sources.yaml');
+                const timestamp = new Date().getTime();
+                const response = await fetch(`sources.yaml?t=${timestamp}`, { cache: 'no-store' });
                 const yamlText = await response.text();
                 const data = jsyaml.load(yamlText);
 
@@ -678,7 +679,7 @@
         async function loadCSV(url) {
             const timestamp = new Date().getTime();
             const cacheBustedUrl = url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
-            const response = await fetch(cacheBustedUrl);
+            const response = await fetch(cacheBustedUrl, { cache: 'no-store' });
             const text = await response.text();
             const lines = text.trim().split('\n');
             const headers = lines[0].split(',').map(h => h.trim());
@@ -751,9 +752,8 @@
                     categoryMap[cat.id] = cat;
                 });
 
-                const parentlessEvents = events
+                const yearEvents = events
                     .filter(e => e.year === selectedYear)
-                    .filter(e => !categoryMap[e.category_id] || !categoryMap[e.category_id].parent)
                     .map(e => ({
                         ...e,
                         categoryName: categoryMap[e.category_id] ? categoryMap[e.category_id].name : 'Okänd',
@@ -763,7 +763,11 @@
                         y: parseFloat(e.y),
                         width: parseFloat(e.width),
                         height: parseFloat(e.height)
-                    }))
+                    }));
+
+                // Keep waterfall based on top-level categories only.
+                const parentlessEvents = yearEvents
+                    .filter(e => !categoryMap[e.category_id] || !categoryMap[e.category_id].parent)
                     .sort((a, b) => {
                         if (a.amount > 0 && b.amount <= 0) return -1;
                         if (a.amount <= 0 && b.amount > 0) return 1;
@@ -790,7 +794,7 @@
                 const netCashCell = document.getElementById('net-cash');
                 netCashCell.textContent = formatNumber(netTotal) + ' SEK';
                 netCashCell.className = getAmountClass(netTotal);
-                document.getElementById('event-count').textContent = `${parentlessEvents.length} kategorier`;
+                document.getElementById('event-count').textContent = `${yearEvents.length} rader (${parentlessEvents.length} toppkategorier)`;
 
                 /* ── Plotly waterfall ──────────────────── */
                 const x = waterfallData.map(d => d.amount);
@@ -882,14 +886,41 @@
                 const tbody = document.getElementById('events-body');
                 tbody.innerHTML = '';
 
-                waterfallData.forEach((data) => {
+                const childrenOf = {};
+                yearEvents.forEach(e => {
+                    const parent = categoryMap[e.category_id] ? categoryMap[e.category_id].parent : '';
+                    if (parent) {
+                        if (!childrenOf[parent]) childrenOf[parent] = [];
+                        childrenOf[parent].push(e);
+                    }
+                });
+
+                Object.keys(childrenOf).forEach(parentId => {
+                    childrenOf[parentId].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+                });
+
+                const sortedTopLevel = [...parentlessEvents];
+                const tableRows = [];
+
+                function pushWithChildren(event, depth) {
+                    tableRows.push({ ...event, depth });
+                    const kids = childrenOf[event.category_id] || [];
+                    kids.forEach(child => pushWithChildren(child, depth + 1));
+                }
+
+                sortedTopLevel.forEach(event => pushWithChildren(event, 0));
+
+                tableRows.forEach((data) => {
                     const row = document.createElement('tr');
                     const amountHtml = data.file && data.page
                         ? `<span class="clickable-amount" onclick="showPDF('${data.file}', ${data.page}, ${data.x}, ${data.y}, ${data.width}, ${data.height}, '${data.categoryName}')">${formatNumber(data.amount)} SEK</span>`
                         : `${formatNumber(data.amount)} SEK`;
 
+                    const indent = data.depth ? `padding-left:${10 + data.depth * 18}px; color:#5e6b80;` : '';
+                    const nameLabel = data.depth ? `↳ ${data.categoryName}` : data.categoryName;
+
                     row.innerHTML = `
-                        <td>${data.categoryName}</td>
+                        <td style="${indent}">${nameLabel}</td>
                         <td style="text-align: right;" class="${getAmountClass(data.amount)}">
                             ${amountHtml}
                         </td>
