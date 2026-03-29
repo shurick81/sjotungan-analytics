@@ -492,13 +492,15 @@
         const pdfScale = 1.5;
         const pdfSources = {};
         let currentHighlight = null;
+        const sourceCatalog = { reports: [], protocols: [] };
+        const sourceYearBounds = { reportsMin: null, protocolsMin: null };
 
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
 
         async function loadPDFSources() {
             try {
-                const response = await fetch('sources.yaml');
+                const response = await fetch(`sources.yaml?t=${Date.now()}`, { cache: 'no-store' });
                 const yamlText = await response.text();
                 const data = jsyaml.load(yamlText);
                 if (data && data.annual_reports) {
@@ -506,7 +508,6 @@
                         const filename = source.local_path.split('/').pop();
                         pdfSources[filename] = source.url;
                     });
-                    renderPDFSourceList(data.annual_reports);
                 }
                 if (data && data.stamma_protocols) {
                     data.stamma_protocols.forEach(source => {
@@ -514,21 +515,45 @@
                         pdfSources[filename] = source.url;
                     });
                 }
+                sourceCatalog.reports = (data && Array.isArray(data.annual_reports)) ? data.annual_reports : [];
+                sourceCatalog.protocols = (data && Array.isArray(data.stamma_protocols)) ? data.stamma_protocols : [];
+                updateSourceList();
             } catch (error) {
                 console.error('Error loading PDF sources:', error);
             }
         }
 
-        function renderPDFSourceList(reports) {
+        function updateSourceList() {
+            renderPDFSourceList(sourceCatalog.reports, sourceCatalog.protocols, sourceYearBounds);
+        }
+
+        function renderPDFSourceList(reports, protocols, yearBounds = {}) {
             const list = document.getElementById('pdf-source-list');
-            if (!list || !Array.isArray(reports)) return;
-            const minYear = 2015;
-            const sorted = [...reports]
-                .filter(r => Number(r.finance_period) >= minYear)
-                .sort((a, b) => b.finance_period - a.finance_period);
-            list.innerHTML = sorted.map(r => {
+            if (!list) return;
+            const reportsMin = Number.isFinite(Number(yearBounds.reportsMin)) ? Number(yearBounds.reportsMin) : null;
+            const protocolsMin = Number.isFinite(Number(yearBounds.protocolsMin)) ? Number(yearBounds.protocolsMin) : null;
+            const sortedReports = [...(Array.isArray(reports) ? reports : [])]
+                .filter(r => reportsMin === null || Number(r.finance_period) >= reportsMin)
+                .sort((a, b) => Number(b.finance_period || 0) - Number(a.finance_period || 0));
+
+            const sortedProtocols = [...(Array.isArray(protocols) ? protocols : [])]
+                .filter(p => protocolsMin === null || Number(p.meeting_year) >= protocolsMin)
+                .sort((a, b) => Number(b.meeting_year || 0) - Number(a.meeting_year || 0));
+
+            const reportItems = sortedReports.map(r => {
                 return `<li>${r.finance_period} - <a href="${r.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${r.url}</a></li>`;
             }).join('');
+
+            const protocolItems = sortedProtocols.map(p => {
+                return `<li>${p.meeting_year} - <a href="${p.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${p.url}</a></li>`;
+            }).join('');
+
+            list.innerHTML = [
+                '<li class="font-semibold text-gray-700 mt-2">Arsredovisningar</li>',
+                reportItems || '<li class="text-gray-500">Inga arsredovisningar hittades.</li>',
+                '<li class="font-semibold text-gray-700 mt-3">Stammaprotokoll</li>',
+                protocolItems || '<li class="text-gray-500">Inga stammaprotokoll hittades.</li>'
+            ].join('');
         }
 
         function openMotionPdf(file, page, label, highlight = null, folder = 'annual_reports') {
@@ -1397,10 +1422,18 @@
                     parsed.filter(r => r.categoryId === ATTENDANCE_MEMBERS_CATEGORY_ID || r.categoryId === ATTENDANCE_PROXIES_CATEGORY_ID)
                 );
 
+                const attendanceYears = attendanceRows
+                    .map(r => Number(r.year))
+                    .filter(y => Number.isFinite(y));
+                sourceYearBounds.protocolsMin = attendanceYears.length ? Math.min(...attendanceYears) : null;
+                updateSourceList();
+
                 renderAttendanceChart(attendanceRows);
                 renderAttendanceTable(attendanceRows);
             } catch (error) {
                 console.error(error);
+                sourceYearBounds.protocolsMin = null;
+                updateSourceList();
                 renderAttendanceChart([]);
                 renderAttendanceTable([]);
             }
@@ -1448,12 +1481,20 @@
                     return asNumber(a.motionNumber, Infinity) - asNumber(b.motionNumber, Infinity);
                 });
 
+                const motionYears = allRecords
+                    .map(r => Number(r.year))
+                    .filter(y => Number.isFinite(y));
+                sourceYearBounds.reportsMin = motionYears.length ? Math.min(...motionYears) : null;
+                updateSourceList();
+
                 setupYearRange(allRecords);
                 setupOutcomeFilters();
                 setupColumnFilters();
                 applyFilters();
             } catch (error) {
                 console.error(error);
+                sourceYearBounds.reportsMin = null;
+                updateSourceList();
                 updateAnalytics([]);
                 renderRows([]);
             }

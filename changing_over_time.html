@@ -601,8 +601,8 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                         const filename = source.local_path.split('/').pop();
                         pdfSources[filename] = source.url;
                     });
-                    renderPDFSourceList(data.annual_reports);
                 }
+                renderPDFSourceList(Array.isArray(data.annual_reports) ? data.annual_reports : []);
                 
                 console.log('Loaded PDF sources:', pdfSources);
             } catch (error) {
@@ -613,10 +613,17 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         function renderPDFSourceList(reports) {
             const list = document.getElementById('pdf-source-list');
             if (!list) return;
-            const sorted = [...reports].sort((a, b) => b.finance_period - a.finance_period);
-            list.innerHTML = sorted.map(r => {
+            const sortedReports = [...(Array.isArray(reports) ? reports : [])]
+                .sort((a, b) => b.finance_period - a.finance_period);
+
+            const reportItems = sortedReports.map(r => {
                 return `<li>${r.finance_period} – <a href="${r.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${r.url}</a></li>`;
             }).join('');
+
+            list.innerHTML = [
+                '<li class="font-semibold text-gray-700 mt-2">Arsredovisningar</li>',
+                reportItems || '<li class="text-gray-500">Inga arsredovisningar hittades.</li>'
+            ].join('');
         }
 
         // Load and parse CSV data
