@@ -1,0 +1,55 @@
+{
+  "year": 2006,
+  "pdf": "Arsredovisning_2006.pdf",
+  "page": 2,
+  "parsed": {
+    "chair": "Robert Frick",
+    "vice": "Bengt Rapp",
+    "members": [
+      "Benny Strand",
+      "Rolf Stohr",
+      "Pether Johnsson",
+      "Stefan Bengtsson",
+      "Margueite Bjärevall"
+    ],
+    "valberedning": [
+      "Lars Andersson",
+      "Åke Berg",
+      "Ewa Forsberg",
+      "Håkan Kylsäter"
+    ],
+    "boxes": {
+      "year": [
+        70.86,
+        218.8437,
+        111.5916,
+        229.6437
+      ],
+      "chair": [
+        184.2,
+        284.3037,
+        245.124,
+        295.1037
+      ],
+      "vice": [
+        184.2,
+        298.0437,
+        241.2096,
+        308.8437
+      ],
+      "members": [
+        184.2,
+        311.8437,
+        280.5792,
+        377.8437
+      ],
+      "valberedning": [
+        184.2,
+        649.9437,
+        259.8624,
+        702.1437
+      ]
+    }
+  },
+  "line_count": 33
+}

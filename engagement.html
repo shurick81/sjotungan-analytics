@@ -445,6 +445,43 @@
                 Inga uppgifter hittades i data/general_states.csv for kategorierna narvaro/fullmakter.
             </div>
         </section>
+
+        <section class="chart-card p-4 mb-6" aria-label="Styrelsedeltagare per ar">
+            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Styrelsedeltagare per ar</h2>
+            <div class="mb-4 flex flex-wrap gap-4" id="board-column-filters" aria-label="Visa eller dolj kolumner for styrelse">
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="year" checked style="accent-color: var(--vm-blue);">
+                    Ar
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="chair" checked style="accent-color: var(--vm-blue);">
+                    Ordförande
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="viceChair" checked style="accent-color: var(--vm-blue);">
+                    Vice ordförande
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="members" style="accent-color: var(--vm-blue);">
+                    Ledamöter
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="valberedning" style="accent-color: var(--vm-blue);">
+                    Valberedare
+                </label>
+            </div>
+            <div class="overflow-x-auto rounded-lg">
+                <table class="motions-table" id="board-participants-table">
+                    <thead>
+                        <tr id="board-participants-head-row"></tr>
+                    </thead>
+                    <tbody id="board-participants-body"></tbody>
+                </table>
+            </div>
+            <div id="board-participants-empty-state" class="empty-state mt-4 p-4 text-sm hidden">
+                Inga uppgifter hittades i data/general_states.csv for kategorierna styrelse.
+            </div>
+        </section>
     </section>
 
     <section id="forum" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
@@ -493,7 +530,11 @@
         const pdfSources = {};
         let currentHighlight = null;
         const sourceCatalog = { reports: [], protocols: [] };
-        const sourceYearBounds = { reportsMin: null, protocolsMin: null };
+        const sourceYearBounds = {
+            reportsMinFromMotions: null,
+            reportsMinFromBoard: null,
+            protocolsMin: null
+        };
 
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
@@ -530,7 +571,11 @@
         function renderPDFSourceList(reports, protocols, yearBounds = {}) {
             const list = document.getElementById('pdf-source-list');
             if (!list) return;
-            const reportsMin = Number.isFinite(Number(yearBounds.reportsMin)) ? Number(yearBounds.reportsMin) : null;
+            const reportCandidates = [
+                Number(yearBounds.reportsMinFromMotions),
+                Number(yearBounds.reportsMinFromBoard)
+            ].filter(Number.isFinite);
+            const reportsMin = reportCandidates.length ? Math.min(...reportCandidates) : null;
             const protocolsMin = Number.isFinite(Number(yearBounds.protocolsMin)) ? Number(yearBounds.protocolsMin) : null;
             const sortedReports = [...(Array.isArray(reports) ? reports : [])]
                 .filter(r => reportsMin === null || Number(r.finance_period) >= reportsMin)
@@ -721,6 +766,17 @@
         const GENERAL_STATES_URL = 'data/general_states.csv';
         const ATTENDANCE_MEMBERS_CATEGORY_ID = '6';
         const ATTENDANCE_PROXIES_CATEGORY_ID = '7';
+        const BOARD_CHAIR_CATEGORY_ID = '1';
+        const BOARD_VICE_CHAIR_CATEGORY_ID = '2';
+        const BOARD_MEMBERS_CATEGORY_ID = '3';
+        const BOARD_VALBEREDNING_CATEGORY_ID = '4';
+        const BOARD_TABLE_COLUMNS = [
+            { key: 'year', label: 'Ar', className: 'col-year' },
+            { key: 'chair', label: 'Ordförande', className: '' },
+            { key: 'viceChair', label: 'Vice ordförande', className: '' },
+            { key: 'members', label: 'Ledamöter', className: '' },
+            { key: 'valberedning', label: 'Valberedare', className: '' }
+        ];
         const TABLE_COLUMNS = [
             { key: 'year', label: 'Ar', className: 'col-year' },
             { key: 'title', label: 'Titel', className: '' },
@@ -734,6 +790,7 @@
         let resolutionPieChart = null;
         let resolutionBarChart = null;
         let attendanceBarChart = null;
+        let boardParticipantRows = [];
 
         // Parse CSV with support for quoted fields and escaped quotes.
         function parseCsv(text) {
@@ -1251,6 +1308,178 @@
                 && Number(ref.height) > 0;
         }
 
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeBoardList(value) {
+            return (value || '')
+                .split(';')
+                .map(part => part.trim())
+                .filter(Boolean)
+                .join('<br>');
+        }
+
+        function buildBoardParticipantRows(records) {
+            const perYear = new Map();
+
+            for (const row of records) {
+                const year = Number(row.year);
+                if (!Number.isFinite(year)) continue;
+
+                if (!perYear.has(year)) {
+                    perYear.set(year, {
+                        year,
+                        chair: null,
+                        viceChair: null,
+                        members: null,
+                        valberedning: null,
+                        chairRef: null,
+                        viceChairRef: null,
+                        membersRef: null,
+                        valberedningRef: null
+                    });
+                }
+
+                const item = perYear.get(year);
+                const value = (row.value || '').trim();
+                const ref = {
+                    file: row.file,
+                    page: Number(row.page) || 1,
+                    x: Number(row.x),
+                    y: Number(row.y),
+                    width: Number(row.width),
+                    height: Number(row.height)
+                };
+
+                if (row.categoryId === BOARD_CHAIR_CATEGORY_ID) {
+                    item.chair = value || null;
+                    item.chairRef = ref;
+                } else if (row.categoryId === BOARD_VICE_CHAIR_CATEGORY_ID) {
+                    item.viceChair = value || null;
+                    item.viceChairRef = ref;
+                } else if (row.categoryId === BOARD_MEMBERS_CATEGORY_ID) {
+                    item.members = value || null;
+                    item.membersRef = ref;
+                } else if (row.categoryId === BOARD_VALBEREDNING_CATEGORY_ID) {
+                    item.valberedning = value || null;
+                    item.valberedningRef = ref;
+                }
+            }
+
+            return [...perYear.values()]
+                .filter(item => item.chair || item.viceChair || item.members || item.valberedning)
+                .sort((a, b) => b.year - a.year);
+        }
+
+        function renderBoardCell(cell, value, label, ref, year) {
+            const text = (value || '').trim();
+            if (!text) {
+                cell.textContent = '-';
+                return;
+            }
+
+            const canLink = ref?.file && hasValidHighlightRef(ref);
+            if (!canLink) {
+                if (label === 'Ledamoter') {
+                    cell.innerHTML = normalizeBoardList(escapeHtml(text));
+                } else {
+                    cell.textContent = text;
+                }
+                return;
+            }
+
+            const span = document.createElement('span');
+            span.className = 'clickable-cell';
+            span.title = 'Visa markering i arsredovisning-PDF';
+            if (label === 'Ledamoter') {
+                span.innerHTML = normalizeBoardList(escapeHtml(text));
+            } else {
+                span.textContent = text;
+            }
+            span.addEventListener('click', () => {
+                openMotionPdf(
+                    ref.file,
+                    ref.page,
+                    `Styrelse ${year} - ${label}`,
+                    ref,
+                    'annual_reports'
+                );
+            });
+            cell.appendChild(span);
+        }
+
+        function renderBoardParticipantsTable(rows) {
+            const headRow = document.getElementById('board-participants-head-row');
+            const tbody = document.getElementById('board-participants-body');
+            const emptyState = document.getElementById('board-participants-empty-state');
+            if (!headRow || !tbody || !emptyState) return;
+
+            const visibleColumns = getVisibleBoardColumns();
+            headRow.innerHTML = visibleColumns.map(col => {
+                const classAttr = col.className ? ` class="${col.className}"` : '';
+                return `<th${classAttr}>${col.label}</th>`;
+            }).join('');
+
+            tbody.innerHTML = '';
+            if (!rows.length) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            for (const row of rows) {
+                const tr = document.createElement('tr');
+
+                for (const col of visibleColumns) {
+                    const td = document.createElement('td');
+                    if (col.className) td.className = col.className;
+
+                    if (col.key === 'year') {
+                        td.textContent = String(row.year);
+                    } else if (col.key === 'chair') {
+                        renderBoardCell(td, row.chair, 'Ordförande', row.chairRef, row.year);
+                    } else if (col.key === 'viceChair') {
+                        renderBoardCell(td, row.viceChair, 'Vice ordförande', row.viceChairRef, row.year);
+                    } else if (col.key === 'members') {
+                        renderBoardCell(td, row.members, 'Ledamoter', row.membersRef, row.year);
+                    } else if (col.key === 'valberedning') {
+                        renderBoardCell(td, row.valberedning, 'Valberedare', row.valberedningRef, row.year);
+                    }
+
+                    tr.appendChild(td);
+                }
+
+                tbody.appendChild(tr);
+            }
+        }
+
+        function getVisibleBoardColumns() {
+            const selected = new Set(
+                [...document.querySelectorAll('#board-column-filters input:checked')].map(el => el.value)
+            );
+            return BOARD_TABLE_COLUMNS.filter(col => selected.has(col.key));
+        }
+
+        function setupBoardColumnFilters() {
+            const filters = document.querySelectorAll('#board-column-filters input[type="checkbox"]');
+            filters.forEach(filter => {
+                filter.addEventListener('change', () => {
+                    const selectedCount = document.querySelectorAll('#board-column-filters input:checked').length;
+                    if (selectedCount === 0) {
+                        filter.checked = true;
+                        return;
+                    }
+                    renderBoardParticipantsTable(boardParticipantRows);
+                });
+            });
+        }
+
         function renderAttendanceChart(rows) {
             const canvas = document.getElementById('attendance-bar-chart');
             if (!canvas || typeof Chart === 'undefined') return;
@@ -1395,8 +1624,13 @@
                 const text = await resp.text();
                 const rows = parseCsv(text);
                 if (!rows.length) {
+                    sourceYearBounds.protocolsMin = null;
+                    sourceYearBounds.reportsMinFromBoard = null;
+                    boardParticipantRows = [];
+                    updateSourceList();
                     renderAttendanceChart([]);
                     renderAttendanceTable([]);
+                    renderBoardParticipantsTable([]);
                     return;
                 }
 
@@ -1421,21 +1655,38 @@
                 const attendanceRows = buildAttendanceRows(
                     parsed.filter(r => r.categoryId === ATTENDANCE_MEMBERS_CATEGORY_ID || r.categoryId === ATTENDANCE_PROXIES_CATEGORY_ID)
                 );
+                const boardRows = buildBoardParticipantRows(
+                    parsed.filter(r => {
+                        return r.categoryId === BOARD_CHAIR_CATEGORY_ID
+                            || r.categoryId === BOARD_VICE_CHAIR_CATEGORY_ID
+                            || r.categoryId === BOARD_MEMBERS_CATEGORY_ID
+                            || r.categoryId === BOARD_VALBEREDNING_CATEGORY_ID;
+                    })
+                );
+                boardParticipantRows = boardRows;
 
                 const attendanceYears = attendanceRows
                     .map(r => Number(r.year))
                     .filter(y => Number.isFinite(y));
                 sourceYearBounds.protocolsMin = attendanceYears.length ? Math.min(...attendanceYears) : null;
+                const boardYears = boardRows
+                    .map(r => Number(r.year))
+                    .filter(y => Number.isFinite(y));
+                sourceYearBounds.reportsMinFromBoard = boardYears.length ? Math.min(...boardYears) : null;
                 updateSourceList();
 
                 renderAttendanceChart(attendanceRows);
                 renderAttendanceTable(attendanceRows);
+                renderBoardParticipantsTable(boardRows);
             } catch (error) {
                 console.error(error);
                 sourceYearBounds.protocolsMin = null;
+                sourceYearBounds.reportsMinFromBoard = null;
+                boardParticipantRows = [];
                 updateSourceList();
                 renderAttendanceChart([]);
                 renderAttendanceTable([]);
+                renderBoardParticipantsTable([]);
             }
         }
 
@@ -1484,7 +1735,7 @@
                 const motionYears = allRecords
                     .map(r => Number(r.year))
                     .filter(y => Number.isFinite(y));
-                sourceYearBounds.reportsMin = motionYears.length ? Math.min(...motionYears) : null;
+                sourceYearBounds.reportsMinFromMotions = motionYears.length ? Math.min(...motionYears) : null;
                 updateSourceList();
 
                 setupYearRange(allRecords);
@@ -1493,13 +1744,14 @@
                 applyFilters();
             } catch (error) {
                 console.error(error);
-                sourceYearBounds.reportsMin = null;
+                sourceYearBounds.reportsMinFromMotions = null;
                 updateSourceList();
                 updateAnalytics([]);
                 renderRows([]);
             }
         }
 
+        setupBoardColumnFilters();
         loadMotions();
         loadAttendance();
         loadPDFSources();

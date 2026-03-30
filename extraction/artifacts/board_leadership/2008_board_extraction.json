@@ -1,0 +1,55 @@
+{
+  "year": 2008,
+  "pdf": "Arsredovisning_2008.pdf",
+  "page": 3,
+  "parsed": {
+    "chair": "Bengt Rapp",
+    "vice": "Pether Johnsson",
+    "members": [
+      "Bertil Neij",
+      "Rolf Stohr",
+      "Stefan Bengtsson",
+      "Anita Buske"
+    ],
+    "valberedning": [
+      "Ake Berg",
+      "Ewa Forsberg",
+      "Hakan Kylsater",
+      "Lolita Lall",
+      "Lena Wiklund"
+    ],
+    "boxes": {
+      "year": [
+        63.36,
+        206.64,
+        100.32,
+        217.92
+      ],
+      "chair": [
+        176.64,
+        271.68,
+        222.95999999999998,
+        282.0
+      ],
+      "vice": [
+        176.64,
+        284.4,
+        242.64,
+        292.8
+      ],
+      "members": [
+        176.16,
+        297.12,
+        246.48,
+        343.44
+      ],
+      "valberedning": [
+        177.84,
+        607.4399999999999,
+        244.07999999999998,
+        669.6
+      ]
+    }
+  },
+  "line_count": 34
+}

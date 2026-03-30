@@ -1,0 +1,54 @@
+{
+  "year": 2007,
+  "pdf": "Arsredovisning_2007.pdf",
+  "page": 2,
+  "parsed": {
+    "chair": "Bengt Rapp",
+    "vice": "Pether Johnsson",
+    "members": [
+      "Marguerite Bjärevall",
+      "Bertil Neij",
+      "Rolf Stohr",
+      "Stefan Bengtsson"
+    ],
+    "valberedning": [
+      "Lars Andersson",
+      "Åke Berg",
+      "Ewa Forsberg",
+      "Håkan Kylsäter"
+    ],
+    "boxes": {
+      "year": [
+        70.32,
+        184.07999999999998,
+        109.67999999999999,
+        195.12
+      ],
+      "chair": [
+        184.07999999999998,
+        248.64,
+        234.48,
+        258.71999999999997
+      ],
+      "vice": [
+        184.07999999999998,
+        260.88,
+        253.67999999999998,
+        269.28
+      ],
+      "members": [
+        184.07999999999998,
+        273.12,
+        274.32,
+        321.84
+      ],
+      "valberedning": [
+        187.44,
+        584.64,
+        255.35999999999999,
+        633.12
+      ]
+    }
+  },
+  "line_count": 29
+}
