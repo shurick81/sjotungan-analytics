@@ -1,0 +1,54 @@
+{
+  "year": 2010,
+  "pdf": "arsredovisning2010.pdf",
+  "page": 4,
+  "parsed": {
+    "chair": "Bengt Rapp",
+    "vice": "Pether Johnsson",
+    "members": [
+      "Andreas Tollefors Bristam",
+      "” Stefan Bengtsson",
+      "Anita Buske",
+      "Markku Sandelin",
+      "Hans Buhimann"
+    ],
+    "valberedning": [
+      "Hilde Bjéns",
+      "Christina Fredriksson",
+      "Sven Back"
+    ],
+    "boxes": {
+      "year": [
+        88.56,
+        132.24,
+        130.79999999999998,
+        142.79999999999998
+      ],
+      "chair": [
+        89.03999999999999,
+        157.44,
+        145.92,
+        167.76
+      ],
+      "vice": [
+        89.28,
+        169.92,
+        169.68,
+        178.56
+      ],
+      "members": [
+        88.56,
+        194.4,
+        212.88,
+        241.44
+      ],
+      "valberedning": [
+        202.32,
+        480.47999999999996,
+        514.0799999999999,
+        494.88
+      ]
+    }
+  },
+  "line_count": 39
+}

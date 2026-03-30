@@ -13,6 +13,8 @@ This folder groups reusable data-extraction assets in one place.
 - Method doc: `methods/motion_resolutions.md`
 - Script: `scripts/extract_stamma_attendance.py`
 - Method doc: `methods/stamma_attendance.md`
+- Script: `scripts/extract_board_leadership.py`
+- Method doc: `methods/board_leadership.md`
 - Script: `scripts/extract_legacy_states.py`
 - Script: `scripts/extract_legacy_events_candidates.py`
 - Script: `scripts/extract_pre2009_states_events.py`
@@ -71,6 +73,20 @@ The script writes directly to `data/general_states.csv` as:
 - category `7`: Fullmakter
 
 For older scanned protocols without a text layer, `extract_stamma_attendance.py` now uses OCR fallback (`pdftoppm` + `tesseract`) before writing results.
+
+## Board leadership extraction (pre-2013 backfill)
+
+Dry-run board leadership extraction (writes artifacts under `extraction/artifacts/board_leadership/`):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py
+```
+
+Append board leadership rows to `data/general_states.csv` (categories 0, 1, 2, 3):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py --append
+```
 
 ## Legacy financial extraction (states/events)
 

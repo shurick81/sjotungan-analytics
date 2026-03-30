@@ -1,0 +1,56 @@
+{
+  "year": 2003,
+  "pdf": "arsredovisning_03_B.pdf",
+  "page": 2,
+  "parsed": {
+    "chair": "Robert Frick",
+    "vice": "Sven Sjögren",
+    "members": [
+      "Benny Strand",
+      "Bengt Rapp",
+      "Rolf Stohr",
+      "Pether Johnsson",
+      "Mats Pjons",
+      "Ann-Christine Wisén",
+      "Stefan Bengtsson"
+    ],
+    "valberedning": [
+      "Lars Andersson",
+      "Åke Berg",
+      "Ewa Forsberg"
+    ],
+    "boxes": {
+      "year": [
+        70.5,
+        217.81625,
+        108.0767,
+        227.94125
+      ],
+      "chair": [
+        183.75,
+        267.31625,
+        240.10225,
+        277.44125
+      ],
+      "vice": [
+        183.75,
+        280.06625,
+        243.11375,
+        290.19125
+      ],
+      "members": [
+        183.75,
+        292.81625,
+        278.3219,
+        378.69125
+      ],
+      "valberedning": [
+        183.75,
+        599.56625,
+        253.5471,
+        635.19125
+      ]
+    }
+  },
+  "line_count": 37
+}

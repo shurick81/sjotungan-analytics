@@ -1,0 +1,60 @@
+{
+  "year": 2005,
+  "pdf": "bokslut2005.pdf",
+  "page": 2,
+  "parsed": {
+    "chair": "Robert Frick",
+    "vice": "Bengt Rapp",
+    "members": [
+      "Benny Strand",
+      "Rolf Stohr",
+      "Pether Johnsson",
+      "Stefan Bengtsson",
+      "Gun Hallgren",
+      "Ann-Christine Wisén",
+      "Mats Pjons",
+      "Maria Neiglick",
+      "Ingela Livchitz",
+      "Margueite Bjärevall",
+      "Alfonso Morales"
+    ],
+    "valberedning": [
+      "Lars Andersson",
+      "Åke Berg",
+      "Ewa Forsberg"
+    ],
+    "boxes": {
+      "year": [
+        33.1464,
+        207.9146,
+        73.8024,
+        223.9106
+      ],
+      "chair": [
+        146.5464,
+        273.4226,
+        207.4224,
+        289.1906
+      ],
+      "vice": [
+        146.5464,
+        287.2226,
+        203.4504,
+        302.9906
+      ],
+      "members": [
+        146.5464,
+        301.0226,
+        305.4651,
+        572.0419
+      ],
+      "valberedning": [
+        146.5463,
+        639.0625,
+        222.1943,
+        682.4305
+      ]
+    }
+  },
+  "line_count": 36
+}

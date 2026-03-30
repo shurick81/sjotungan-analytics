@@ -1,0 +1,53 @@
+{
+  "year": 2011,
+  "pdf": "arsredovisning2012.pdf",
+  "page": 5,
+  "parsed": {
+    "chair": "Bengt Rapp",
+    "vice": "Pether Johnsson",
+    "members": [
+      "Andreas Tollefors Bristam",
+      "Stefan Bengtsson",
+      "Anita Buske",
+      "Markku Sandelin",
+      "Hans Buhlmann"
+    ],
+    "valberedning": [
+      "Christina Fredriksson",
+      "Sven Back"
+    ],
+    "boxes": {
+      "year": [
+        95.52,
+        104.88,
+        137.76,
+        115.44
+      ],
+      "chair": [
+        95.75999999999999,
+        130.56,
+        153.12,
+        140.88
+      ],
+      "vice": [
+        95.75999999999999,
+        143.04,
+        177.12,
+        151.2
+      ],
+      "members": [
+        94.8,
+        168.48,
+        220.79999999999998,
+        227.28
+      ],
+      "valberedning": [
+        356.64,
+        447.35999999999996,
+        521.76,
+        456.96
+      ]
+    }
+  },
+  "line_count": 39
+}

@@ -1,0 +1,55 @@
+{
+  "year": 2009,
+  "pdf": "arsredovisning_2009.pdf",
+  "page": 4,
+  "parsed": {
+    "chair": "Pether Johnsson",
+    "vice": "Pether Johnsson",
+    "members": [
+      "Andreas Tollefors Gustafsson",
+      "Stefan Bengtsson",
+      "Anita Buske",
+      "Markku Sandelin",
+      "Hans Bäöhlmann",
+      "Bengt Rapp"
+    ],
+    "valberedning": [
+      "Håkan Kylsäter",
+      "Lolita Lall",
+      "Karna Henseby"
+    ],
+    "boxes": {
+      "year": [
+        98.16,
+        113.03999999999999,
+        140.4,
+        123.6
+      ],
+      "chair": [
+        98.16,
+        151.2,
+        179.51999999999998,
+        159.84
+      ],
+      "vice": [
+        98.16,
+        151.2,
+        179.51999999999998,
+        159.84
+      ],
+      "members": [
+        96.96,
+        138.72,
+        241.2,
+        223.2
+      ],
+      "valberedning": [
+        206.64,
+        468.71999999999997,
+        505.2,
+        480.96
+      ]
+    }
+  },
+  "line_count": 44
+}

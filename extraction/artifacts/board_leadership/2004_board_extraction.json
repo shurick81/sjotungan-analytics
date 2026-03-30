@@ -1,0 +1,57 @@
+{
+  "year": 2004,
+  "pdf": "Arsredovisning_2004.pdf",
+  "page": 2,
+  "parsed": {
+    "chair": "Robert Frick",
+    "vice": "Bengt Rapp",
+    "members": [
+      "Ann-Christine Wisén",
+      "Benny Strand",
+      "Rolf Stohr",
+      "Mats Pjons",
+      "Pether Johnsson",
+      "Stefan Bengtsson",
+      "Gun Hallgren"
+    ],
+    "valberedning": [
+      "Lars Andersson",
+      "Åke Berg",
+      "Ewa Forsberg",
+      "Sanna Havlind"
+    ],
+    "boxes": {
+      "year": [
+        70.8,
+        194.37968,
+        108.23572,
+        204.31568
+      ],
+      "chair": [
+        184.2,
+        244.65968,
+        240.24732,
+        254.59568
+      ],
+      "vice": [
+        184.2,
+        257.37968,
+        236.5336,
+        267.31568
+      ],
+      "members": [
+        184.2,
+        269.97968,
+        278.16408,
+        355.87568
+      ],
+      "valberedning": [
+        184.2,
+        525.33968,
+        253.68936,
+        573.19568
+      ]
+    }
+  },
+  "line_count": 45
+}

@@ -1,0 +1,41 @@
+year=2005
+pdf=bokslut2005.pdf
+page=2
+
+lines:
+Org.nr 712400-1467
+Sida 2 av 4
+Datum 2006-05-13
+Årsredovisning
+Styrelsen för HSB:s Brf Sjötungan i Tyresö får härmed avge årsredovisning för räkenskapsåret 2003.
+Förvaltningsberättelse
+Styrelse
+Styrelsen har sedan ordinarie stämma 2005-06-09 bestått av:
+Ordinarie
+Suppleanter
+Av HSB tillsatta
+Robert Frick
+Bengt Rapp
+Benny Strand
+Rolf Stohr
+Pether Johnsson
+Stefan Bengtsson
+Gun Hallgren
+Ann-Christine Wisén
+Mats Pjons
+Ordf.
+Maria Neiglick
+Ingela Livchitz
+Margueite Bjärevall
+Peter Gottling med personlig ersättare Christina Gauffin
+Alfonso Morales
+Revisor
+Revisor har varit Karin Skeppström med Per Gustavsson som suppleant valda vid
+föreningsstämman samt BoRevision AB, av HSB Riksförbund utsedd revisor.
+Valberedning
+Lars Andersson
+Åke Berg
+Ewa Forsberg
+Sammankallande
+Föreningens stadgar
+Föreningens gällande stadgar har registrerats hos Patent- och Registreringsverket 1992-10-12.
