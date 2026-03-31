@@ -189,6 +189,7 @@ def clean_authors(text: str) -> str:
     rebuilt = " ".join(tokens)
     rebuilt = re.sub(r"\s+,\s+", ", ", rebuilt)
     rebuilt = re.sub(r"\s+och\s+", " och ", rebuilt)
+    rebuilt = rebuilt.replace(", och ", " och ")
     rebuilt = re.sub(r"\s+", " ", rebuilt).strip(" ,")
 
     # Require at least one probable full name.
@@ -262,6 +263,45 @@ def title_has_appended_tail(existing_title: str, canonical_title: str) -> bool:
         return False
     tail = existing_norm[len(canonical_norm) :].strip(" .,;:-")
     return len(tail) >= 8
+
+
+def title_is_better_candidate(existing_title: str, candidate_title: str) -> bool:
+    if not existing_title or not candidate_title:
+        return False
+
+    existing_norm = normalize_text(existing_title).strip(" .,;:-")
+    candidate_norm = normalize_text(candidate_title).strip(" .,;:-")
+    if len(candidate_norm) <= len(existing_norm) + 6:
+        return False
+
+    existing_words = existing_norm.split()
+    candidate_words = candidate_norm.split()
+    prefix_match = 0
+    for ew, cw in zip(existing_words, candidate_words):
+        if ew != cw:
+            break
+        prefix_match += 1
+
+    return prefix_match >= 3
+
+
+def authors_is_better_candidate(existing_authors: str, candidate_authors: str) -> bool:
+    if not candidate_authors:
+        return False
+    if not existing_authors:
+        return True
+
+    existing_norm = normalize_text(existing_authors)
+    candidate_norm = normalize_text(candidate_authors)
+    if candidate_norm == existing_norm:
+        return False
+
+    existing_name_count = len(re.findall(r"[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+\s+[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+", existing_authors))
+    candidate_name_count = len(re.findall(r"[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+\s+[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+", candidate_authors))
+    if candidate_name_count > existing_name_count:
+        return True
+
+    return candidate_norm.startswith(existing_norm) and (len(candidate_norm) >= len(existing_norm) + 5)
 
 
 def extract_title_from_section(lines: List[str], motion_number: int) -> str:
@@ -1011,8 +1051,14 @@ def update_rows_for_year(
                 is_low_quality_protocol_title(existing_title)
                 or title_has_trailing_author_noise(existing_title, existing_authors)
                 or title_has_appended_tail(existing_title, meta.title)
+                or title_is_better_candidate(existing_title, meta.title)
             )
             and not is_low_quality_protocol_title(meta.title)
+        )
+        should_replace_authors = bool(
+            meta
+            and protocol_derived_title
+            and authors_is_better_candidate(existing_authors, meta.authors)
         )
         if decision is None:
             # If annual-report extraction missed title/file/page, use protocol motion metadata.
@@ -1020,7 +1066,7 @@ def update_rows_for_year(
                 row["title"] = meta.title
                 row["file"] = protocol_file
                 row["page"] = str(meta.page)
-            if meta and not (row.get("authors", "").strip()) and meta.authors:
+            if meta and (not existing_authors or should_replace_authors) and meta.authors:
                 row["authors"] = meta.authors
                 updated += 1
             elif meta and (not existing_title or should_replace_title):
@@ -1031,7 +1077,7 @@ def update_rows_for_year(
             row["title"] = meta.title
             row["file"] = protocol_file
             row["page"] = str(meta.page)
-        if meta and not (row.get("authors", "").strip()) and meta.authors:
+        if meta and (not existing_authors or should_replace_authors) and meta.authors:
             row["authors"] = meta.authors
 
         row["stamma_decision"] = ""
