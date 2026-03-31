@@ -36,6 +36,31 @@ except Exception:
 
 DEFAULT_OUTPUT = Path("data/motions.csv")
 PDF_DIR = Path("data/annual_reports")
+MOTIONS_FIELDNAMES = [
+    "year",
+    "file",
+    "motion_number",
+    "page",
+    "title",
+    "authors",
+    "resolution",
+    "resolution_page",
+    "resolution_x",
+    "resolution_y",
+    "resolution_width",
+    "resolution_height",
+    "stamma_decision",
+    "follows_styrelse_suggestion",
+    "stamma_decision_wording",
+    "stamma_followed_styrelse_binary",
+    "stamma_protocol_file",
+    "stamma_decision_page",
+    "stamma_decision_x",
+    "stamma_decision_y",
+    "stamma_decision_width",
+    "stamma_decision_height",
+    "stamma_decision_evidence",
+]
 
 
 @dataclass
@@ -96,6 +121,23 @@ def extract_page_text(pdf_path: Path, page: int) -> str:
 
 def normalize_space(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def normalize_resolution_text(text: str) -> str:
+    """Normalize text for resilient regex matching on noisy/OCR PDF text."""
+    lowered = text.lower().replace("\r\n", "\n").replace("\r", "\n")
+    decomposed = unicodedata.normalize("NFD", lowered)
+    normalized = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
+
+    # Keep line structure for header positioning, only collapse horizontal spaces.
+    normalized = re.sub(r"[ \t\f\v]+", " ", normalized)
+    normalized = re.sub(r"\n+", "\n", normalized)
+
+    # Repair common split-word OCR artifacts in decision phrases, e.g. "avsla s".
+    normalized = re.sub(r"\bavsla\s+s\b", "avslas", normalized, flags=re.MULTILINE)
+    normalized = re.sub(r"\bbifalle\s+s\b", "bifalles", normalized, flags=re.MULTILINE)
+    normalized = re.sub(r"\bbifall\s+s\b", "bifalls", normalized, flags=re.MULTILINE)
+    return normalized
 
 
 def normalize_token(text: str) -> str:
@@ -268,11 +310,11 @@ def find_motion_context(
     resolution_page: int,
     match_pos_on_page: Optional[int] = None,
 ) -> MotionContext:
-    motion_pattern = re.compile(r"\b(?:MOTION|Motion)\s*(\d+)\b")
+    motion_pattern = re.compile(r"^\s*motion\s*(\d+)\b", flags=re.IGNORECASE | re.MULTILINE)
 
     # Prefer nearest MOTION heading on the same page before the matched phrase.
     if match_pos_on_page is not None:
-        compact_page = normalize_space(pages.get(resolution_page, ""))
+        compact_page = normalize_resolution_text(pages.get(resolution_page, ""))
         same_page_matches = list(motion_pattern.finditer(compact_page))
         prior_matches = [m for m in same_page_matches if m.start() <= match_pos_on_page]
         if prior_matches:
@@ -282,14 +324,14 @@ def find_motion_context(
         # Match appears before the first motion header on this page.
         # In that case, context belongs to a motion started on a previous page.
         for page in range(resolution_page - 1, 0, -1):
-            text = pages.get(page, "")
+            text = normalize_resolution_text(pages.get(page, ""))
             page_matches = list(motion_pattern.finditer(text))
             if page_matches:
                 number = int(page_matches[-1].group(1))
                 return MotionContext(number=number, title=f"Motion {number}", page=page)
 
     for page in range(resolution_page, 0, -1):
-        text = pages.get(page, "")
+        text = normalize_resolution_text(pages.get(page, ""))
         page_matches = list(motion_pattern.finditer(text))
         if page_matches:
             number = int(page_matches[-1].group(1))
@@ -637,10 +679,10 @@ def extract_page_text_ocr(pdf_path: Path, page: int) -> str:
 
 
 def detect_resolutions(text: str) -> List[Tuple[str, str, int]]:
-    compact = normalize_space(text).lower()
+    compact = normalize_resolution_text(text)
 
     yrkar_styrelsen = r"(?:styrelsen\s+yrkar|yrkar(?:\s+\w+){0,3}\s+styrelsen)"
-    foreslar_styrelsen = r"(?:styrelsen\s+f[oö]resl[aå]r|f[oö]resl[aå]r\s+styrelsen)"
+    foreslar_styrelsen = r"(?:styrelsen\s+foreslar|foreslar\s+styrelsen)"
 
     patterns = [
         (rf"{yrkar_styrelsen}\s+.*?delvis\s+bifall", "Delvis tillstyrker"),
@@ -651,19 +693,20 @@ def detect_resolutions(text: str) -> List[Tuple[str, str, int]]:
         (rf"{foreslar_styrelsen}\s+.*?\bbifall\b", "Tillstyrker"),
         (rf"{foreslar_styrelsen}\s+.*?\bbifall[aer]\b", "Tillstyrker"),
         (rf"{foreslar_styrelsen}\s+.*?\bavslag\b", "Avstyrker"),
-        (rf"{foreslar_styrelsen}\s+.*?\bavsl[aå]\b", "Avstyrker"),
+        (rf"{foreslar_styrelsen}\s+.*?\bavsla(?:s)?\b", "Avstyrker"),
         # Keep passive outcome wording when stated explicitly in the source text.
         (r"motionen\s+bifalles", "Bifalls"),
-        (r"motionen\s+avsl[aå]s", "Avslås"),
-        (r"motionen\s+[aä]r\s+besvarad", "Besvarad"),
-        (r"fr[aå]gan\s+[aä]r\s+besvarad", "Besvarad"),
-        (r"st[aä]mman\s+besl[oö]t\s+att\s+bifall[a-z]*", "Bifalls"),
-        (r"st[aä]mman\s+besl[oö]t\s+att\s+avsl[aå][a-z]*", "Avslås"),
+        (r"motionen\s+bifalls", "Bifalls"),
+        (r"motionen\s+avsla\s*s", "Avslås"),
+        (r"motionen\s+ar\s+besvarad", "Besvarad"),
+        (r"fragan\s+ar\s+besvarad", "Besvarad"),
+        (r"stamman\s+beslot\s+att\s+bifall[a-z]*", "Bifalls"),
+        (r"stamman\s+beslot\s+att\s+avsla[a-z]*", "Avslås"),
     ]
 
     found: List[Tuple[int, int, str]] = []
     for pattern, resolution in patterns:
-        for m in re.finditer(pattern, compact):
+        for m in re.finditer(pattern, compact, flags=re.DOTALL):
             found.append((m.start(), m.end(), resolution))
 
     if not found:
@@ -783,22 +826,7 @@ def build_rows(
 
 def print_rows(rows: List[ResolutionRow]) -> None:
     writer = csv.writer(sys.stdout)
-    writer.writerow(
-        [
-            "year",
-            "file",
-            "motion_number",
-            "page",
-            "title",
-            "authors",
-            "resolution",
-            "resolution_page",
-            "resolution_x",
-            "resolution_y",
-            "resolution_width",
-            "resolution_height",
-        ]
-    )
+    writer.writerow(MOTIONS_FIELDNAMES)
     for row in rows:
         writer.writerow(
             [
@@ -814,26 +842,22 @@ def print_rows(rows: List[ResolutionRow]) -> None:
                 row.resolution_y,
                 row.resolution_width,
                 row.resolution_height,
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
             ]
         )
 
 
 def append_rows(output_path: Path, rows: List[ResolutionRow]) -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = [
-        "year",
-        "file",
-        "motion_number",
-        "page",
-        "title",
-        "authors",
-        "resolution",
-        "resolution_page",
-        "resolution_x",
-        "resolution_y",
-        "resolution_width",
-        "resolution_height",
-    ]
+    fieldnames = MOTIONS_FIELDNAMES
 
     def infer_motion_number(d: Dict[str, str]) -> str:
         raw = normalize_space(d.get("motion_number", ""))
@@ -855,11 +879,47 @@ def append_rows(output_path: Path, rows: List[ResolutionRow]) -> int:
     def make_legacy_key(d: Dict[str, str]) -> Tuple[str, str, str, str]:
         return (d["year"], d["file"], d["page"], d["resolution_page"])
 
+    def make_year_motion_key(d: Dict[str, str]) -> Optional[Tuple[str, str]]:
+        motion_number = infer_motion_number(d)
+        if not motion_number:
+            return None
+        return (d["year"], motion_number)
+
+    def merge_annual_fields(existing_row: Dict[str, str], annual_row: Dict[str, str]) -> Dict[str, str]:
+        merged = dict(existing_row)
+        annual_fields = [
+            "file",
+            "motion_number",
+            "page",
+            "title",
+            "authors",
+            "resolution",
+            "resolution_page",
+            "resolution_x",
+            "resolution_y",
+            "resolution_width",
+            "resolution_height",
+        ]
+        for field in annual_fields:
+            value = (annual_row.get(field) or "").strip()
+            if value:
+                merged[field] = annual_row[field]
+        return merged
+
+    def merge_non_empty_fields(base_row: Dict[str, str], incoming_row: Dict[str, str]) -> Dict[str, str]:
+        merged = dict(base_row)
+        for field in fieldnames:
+            if not (merged.get(field) or "").strip() and (incoming_row.get(field) or "").strip():
+                merged[field] = incoming_row[field]
+        return merged
+
     existing: List[Dict[str, str]] = []
     if output_path.exists():
         with output_path.open("r", encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             for r in reader:
+                for field in fieldnames:
+                    r.setdefault(field, "")
                 existing.append(r)
 
     # Remove duplicate records already present in the CSV, keeping last occurrence.
@@ -907,8 +967,30 @@ def append_rows(output_path: Path, rows: List[ResolutionRow]) -> int:
         by_legacy[lk] = r
     existing = [by_legacy[k] for k in legacy_order]
 
+    # Consolidate duplicate rows that represent the same year+motion number,
+    # preserving non-empty values from both annual-report and protocol extraction.
+    consolidated_existing: List[Dict[str, str]] = []
+    ym_to_idx: Dict[Tuple[str, str], int] = {}
+    for r in existing:
+        ym_key = make_year_motion_key(r)
+        if ym_key is None:
+            consolidated_existing.append(r)
+            continue
+        prev_idx = ym_to_idx.get(ym_key)
+        if prev_idx is None:
+            ym_to_idx[ym_key] = len(consolidated_existing)
+            consolidated_existing.append(r)
+            continue
+        consolidated_existing[prev_idx] = merge_non_empty_fields(consolidated_existing[prev_idx], r)
+    existing = consolidated_existing
+
     existing_idx = {make_key(r): i for i, r in enumerate(existing)}
     legacy_idx = {make_legacy_key(r): i for i, r in enumerate(existing)}
+    year_motion_idx = {}
+    for i, r in enumerate(existing):
+        ym_key = make_year_motion_key(r)
+        if ym_key is not None:
+            year_motion_idx[ym_key] = i
     added = 0
 
     for row in rows:
@@ -925,21 +1007,44 @@ def append_rows(output_path: Path, rows: List[ResolutionRow]) -> int:
             "resolution_y": row.resolution_y,
             "resolution_width": row.resolution_width,
             "resolution_height": row.resolution_height,
+            "stamma_decision": "",
+            "follows_styrelse_suggestion": "",
+            "stamma_decision_wording": "",
+            "stamma_followed_styrelse_binary": "",
+            "stamma_protocol_file": "",
+            "stamma_decision_page": "",
+            "stamma_decision_x": "",
+            "stamma_decision_y": "",
+            "stamma_decision_width": "",
+            "stamma_decision_height": "",
+            "stamma_decision_evidence": "",
         }
         key = make_key(record)
         if key in existing_idx:
-            existing[existing_idx[key]] = record
+            idx = existing_idx[key]
+            existing[idx] = merge_annual_fields(existing[idx], record)
         else:
+            ym_key = make_year_motion_key(record)
+            if ym_key is not None and ym_key in year_motion_idx:
+                idx = year_motion_idx[ym_key]
+                existing[idx] = merge_annual_fields(existing[idx], record)
+                # Keep fast indexes aligned after merge.
+                existing_idx[make_key(existing[idx])] = idx
+                legacy_idx[make_legacy_key(existing[idx])] = idx
+                continue
+
             legacy_key = make_legacy_key(record)
             if legacy_key in legacy_idx and not record["motion_number"]:
                 idx = legacy_idx[legacy_key]
-                existing[idx] = record
+                existing[idx] = merge_annual_fields(existing[idx], record)
                 existing_idx[key] = idx
             else:
                 existing.append(record)
                 idx = len(existing) - 1
                 existing_idx[key] = idx
                 legacy_idx[legacy_key] = idx
+                if ym_key is not None:
+                    year_motion_idx[ym_key] = idx
                 added += 1
 
     with output_path.open("w", encoding="utf-8", newline="") as f:
