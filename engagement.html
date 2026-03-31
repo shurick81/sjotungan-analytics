@@ -318,7 +318,8 @@
 
     <section id="motioner" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
         <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Engagemang</h1>
-        <p class="mb-6" style="color: var(--vm-muted);">Arsstamma-motioner med ar, motionsnummer, titel och beslut.</p>
+        <p class="mb-6" style="color: var(--vm-muted);">Sidan visar engagemang i foreningen genom motioner, narvaro pa arsstamma och styrelsedeltagande over tid.</p>
+        <p class="text-sm mb-6" style="color: var(--vm-muted);">For motioner bygger underlaget pa tva dokumenttyper: styrelsens forslag hamtas fran kallelser, och stammans beslut hamtas fran motesprotokoll.</p>
 
         <section class="filter-card p-4 mb-6" aria-label="Filtrera pa ar">
             <div class="flex flex-wrap items-end gap-4">
@@ -341,7 +342,7 @@
                 </div>
             </div>
             <div class="mt-4 pt-3" style="border-top: 1px solid #dde6f4;">
-                <div class="text-xs uppercase tracking-wide mb-2" style="color: var(--vm-muted);">Filtrera beslut</div>
+                <div class="text-xs uppercase tracking-wide mb-2" style="color: var(--vm-muted);">Filtrera styrelsens forslag</div>
                 <div class="flex flex-wrap gap-4" id="outcome-filters">
                     <label class="text-sm" style="color: var(--vm-text);">
                         <input type="checkbox" value="positive" checked style="accent-color: var(--vm-blue);">
@@ -359,18 +360,32 @@
             </div>
         </section>
 
-        <section class="chart-card p-4 mb-6" aria-label="Fordelning av beslut">
-            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Beslutsfordelning (filtrerat urval)</h2>
+        <section class="chart-card p-4 mb-6" aria-label="Fordelning av styrelsens forslag">
+            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens forslag: fordelning (filtrerat urval)</h2>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger pa styrelsens forslag i kallelser till arsstamma.</p>
             <div class="w-full max-w-sm mx-auto">
-                <canvas id="resolution-pie-chart" aria-label="Beslutsfordelning i cirkeldiagram" role="img"></canvas>
+                <canvas id="resolution-pie-chart" aria-label="Styrelsens forslag fordelning i cirkeldiagram" role="img"></canvas>
             </div>
         </section>
 
-        <section class="chart-card p-4 mb-6" aria-label="Beslut per ar">
-            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Antal beslut per ar (filtrerat urval)</h2>
+        <section class="chart-card p-4 mb-6" aria-label="Styrelsens forslag per ar">
+            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens forslag per ar (filtrerat urval)</h2>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger pa styrelsens forslag i kallelser till arsstamma.</p>
             <div class="w-full bar-chart-wrap">
-                <canvas id="resolution-bar-chart" aria-label="Antal positiva, negativa och ovriga beslut per ar" role="img"></canvas>
+                <canvas id="resolution-bar-chart" aria-label="Antal positiva, negativa och ovriga styrelseforslag per ar" role="img"></canvas>
             </div>
+        </section>
+
+        <section class="chart-card p-4 mb-6" aria-label="Om stamma foljer styrelsens forslag">
+            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Foljde stamma styrelsens forslag?</h2>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Jammerfor stammans beslut i motesprotokoll med styrelsens forslag i kallelser.</p>
+            <div class="w-full max-w-sm mx-auto mb-4">
+                <canvas id="stamma-alignment-pie-chart" aria-label="Fordelning av om stamma foljde styrelsens forslag i cirkeldiagram" role="img"></canvas>
+            </div>
+            <div class="w-full bar-chart-wrap">
+                <canvas id="stamma-alignment-chart" aria-label="Antal motioner per ar dar stamma foljde eller inte foljde styrelsens forslag" role="img"></canvas>
+            </div>
+            <p id="stamma-alignment-summary" class="text-sm mt-3" style="color: var(--vm-text);"></p>
         </section>
 
         <section class="filter-card p-4 mb-4" aria-label="Visa eller dolj tabellkolumner">
@@ -381,12 +396,24 @@
                     Ar
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="motionNumber" checked style="accent-color: var(--vm-blue);">
+                    Motion nr
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="title" checked style="accent-color: var(--vm-blue);">
                     Titel
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="resolution" checked style="accent-color: var(--vm-blue);">
-                    Beslut
+                    Styrelsens forslag
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="stammaDecision" checked style="accent-color: var(--vm-blue);">
+                    Stammans beslut
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="followsStyrelseSuggestion" checked style="accent-color: var(--vm-blue);">
+                    F
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="authors" style="accent-color: var(--vm-blue);">
@@ -399,10 +426,6 @@
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="page" style="accent-color: var(--vm-blue);">
                     Sida
-                </label>
-                <label class="text-sm" style="color: var(--vm-text);">
-                    <input type="checkbox" value="motionNumber" style="accent-color: var(--vm-blue);">
-                    Motion nr
                 </label>
             </div>
         </section>
@@ -512,6 +535,7 @@
                     <button id="next-page" onclick="changePage(1)">Nästa →</button>
                 </div>
                 <canvas id="pdf-canvas"></canvas>
+                <div id="highlight-note" class="text-xs mt-2" style="color: var(--vm-muted); display: none;"></div>
                 <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
                     <a href="#" target="_blank" id="pdf-url" style="color: var(--vm-blue); text-decoration: none; font-size: 12px; word-wrap: break-word;"></a>
                 </div>
@@ -528,6 +552,8 @@
         let pageNumPending = null;
         const pdfScale = 1.5;
         const pdfSources = {};
+        const pdfLocalPaths = {};
+        const pdfFolderByFile = {};
         let currentHighlight = null;
         const sourceCatalog = { reports: [], protocols: [] };
         const sourceYearBounds = {
@@ -548,12 +574,16 @@
                     data.annual_reports.forEach(source => {
                         const filename = source.local_path.split('/').pop();
                         pdfSources[filename] = source.url;
+                        pdfLocalPaths[filename] = source.local_path;
+                        pdfFolderByFile[filename] = 'annual_reports';
                     });
                 }
                 if (data && data.stamma_protocols) {
                     data.stamma_protocols.forEach(source => {
                         const filename = source.local_path.split('/').pop();
                         pdfSources[filename] = source.url;
+                        pdfLocalPaths[filename] = source.local_path;
+                        pdfFolderByFile[filename] = 'stamma_protocols';
                     });
                 }
                 sourceCatalog.reports = (data && Array.isArray(data.annual_reports)) ? data.annual_reports : [];
@@ -601,12 +631,32 @@
             ].join('');
         }
 
+        function buildCandidatePdfPaths(file, preferredFolder = 'annual_reports') {
+            const mappedFolder = pdfFolderByFile[file] || preferredFolder || 'annual_reports';
+            const localPath = pdfLocalPaths[file];
+            const alternateFolder = mappedFolder === 'stamma_protocols' ? 'annual_reports' : 'stamma_protocols';
+
+            const rawCandidates = [
+                localPath,
+                localPath ? localPath.replace(/^\.\//, '') : null,
+                localPath ? localPath.replace(/^data\//, '') : null,
+                `data/${mappedFolder}/${file}`,
+                `data/${alternateFolder}/${file}`,
+                `${mappedFolder}/${file}`,
+                `${alternateFolder}/${file}`,
+                file
+            ];
+
+            return [...new Set(rawCandidates.filter(Boolean))];
+        }
+
         function openMotionPdf(file, page, label, highlight = null, folder = 'annual_reports') {
             if (!file) return;
             const safePage = Number(page) || 1;
             const modal = document.getElementById('pdfModal');
             const title = document.getElementById('modal-title');
             const urlLink = document.getElementById('pdf-url');
+            const highlightNote = document.getElementById('highlight-note');
             title.textContent = `Källdokument: ${file} - ${label}`;
 
             const hasHighlight = highlight
@@ -625,6 +675,16 @@
                 height: Number(highlight.height)
             } : null;
 
+            if (highlightNote) {
+                if (hasHighlight) {
+                    highlightNote.style.display = 'none';
+                    highlightNote.textContent = '';
+                } else {
+                    highlightNote.style.display = 'block';
+                    highlightNote.textContent = 'Ingen markeringsruta finns sparad for detta beslut. PDF visas pa ratt sida utan highlight.';
+                }
+            }
+
             if (pdfSources[file]) {
                 urlLink.href = pdfSources[file];
                 urlLink.textContent = pdfSources[file];
@@ -634,13 +694,18 @@
             }
 
             modal.style.display = 'block';
-            loadPDF(`data/${folder}/` + file, safePage);
+            loadPDF(buildCandidatePdfPaths(file, folder), safePage);
         }
 
         function closeModal() {
             document.getElementById('pdfModal').style.display = 'none';
             pdfDoc = null;
             currentHighlight = null;
+            const highlightNote = document.getElementById('highlight-note');
+            if (highlightNote) {
+                highlightNote.style.display = 'none';
+                highlightNote.textContent = '';
+            }
         }
 
         window.addEventListener('click', (event) => {
@@ -649,16 +714,27 @@
             }
         });
 
-        async function loadPDF(pdfPath, targetPage) {
-            try {
-                pageNum = targetPage || 1;
-                const loadingTask = pdfjsLib.getDocument(pdfPath);
-                pdfDoc = await loadingTask.promise;
-                document.getElementById('page-count').textContent = pdfDoc.numPages;
-                renderPage(pageNum);
-            } catch (error) {
-                console.error('Error loading PDF:', error);
+        async function loadPDF(pdfPathOrCandidates, targetPage) {
+            const candidates = Array.isArray(pdfPathOrCandidates)
+                ? pdfPathOrCandidates
+                : [pdfPathOrCandidates];
+
+            let lastError = null;
+            for (const candidatePath of candidates) {
+                try {
+                    pageNum = targetPage || 1;
+                    const loadingTask = pdfjsLib.getDocument(candidatePath);
+                    pdfDoc = await loadingTask.promise;
+                    document.getElementById('page-count').textContent = pdfDoc.numPages;
+                    renderPage(pageNum);
+                    return;
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Failed to load PDF path: ${candidatePath}`);
+                }
             }
+
+            console.error('Error loading PDF from all candidate paths:', lastError);
         }
 
         async function renderPage(num) {
@@ -742,6 +818,14 @@
                         resolutionBarChart.resize();
                         resolutionBarChart.update();
                     }
+                    if (stammaAlignmentPieChart) {
+                        stammaAlignmentPieChart.resize();
+                        stammaAlignmentPieChart.update();
+                    }
+                    if (stammaAlignmentBarChart) {
+                        stammaAlignmentBarChart.resize();
+                        stammaAlignmentBarChart.update();
+                    }
                     if (attendanceBarChart) {
                         attendanceBarChart.resize();
                         attendanceBarChart.update();
@@ -779,16 +863,21 @@
         ];
         const TABLE_COLUMNS = [
             { key: 'year', label: 'Ar', className: 'col-year' },
+            { key: 'motionNumber', label: 'Nr', className: 'col-motion' },
             { key: 'title', label: 'Titel', className: '' },
-            { key: 'resolution', label: 'Beslut', className: '' },
+            { key: 'resolution', label: 'Styrelsens forslag', className: '' },
+            { key: 'stammaDecision', label: 'Stammans beslut', className: '' },
+            { key: 'followsStyrelseSuggestion', label: 'F', className: 'col-motion' },
             { key: 'authors', label: 'Forfattare', className: '' },
             { key: 'file', label: 'Fil', className: '' },
-            { key: 'page', label: 'Sida', className: 'col-motion' },
-            { key: 'motionNumber', label: 'Motion nr', className: 'col-motion' }
+            { key: 'page', label: 'Sida', className: 'col-motion' }
         ];
         let allRecords = [];
         let resolutionPieChart = null;
         let resolutionBarChart = null;
+        let stammaDecisionChart = null;
+        let stammaAlignmentPieChart = null;
+        let stammaAlignmentBarChart = null;
         let attendanceBarChart = null;
         let boardParticipantRows = [];
 
@@ -857,6 +946,38 @@
             return (cells[idx] || '').trim();
         }
 
+        function getStammaAgreementDisplay(value) {
+            const normalized = normalizeDecisionText(value);
+            if (normalized === '1' || normalized === 'yes' || normalized === 'ja') {
+                return {
+                    icon: '&#x2611;',
+                    label: 'Ja',
+                    title: 'Stamma foljde styrelsens forslag',
+                    bg: '#dcfce7',
+                    color: '#166534',
+                    border: '#86efac'
+                };
+            }
+            if (normalized === '0' || normalized === 'no' || normalized === 'nej') {
+                return {
+                    icon: '&#x2612;',
+                    label: 'Nej',
+                    title: 'Stamma avvek fran styrelsens forslag',
+                    bg: '#fee2e2',
+                    color: '#991b1b',
+                    border: '#fca5a5'
+                };
+            }
+            return {
+                icon: '&#x25A1;',
+                label: 'Okant',
+                title: 'Okant om stamma foljde styrelsens forslag',
+                bg: '#e2e8f0',
+                color: '#334155',
+                border: '#cbd5e1'
+            };
+        }
+
         function renderRows(records) {
             const tbody = document.getElementById('motions-body');
             const headRow = document.getElementById('motions-head-row');
@@ -884,8 +1005,15 @@
                     const td = document.createElement('td');
                     if (col.className) td.className = col.className;
 
+                    if (col.key === 'followsStyrelseSuggestion') {
+                        const agreement = getStammaAgreementDisplay(record.followsStyrelseSuggestion);
+                        td.innerHTML = `<span title="${agreement.title}" aria-label="${agreement.title}" style="display:inline-flex;align-items:center;gap:0.38rem;padding:0.14rem 0.48rem;border-radius:999px;border:1px solid ${agreement.border};background:${agreement.bg};color:${agreement.color};font-weight:700;font-size:0.86rem;line-height:1;"><span style="font-size:1.05rem;line-height:1;">${agreement.icon}</span><span>${agreement.label}</span></span>`;
+                        tr.appendChild(td);
+                        continue;
+                    }
+
                     const value = record[col.key] || '-';
-                    const isClickable = (
+                    const isAnnualReportClickable = (
                         col.key === 'motionNumber'
                         || col.key === 'title'
                         || col.key === 'file'
@@ -893,7 +1021,9 @@
                         || col.key === 'resolution'
                     ) && record.file;
 
-                    if (isClickable) {
+                    const isStammaDecisionClickable = col.key === 'stammaDecision' && record.stammaProtocolFile;
+
+                    if (isAnnualReportClickable || isStammaDecisionClickable) {
                         const span = document.createElement('span');
                         span.className = 'clickable-cell';
                         span.textContent = value;
@@ -903,9 +1033,29 @@
                         if (col.key === 'title') label = record.title || 'Motion';
                         if (col.key === 'file') label = `Fil ${record.file}`;
                         if (col.key === 'page') label = `Sida ${record.page || ''}`;
-                        if (col.key === 'resolution') label = `Beslut: ${record.resolution || ''}`;
+                        if (col.key === 'resolution') label = `Styrelsens forslag: ${record.resolution || ''}`;
+                        if (col.key === 'stammaDecision') label = `Stammans beslut: ${record.stammaDecision || ''}`;
 
                         span.addEventListener('click', () => {
+                            if (col.key === 'stammaDecision') {
+                                const protocolPage = Number(record.stammaDecisionPage) || 1;
+                                const highlight = {
+                                    page: protocolPage,
+                                    x: Number(record.stammaDecisionX),
+                                    y: Number(record.stammaDecisionY),
+                                    width: Number(record.stammaDecisionWidth),
+                                    height: Number(record.stammaDecisionHeight)
+                                };
+                                openMotionPdf(
+                                    record.stammaProtocolFile,
+                                    protocolPage,
+                                    label,
+                                    highlight,
+                                    'stamma_protocols'
+                                );
+                                return;
+                            }
+
                             const targetPage = col.key === 'resolution'
                                 ? (Number(record.resolutionPage) || Number(record.page) || 1)
                                 : (Number(record.page) || 1);
@@ -965,6 +1115,296 @@
             return 'other';
         }
 
+        function normalizeDecisionText(value) {
+            return (value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        function getStammaDecisionLabel(value) {
+            const raw = (value || '').trim();
+            const normalized = normalizeDecisionText(raw);
+            if (!normalized) return 'Saknas';
+            if (normalized === 'avslas' || normalized === 'avslag' || normalized === 'avstyrker') return 'Avslas/Avstyrker';
+            if (normalized === 'bifalls' || normalized === 'bifall' || normalized === 'tillstyrker' || normalized === 'tillstyrks') return 'Bifalls/Tillstyrks';
+            if (normalized === 'besvarad') return 'Besvarad';
+            return raw;
+        }
+
+        function getStammaDecisionCounts(records) {
+            const counts = new Map();
+            for (const record of records) {
+                const label = getStammaDecisionLabel(record.stammaDecision);
+                counts.set(label, (counts.get(label) || 0) + 1);
+            }
+
+            const labels = [...counts.keys()].sort((a, b) => {
+                const diff = (counts.get(b) || 0) - (counts.get(a) || 0);
+                return diff !== 0 ? diff : a.localeCompare(b, 'sv');
+            });
+
+            return {
+                labels,
+                values: labels.map(label => counts.get(label) || 0)
+            };
+        }
+
+        function updateStammaDecisionChart(records) {
+            const canvas = document.getElementById('stamma-decision-chart');
+            if (!canvas || typeof Chart === 'undefined') return;
+
+            const grouped = getStammaDecisionCounts(records);
+            const labels = grouped.labels;
+            const values = grouped.values;
+
+            if (stammaDecisionChart) {
+                stammaDecisionChart.data.labels = labels;
+                stammaDecisionChart.data.datasets[0].data = values;
+                stammaDecisionChart.update();
+                return;
+            }
+
+            stammaDecisionChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Antal motioner',
+                            data: values,
+                            backgroundColor: '#3b82f6'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Stammobeslut'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Antal motioner'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function getStammaAlignmentBucket(value) {
+            const normalized = normalizeDecisionText(value);
+            if (!normalized) return 'unknown';
+            if (normalized === '1') return 'followed';
+            if (normalized === '0') return 'didNotFollow';
+            if (normalized === 'yes' || normalized === 'ja') return 'followed';
+            if (normalized === 'no' || normalized === 'nej') return 'didNotFollow';
+            return 'unknown';
+        }
+
+        function getYearlyStammaAlignmentCounts(records) {
+            const yearly = {};
+            const yearFromEl = document.getElementById('year-from');
+            const yearToEl = document.getElementById('year-to');
+            const selectedMinYear = Number(yearFromEl?.value);
+            const selectedMaxYear = Number(yearToEl?.value);
+
+            if (Number.isFinite(selectedMinYear) && Number.isFinite(selectedMaxYear)) {
+                for (let year = selectedMinYear; year <= selectedMaxYear; year += 1) {
+                    yearly[year] = { followed: 0, didNotFollow: 0, unknown: 0 };
+                }
+            }
+
+            for (const record of records) {
+                const year = Number(record.year);
+                if (!Number.isFinite(year)) continue;
+                if (!yearly[year]) {
+                    yearly[year] = { followed: 0, didNotFollow: 0, unknown: 0 };
+                }
+
+                const bucket = getStammaAlignmentBucket(record.followsStyrelseSuggestion);
+                if (bucket === 'followed') yearly[year].followed += 1;
+                else if (bucket === 'didNotFollow') yearly[year].didNotFollow += 1;
+                else yearly[year].unknown += 1;
+            }
+
+            const labels = Object.keys(yearly)
+                .map(y => Number(y))
+                .sort((a, b) => a - b)
+                .map(y => String(y));
+
+            return {
+                labels,
+                followed: labels.map(y => yearly[Number(y)].followed),
+                didNotFollow: labels.map(y => yearly[Number(y)].didNotFollow),
+                unknown: labels.map(y => yearly[Number(y)].unknown)
+            };
+        }
+
+        function updateStammaAlignmentChart(records) {
+            const pieCanvas = document.getElementById('stamma-alignment-pie-chart');
+            const barCanvas = document.getElementById('stamma-alignment-chart');
+            const summary = document.getElementById('stamma-alignment-summary');
+            if (!pieCanvas || !barCanvas || !summary || typeof Chart === 'undefined') return;
+
+            let followed = 0;
+            let didNotFollow = 0;
+            let unknown = 0;
+
+            for (const record of records) {
+                const bucket = getStammaAlignmentBucket(record.followsStyrelseSuggestion);
+                if (bucket === 'followed') followed += 1;
+                else if (bucket === 'didNotFollow') didNotFollow += 1;
+                else unknown += 1;
+            }
+
+            const totalKnown = followed + didNotFollow;
+            const totalAll = totalKnown + unknown;
+            const mismatchPct = totalKnown > 0 ? Math.round((didNotFollow / totalKnown) * 100) : 0;
+            if (totalKnown > 0) {
+                summary.textContent = `${didNotFollow} av ${totalKnown} motioner (${mismatchPct} %) avvek fran styrelsens forslag i valt arsintervall. Totalt ${totalAll} motioner, varav ${unknown} med okant utfall.`;
+            } else {
+                summary.textContent = totalAll > 0
+                    ? `Totalt ${totalAll} motioner i valt arsintervall, men samtliga har okant utfall mot styrelsens forslag.`
+                    : 'Ingen tillracklig data for att avgora om stamma foljde styrelsens forslag i valt arsintervall.';
+            }
+
+            const yearly = getYearlyStammaAlignmentCounts(records);
+            const labels = yearly.labels;
+            const followedSeries = yearly.followed;
+            const didNotFollowSeries = yearly.didNotFollow;
+            const unknownSeries = yearly.unknown;
+            const pieValues = [followed, didNotFollow, unknown];
+            const pieLabels = ['Foljde styrelsen', 'Avvek fran styrelsen', 'Okant'];
+            const pieColors = ['#16a34a', '#dc2626', '#8a95a8'];
+            const formatSliceLabel = (label, value, total) => {
+                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${label}: ${value} (${pct} %)`;
+            };
+            const pieSliceLabels = pieLabels.map((label, index) => formatSliceLabel(label, Number(pieValues[index] || 0), totalAll));
+
+            if (stammaAlignmentPieChart) {
+                stammaAlignmentPieChart.data.labels = pieSliceLabels;
+                stammaAlignmentPieChart.data.datasets[0].data = pieValues;
+                stammaAlignmentPieChart.data.datasets[0].backgroundColor = pieColors;
+                stammaAlignmentPieChart.update();
+            } else {
+                stammaAlignmentPieChart = new Chart(pieCanvas, {
+                    type: 'pie',
+                    data: {
+                        labels: pieSliceLabels,
+                        datasets: [
+                            {
+                                data: pieValues,
+                                backgroundColor: pieColors,
+                                borderColor: '#f7f9fd',
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label(context) {
+                                        return context.label || '';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (stammaAlignmentBarChart) {
+                stammaAlignmentBarChart.data.labels = labels;
+                stammaAlignmentBarChart.data.datasets[0].data = followedSeries;
+                stammaAlignmentBarChart.data.datasets[1].data = didNotFollowSeries;
+                stammaAlignmentBarChart.data.datasets[2].data = unknownSeries;
+                stammaAlignmentBarChart.update();
+                return;
+            }
+
+            stammaAlignmentBarChart = new Chart(barCanvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Foljde styrelsen',
+                            data: followedSeries,
+                            backgroundColor: '#16a34a'
+                        },
+                        {
+                            label: 'Avvek fran styrelsen',
+                            data: didNotFollowSeries,
+                            backgroundColor: '#dc2626'
+                        },
+                        {
+                            label: 'Okant',
+                            data: unknownSeries,
+                            backgroundColor: '#8a95a8'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Ar'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Antal motioner'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
         function updateAnalytics(records) {
             const total = records.length;
             let positiveCount = 0;
@@ -991,9 +1431,15 @@
             const data = [positiveCount, negativeCount, otherCount];
             const labels = ['Tillstyrker', 'Avslas/Avstyrker', 'Ovriga'];
             const colors = ['#2f8f46', '#cf4f4f', '#8a95a8'];
+            const total = data.reduce((sum, value) => sum + Number(value || 0), 0);
+            const formatSliceLabel = (label, value, total) => {
+                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${label}: ${value} (${pct} %)`;
+            };
+            const sliceLabels = labels.map((label, index) => formatSliceLabel(label, Number(data[index] || 0), total));
 
             if (resolutionPieChart) {
-                resolutionPieChart.data.labels = labels;
+                resolutionPieChart.data.labels = sliceLabels;
                 resolutionPieChart.data.datasets[0].data = data;
                 resolutionPieChart.data.datasets[0].backgroundColor = colors;
                 resolutionPieChart.update();
@@ -1003,7 +1449,7 @@
             resolutionPieChart = new Chart(canvas, {
                 type: 'pie',
                 data: {
-                    labels: labels,
+                    labels: sliceLabels,
                     datasets: [{
                         data: data,
                         backgroundColor: colors,
@@ -1016,6 +1462,13 @@
                     plugins: {
                         legend: {
                             position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    return context.label || '';
+                                }
+                            }
                         }
                     }
                 }
@@ -1024,6 +1477,17 @@
 
         function getYearlyResolutionCounts(records) {
             const yearly = {};
+            const yearFromEl = document.getElementById('year-from');
+            const yearToEl = document.getElementById('year-to');
+            const selectedMinYear = Number(yearFromEl?.value);
+            const selectedMaxYear = Number(yearToEl?.value);
+
+            if (Number.isFinite(selectedMinYear) && Number.isFinite(selectedMaxYear)) {
+                for (let year = selectedMinYear; year <= selectedMaxYear; year += 1) {
+                    yearly[year] = { positive: 0, negative: 0, other: 0 };
+                }
+            }
+
             for (const record of records) {
                 const year = Number(record.year);
                 if (!Number.isFinite(year)) continue;
@@ -1214,13 +1678,26 @@
             });
         }
 
+        function getYearFilteredRecords() {
+            const minYear = Number(document.getElementById('year-from').value);
+            const maxYear = Number(document.getElementById('year-to').value);
+
+            return allRecords.filter(record => {
+                const y = Number(record.year);
+                if (!Number.isFinite(y)) return false;
+                return y >= minYear && y <= maxYear;
+            });
+        }
+
         function applyFilters() {
             const minValue = document.getElementById('year-from').value;
             const maxValue = document.getElementById('year-to').value;
             setYearLabels(minValue, maxValue);
             updateRangeFill();
 
+            const yearFiltered = getYearFilteredRecords();
             const filtered = getFilteredRecords();
+            updateStammaAlignmentChart(yearFiltered);
             updateAnalytics(filtered);
             renderRows(filtered);
         }
@@ -1719,6 +2196,14 @@
                     title: getCell(cells, indexMap, 'title'),
                     authors: getCell(cells, indexMap, 'authors'),
                     resolution: getCell(cells, indexMap, 'resolution'),
+                    stammaDecision: getCell(cells, indexMap, 'stamma_decision_wording'),
+                    followsStyrelseSuggestion: getCell(cells, indexMap, 'stamma_followed_styrelse_binary'),
+                    stammaProtocolFile: getCell(cells, indexMap, 'stamma_protocol_file'),
+                    stammaDecisionPage: getCell(cells, indexMap, 'stamma_decision_page'),
+                    stammaDecisionX: getCell(cells, indexMap, 'stamma_decision_x'),
+                    stammaDecisionY: getCell(cells, indexMap, 'stamma_decision_y'),
+                    stammaDecisionWidth: getCell(cells, indexMap, 'stamma_decision_width'),
+                    stammaDecisionHeight: getCell(cells, indexMap, 'stamma_decision_height'),
                     resolutionPage: getCell(cells, indexMap, 'resolution_page'),
                     resolutionX: getCell(cells, indexMap, 'resolution_x'),
                     resolutionY: getCell(cells, indexMap, 'resolution_y'),

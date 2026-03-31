@@ -11,6 +11,7 @@ This folder groups reusable data-extraction assets in one place.
 
 - Script: `scripts/extract_motion_resolutions.py`
 - Method doc: `methods/motion_resolutions.md`
+- Script: `scripts/extract_motion_protocol_decisions.py`
 - Script: `scripts/extract_stamma_attendance.py`
 - Method doc: `methods/stamma_attendance.md`
 - Script: `scripts/extract_board_leadership.py`
@@ -53,6 +54,24 @@ Append extracted rows to `data/motions.csv`:
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_resolutions.py 2025 stamma2025.pdf --append
+```
+
+Extract protocol outcomes and whether the stamma followed styrelsens forslag (all years in `data/motions.csv`):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_protocol_decisions.py --all-years --append
+```
+
+Extract from all protocol PDFs (including years missing in `data/motions.csv`) and bootstrap missing motion rows:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_protocol_decisions.py --all-protocols --bootstrap-missing --append
+```
+
+Single year + protocol PDF:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_motion_protocol_decisions.py 2024 protokoll2024.pdf --append
 ```
 
 Dry-run attendance extraction from protocol:
