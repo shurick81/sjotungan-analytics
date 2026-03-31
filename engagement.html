@@ -356,13 +356,17 @@
                         <input type="checkbox" value="other" checked style="accent-color: var(--vm-blue);">
                         Övriga
                     </label>
+                    <label class="text-sm" style="color: var(--vm-text);">
+                        <input type="checkbox" value="unknown" checked style="accent-color: var(--vm-blue);">
+                        Okänd
+                    </label>
                 </div>
             </div>
         </section>
 
         <section class="chart-card p-4 mb-6" aria-label="Fördelning av styrelsens förslag">
             <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens förslag: fördelning (filtrerat urval)</h2>
-            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger på styrelsens förslag i kallelser till årsstämma.</p>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger på styrelsens förslag i kallelser till årsstämma. Fullständig motionstext med styrelsens yttrande finns bara i kallelser från 2017 och framåt; för äldre år saknas denna information och motionerna visas som “Okänd”.</p>
             <div class="w-full max-w-sm mx-auto">
                 <canvas id="resolution-pie-chart" aria-label="Styrelsens förslag fördelning i cirkeldiagram" role="img"></canvas>
             </div>
@@ -370,9 +374,9 @@
 
         <section class="chart-card p-4 mb-6" aria-label="Styrelsens förslag per år">
             <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens förslag per år (filtrerat urval)</h2>
-            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger på styrelsens förslag i kallelser till årsstämma.</p>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger på styrelsens förslag i kallelser till årsstämma. Kallelser med fullständig motionstext och styrelsens yttrande finns bara från 2017 och framåt; för äldre år visas motionerna som “Okänd”.</p>
             <div class="w-full bar-chart-wrap">
-                <canvas id="resolution-bar-chart" aria-label="Antal positiva, negativa och övriga styrelseförslag per år" role="img"></canvas>
+                <canvas id="resolution-bar-chart" aria-label="Antal positiva, negativa, övriga och okända styrelseförslag per år" role="img"></canvas>
             </div>
         </section>
 
@@ -1138,6 +1142,7 @@
         function getResolutionBucket(value) {
             if (isPositiveResolution(value)) return 'positive';
             if (isNegativeResolution(value)) return 'negative';
+            if (!normalizeResolution(value)) return 'unknown';
             return 'other';
         }
 
@@ -1435,28 +1440,31 @@
             const total = records.length;
             let positiveCount = 0;
             let negativeCount = 0;
+            let unknownCount = 0;
 
             for (const record of records) {
                 if (isPositiveResolution(record.resolution)) {
                     positiveCount += 1;
                 } else if (isNegativeResolution(record.resolution)) {
                     negativeCount += 1;
+                } else if (!normalizeResolution(record.resolution)) {
+                    unknownCount += 1;
                 }
             }
 
-            const otherCount = total - positiveCount - negativeCount;
+            const otherCount = total - positiveCount - negativeCount - unknownCount;
 
-            updatePieChart(positiveCount, negativeCount, otherCount);
+            updatePieChart(positiveCount, negativeCount, otherCount, unknownCount);
             updateYearlyBarChart(records);
         }
 
-        function updatePieChart(positiveCount, negativeCount, otherCount) {
+        function updatePieChart(positiveCount, negativeCount, otherCount, unknownCount) {
             const canvas = document.getElementById('resolution-pie-chart');
             if (!canvas || typeof Chart === 'undefined') return;
 
-            const data = [positiveCount, negativeCount, otherCount];
-            const labels = ['Tillstyrker', 'Avslås/Avstyrker', 'Övriga'];
-            const colors = ['#2f8f46', '#cf4f4f', '#8a95a8'];
+            const data = [positiveCount, negativeCount, otherCount, unknownCount];
+            const labels = ['Tillstyrker', 'Avslås/Avstyrker', 'Övriga', 'Okänd'];
+            const colors = ['#2f8f46', '#cf4f4f', '#8a95a8', '#c9b95e'];
             const total = data.reduce((sum, value) => sum + Number(value || 0), 0);
             const formatSliceLabel = (label, value, total) => {
                 const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
@@ -1510,7 +1518,7 @@
 
             if (Number.isFinite(selectedMinYear) && Number.isFinite(selectedMaxYear)) {
                 for (let year = selectedMinYear; year <= selectedMaxYear; year += 1) {
-                    yearly[year] = { positive: 0, negative: 0, other: 0 };
+                    yearly[year] = { positive: 0, negative: 0, other: 0, unknown: 0 };
                 }
             }
 
@@ -1518,13 +1526,15 @@
                 const year = Number(record.year);
                 if (!Number.isFinite(year)) continue;
                 if (!yearly[year]) {
-                    yearly[year] = { positive: 0, negative: 0, other: 0 };
+                    yearly[year] = { positive: 0, negative: 0, other: 0, unknown: 0 };
                 }
 
                 if (isPositiveResolution(record.resolution)) {
                     yearly[year].positive += 1;
                 } else if (isNegativeResolution(record.resolution)) {
                     yearly[year].negative += 1;
+                } else if (!normalizeResolution(record.resolution)) {
+                    yearly[year].unknown += 1;
                 } else {
                     yearly[year].other += 1;
                 }
@@ -1539,7 +1549,8 @@
                 labels,
                 positive: labels.map(y => yearly[Number(y)].positive),
                 negative: labels.map(y => yearly[Number(y)].negative),
-                other: labels.map(y => yearly[Number(y)].other)
+                other: labels.map(y => yearly[Number(y)].other),
+                unknown: labels.map(y => yearly[Number(y)].unknown)
             };
         }
 
@@ -1552,10 +1563,12 @@
             const positive = yearly.positive;
             const negative = yearly.negative;
             const other = yearly.other;
+            const unknown = yearly.unknown;
             const colors = {
                 positive: '#2f8f46',
                 negative: '#cf4f4f',
-                other: '#8a95a8'
+                other: '#8a95a8',
+                unknown: '#c9b95e'
             };
 
             if (resolutionBarChart) {
@@ -1563,6 +1576,7 @@
                 resolutionBarChart.data.datasets[0].data = positive;
                 resolutionBarChart.data.datasets[1].data = negative;
                 resolutionBarChart.data.datasets[2].data = other;
+                resolutionBarChart.data.datasets[3].data = unknown;
                 resolutionBarChart.update();
                 return;
             }
@@ -1586,6 +1600,11 @@
                             label: 'Övriga',
                             data: other,
                             backgroundColor: colors.other
+                        },
+                        {
+                            label: 'Okänd',
+                            data: unknown,
+                            backgroundColor: colors.unknown
                         }
                     ]
                 },
