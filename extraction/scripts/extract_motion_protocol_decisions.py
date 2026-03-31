@@ -133,27 +133,59 @@ def normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", no_marks).strip()
 
 
+# Common post-decision noise markers in scanned protocol pages.
+_POST_DECISION_NOISE_RE = re.compile(
+    r"\b(?:"
+    r"justering(?:ar)?|sekreterare|justerare|justeringsm"
+    r"|st[aä]mmoordf[oö]rande|m[oö]tesordf[oö]rande"
+    r"|stammans avslutning|stamman avslutades"
+    r"|foreningens styrelseordforande"
+    r")\b"
+    r"|(?:^|\s)\$\s*\d{1,3}\.\s",  # paragraph markers like '§19.'
+    flags=re.IGNORECASE,
+)
+
+
+def strip_post_decision_noise(text: str) -> str:
+    """Trim text at common post-decision noise boundaries."""
+    m = _POST_DECISION_NOISE_RE.search(text)
+    if m:
+        text = text[: m.start()].rstrip(" .,:;-")
+    return text
+
+
 def clean_evidence(text: str, limit: int = 220) -> str:
     compact = normalize_space(text)
+    compact = strip_post_decision_noise(compact)
     if len(compact) <= limit:
         return compact
     return compact[: limit - 3].rstrip() + "..."
 
 
 def clean_title(text: str) -> str:
-    title = normalize_space(text).strip("\"'“”„”:- ")
+    title = normalize_space(text).strip("\"'“”„“:- ")
     title = re.sub(r"\s+", " ", title)
+    # "Motion angående ..." prefix is non-semantic boilerplate.
+    title = re.sub(r"^motion\s+ang(?:\.|(?:aende|ående)?)\s+", "", title, flags=re.IGNORECASE)
+    # "till BRF Sjötungan angående ..." prefix is non-semantic boilerplate.
+    title = re.sub(r"^till\s+brf\s+sj[öo]tungan\s+ang(?:\.|(?:aende|ående)?)\s+", "", title, flags=re.IGNORECASE)
     # "Ang." / "Angående" is usually a non-semantic heading prefix.
     title = re.sub(r"^ang(?:\.|(?:aende|ående)?)\s+", "", title, flags=re.IGNORECASE)
     # Common OCR slips in older protocols that hurt title quality.
     title = re.sub(r"\b[aä]nring\b", "ändring", title, flags=re.IGNORECASE)
     title = re.sub(r"\bgymet\b", "gymmet", title, flags=re.IGNORECASE)
+    # Strip trailing dots -- they add no semantic value to titles.
+    title = title.rstrip(".")
     return title[:180].rstrip(" ,;:-")
 
 
 def is_low_quality_protocol_title(title: str) -> bool:
     t = normalize_text(title)
     if not t:
+        return True
+
+    # A title that is just digits/punctuation (e.g. "135.") is noise.
+    if not re.search(r"[a-zåäö]{3,}", t):
         return True
 
     bad_markers = (
@@ -181,6 +213,9 @@ def clean_authors(text: str) -> str:
     s = re.sub(r"\bmyggdalsv[aä]gen\b.*$", "", s, flags=re.IGNORECASE)
     s = re.sub(r"\s+", " ", s).strip(" ,;:-")
 
+    # Normalize '&' to 'och' before tokenizing.
+    s = re.sub(r"\s*&\s*", " och ", s)
+
     # Keep likely personal names and separators.
     tokens = re.findall(r"[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+|och|,", s)
     if not tokens:
@@ -204,9 +239,15 @@ def split_inline_title_and_authors(text: str) -> Tuple[str, str]:
     if not c:
         return "", ""
 
+    # Strip trailing apartment markers (e.g. "M84", "M. 84") so they don't
+    # create spurious period-split points or poison author extraction.
+    c = re.sub(r"\s+M\.?\s*\d{1,3}$", "", c).rstrip(" ,;:")
+    if not c:
+        return "", ""
+
     # Strong pattern: title sentence followed by a person-name tail, often ending with a dot.
     name_tail = re.match(
-        r"^(.*\.)\s+([A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+(?:\s+[A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+)+(?:\s*(?:,|och)\s*[A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+(?:\s+[A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+)*)*)\.?$",
+        r"^(.*\.)\s+([A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+(?:\s+(?:&\s+)?[A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+)+(?:\s*(?:,|och|&)\s*[A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+(?:\s+[A-ZÅÄÖ][A-Za-zÅÄÖåäö-]+)*)*)\.?$",
         c,
     )
     if name_tail:
@@ -219,6 +260,16 @@ def split_inline_title_and_authors(text: str) -> Tuple[str, str]:
     # Use greedy title capture so abbreviations like "Ang." do not truncate the title.
     m = re.match(r"^(.*\.)\s+(.+)$", c)
     if not m:
+        # No-period pattern: "Title text Firstname Lastname" with no separator.
+        m_apt = re.match(
+            r"^(.+?)\s+([A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+(?:\s+(?:&\s+)?[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+)+)$",
+            c,
+        )
+        if m_apt:
+            title_part = clean_title(m_apt.group(1))
+            trailing_authors = clean_authors(m_apt.group(2))
+            if title_part and trailing_authors:
+                return title_part, trailing_authors
         return c, ""
 
     title_part = clean_title(m.group(1))
@@ -249,9 +300,20 @@ def protocol_title_score(title: str) -> int:
 def title_has_trailing_author_noise(title: str, authors: str) -> bool:
     if not title or not authors:
         return False
-    title_norm = normalize_text(title).strip(" .,;:-")
-    authors_norm = normalize_text(authors).strip(" .,;:-")
-    return bool(authors_norm) and title_norm.endswith(authors_norm)
+    # Normalize '&' to space so "Britt & Sven" matches "Britt Sven".
+    title_norm = normalize_text(title).replace("&", " ")
+    title_norm = re.sub(r"\s+", " ", title_norm).strip(" .,;:-")
+    authors_norm = normalize_text(authors).replace("&", " ")
+    authors_norm = re.sub(r"\s+", " ", authors_norm).strip(" .,;:-")
+    if bool(authors_norm) and title_norm.endswith(authors_norm):
+        return True
+    # Also check individual author names (first name in a comma/och-separated list).
+    for part in re.split(r",\s*|\s+och\s+", authors):
+        part_norm = normalize_text(part).replace("&", " ")
+        part_norm = re.sub(r"\s+", " ", part_norm).strip(" .,;:-")
+        if len(part_norm) >= 5 and title_norm.endswith(part_norm):
+            return True
+    return False
 
 
 def title_has_appended_tail(existing_title: str, canonical_title: str) -> bool:
@@ -285,7 +347,27 @@ def title_is_better_candidate(existing_title: str, candidate_title: str) -> bool
     return prefix_match >= 3
 
 
-def authors_is_better_candidate(existing_authors: str, candidate_authors: str) -> bool:
+def strip_motion_heading_prefix(title: str) -> str:
+    t = title
+    t = re.sub(r"^motion(?:en|erna)?\s*\d+(?:\s*[-–]\s*\d+)?\.\s*", "", t, flags=re.IGNORECASE)
+    t = re.sub(r"^motion(?:er|en|erna)?\s*:\s*", "", t, flags=re.IGNORECASE)
+    t = re.sub(r"^motion(?:er|en|erna)?\s+", "", t, flags=re.IGNORECASE)
+    # Strip OCR artifacts like 'I1.' or 'Å.' that are misread motion numbers.
+    t = re.sub(r"^[IÅilå|]\d{1,2}\.\s*", "", t)
+    t = re.sub(r"^(?:ang(?:aende|ående)?\.?\s+)", "", t, flags=re.IGNORECASE)
+    # Strip boilerplate: "till Årsstämma YYYY Brf Sjötungan gällande"
+    t = re.sub(r"^(?:till\s+)?[åa]rsst[aä]mma\s+\d{4}\s+brf\s+sj[öo]tungan\s+g[aä]llande\s+", "", t, flags=re.IGNORECASE)
+    return clean_title(t)
+
+
+def title_has_group_heading_noise(title: str) -> bool:
+    t = normalize_text(title)
+    return bool(re.match(r"^motion(?:er|en|erna)?[\s:]+", t)) or bool(
+        re.match(r"^(?:till\s+)?[a]?rsst[a]?mma\s+\d{4}\s+brf\s+", t)
+    )
+
+
+def authors_is_better_candidate(existing_authors: str, candidate_authors: str, title: str = "") -> bool:
     if not candidate_authors:
         return False
     if not existing_authors:
@@ -300,6 +382,21 @@ def authors_is_better_candidate(existing_authors: str, candidate_authors: str) -
     candidate_name_count = len(re.findall(r"[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+\s+[A-ZÅÄÖ][a-zåäöA-ZÅÄÖ-]+", candidate_authors))
     if candidate_name_count > existing_name_count:
         return True
+
+    # Prefer candidates with explicit separators (och/,) over run-together names.
+    existing_has_sep = bool(re.search(r"\boch\b|,", existing_authors))
+    candidate_has_sep = bool(re.search(r"\boch\b|,", candidate_authors))
+    if candidate_has_sep and not existing_has_sep and candidate_name_count >= existing_name_count:
+        return True
+
+    # If existing authors share significant words with the title but candidate
+    # doesn't, the existing value likely has title words leaking into authors.
+    if title:
+        title_words = set(normalize_text(title).split())
+        existing_overlap = {w for w in set(existing_norm.split()) & title_words if len(w) > 3}
+        candidate_overlap = {w for w in set(candidate_norm.split()) & title_words if len(w) > 3}
+        if existing_overlap and not candidate_overlap and candidate_name_count >= 1:
+            return True
 
     return candidate_norm.startswith(existing_norm) and (len(candidate_norm) >= len(existing_norm) + 5)
 
@@ -418,8 +515,15 @@ def extract_title_and_authors_from_section(lines: List[str], motion_number: int)
             merged_title, merged_authors = split_inline_title_and_authors(merged_cleaned)
             if merged_authors and len(merged_authors) > len(candidate_authors):
                 candidate_title, candidate_authors = merged_title, merged_authors
-        candidate_title = re.sub(r"^motion\s+(?:ang(?:aende|ående)?\.?\s+)?", "", candidate_title, flags=re.IGNORECASE)
-        candidate_title = clean_title(candidate_title)
+        candidate_title = strip_motion_heading_prefix(candidate_title)
+
+        # If the title was stripped to empty (e.g. "Motion 135."), discard
+        # any authors that came from the same merge — they are likely garbage.
+        if not candidate_title:
+            candidate_authors = ""
+            # Also skip the standalone fallback for this line — the line
+            # was purely a heading and shouldn't contribute authors.
+            continue
 
         if not title and candidate_title:
             title = candidate_title
@@ -428,9 +532,14 @@ def extract_title_and_authors_from_section(lines: List[str], motion_number: int)
             authors = candidate_authors
 
         if not authors:
-            standalone_authors = clean_authors(raw)
+            # Strip heading/boilerplate before author extraction so that
+            # words like "Motion", "Årsstämma", "Brf Sjötungan" etc. are
+            # not mistaken for person names.
+            stripped_raw = strip_motion_heading_prefix(clean_title(raw))
+            standalone_authors = clean_authors(stripped_raw)
             if merged_cleaned:
-                merged_authors = clean_authors(f"{raw} {next_raw}")
+                stripped_merged = strip_motion_heading_prefix(merged_cleaned)
+                merged_authors = clean_authors(stripped_merged)
                 if len(merged_authors) > len(standalone_authors):
                     standalone_authors = merged_authors
             raw_norm = normalize_text(raw)
@@ -457,7 +566,7 @@ def detect_decision(normalized_block: str) -> Tuple[str, str]:
         (r"(?:att\s+)?avsl[aå]\s+motionen", "Avslås"),
         (r"motionen\s+avsl[aå]s", "Avslås"),
         (r"avslag\s+(?:pa|på)\s+motionen", "Avslås"),
-        (r"(?:aterremittera|aterremitterades|aterremitterad)\s+motionen", "Återremitterad"),
+        (r"(?:aterremittera|aterremitterades?|aterremitterad)\s+(?:motionen|arendet)", "Återremitterad"),
     ]
 
     for pattern, label in patterns:
@@ -467,9 +576,9 @@ def detect_decision(normalized_block: str) -> Tuple[str, str]:
 
     # Some protocols use free-form decision text inside a motion block
     # (for example: "Beslut: Tillägg till ...") without explicit bifall/avslag verbs.
-    generic = re.search(r"beslut\s*:\s*([^\n]{6,180})", normalized_block)
+    generic = re.search(r"beslut\s*:\s*(.{6,180})", normalized_block)
     if generic:
-        return "Beslutad", generic.group(1).strip()
+        return "Beslutad", strip_post_decision_noise(generic.group(1).strip())
 
     # Keep board-alignment text out of the wording column; this block still has a decision,
     # but without explicit bifall/avslag verbs.
@@ -669,6 +778,11 @@ def find_stamma_decision_bbox(
         "besvarad": [["besvarad"], ["besvarade"], ["besvarades"], ["besvaras"]],
         "enligt styrelsens förslag": [["enligt", "styrelsens", "forslag"]],
         "återremitterad": [["aterremitterad"], ["aterremitterades"], ["aterremittera"]],
+        "beslutad": [
+            ["enligt", "styrelsens", "forslag"],
+            ["enligt", "styrelsens", "svar"],
+            ["stamman", "beslutade"],
+        ],
     }.get(decision.lower().strip(), [])
     for tokens in decision_token_variants:
         candidates.append(tokens)
@@ -1052,13 +1166,14 @@ def update_rows_for_year(
                 or title_has_trailing_author_noise(existing_title, existing_authors)
                 or title_has_appended_tail(existing_title, meta.title)
                 or title_is_better_candidate(existing_title, meta.title)
+                or (title_has_group_heading_noise(existing_title) and not title_has_group_heading_noise(meta.title))
             )
             and not is_low_quality_protocol_title(meta.title)
         )
         should_replace_authors = bool(
             meta
             and protocol_derived_title
-            and authors_is_better_candidate(existing_authors, meta.authors)
+            and authors_is_better_candidate(existing_authors, meta.authors, meta.title)
         )
         if decision is None:
             # If annual-report extraction missed title/file/page, use protocol motion metadata.

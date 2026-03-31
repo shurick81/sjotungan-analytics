@@ -308,7 +308,7 @@
     <main class="container mx-auto mt-8 p-4">
     <section id="start" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
         <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Start</h1>
-        <p class="text-gray-700">Anvand menyn ovan och oppna avsnittet Engagemang for att se analyser och detaljer.</p>
+        <p class="text-gray-700">Använd menyn ovan och öppna avsnittet Engagemang för att se analyser och detaljer.</p>
     </section>
 
     <section id="vision" class="hidden bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
@@ -318,18 +318,18 @@
 
     <section id="motioner" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
         <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Engagemang</h1>
-        <p class="mb-6" style="color: var(--vm-muted);">Sidan visar engagemang i foreningen genom motioner, narvaro pa arsstamma och styrelsedeltagande over tid.</p>
-        <p class="text-sm mb-6" style="color: var(--vm-muted);">For motioner bygger underlaget pa tva dokumenttyper: styrelsens forslag hamtas fran kallelser, och stammans beslut hamtas fran motesprotokoll.</p>
+        <p class="mb-6" style="color: var(--vm-muted);">Sidan visar engagemang i föreningen genom motioner, närvaro på årsstämma och styrelsedeltagande över tid.</p>
+        <p class="text-sm mb-6" style="color: var(--vm-muted);">För motioner bygger underlaget på två dokumenttyper: styrelsens förslag hämtas från kallelser, och stämmans beslut hämtas från mötesprotokoll.</p>
 
-        <section class="filter-card p-4 mb-6" aria-label="Filtrera pa ar">
+        <section class="filter-card p-4 mb-6" aria-label="Filtrera på år">
             <div class="flex flex-wrap items-end gap-4">
                 <div class="min-w-48 flex-1">
-                    <label class="block text-sm mb-1" style="color: var(--vm-muted);">Arsintervall</label>
-                    <div class="range-wrap" aria-label="Val av arsintervall">
+                    <label class="block text-sm mb-1" style="color: var(--vm-muted);">Årsintervall</label>
+                    <div class="range-wrap" aria-label="Val av årsintervall">
                         <div class="range-track"></div>
                         <div id="year-range-fill" class="range-fill"></div>
-                        <input id="year-from" class="range-input" type="range" min="0" max="0" step="1" value="0" aria-label="Fran ar">
-                        <input id="year-to" class="range-input" type="range" min="0" max="0" step="1" value="0" aria-label="Till ar">
+                        <input id="year-from" class="range-input" type="range" min="0" max="0" step="1" value="0" aria-label="Från år">
+                        <input id="year-to" class="range-input" type="range" min="0" max="0" step="1" value="0" aria-label="Till år">
                     </div>
                     <div class="flex justify-between text-sm mt-1" style="color: var(--vm-text);">
                         <span id="year-from-value">-</span>
@@ -342,7 +342,7 @@
                 </div>
             </div>
             <div class="mt-4 pt-3" style="border-top: 1px solid #dde6f4;">
-                <div class="text-xs uppercase tracking-wide mb-2" style="color: var(--vm-muted);">Filtrera styrelsens forslag</div>
+                <div class="text-xs uppercase tracking-wide mb-2" style="color: var(--vm-muted);">Filtrera styrelsens förslag</div>
                 <div class="flex flex-wrap gap-4" id="outcome-filters">
                     <label class="text-sm" style="color: var(--vm-text);">
                         <input type="checkbox" value="positive" checked style="accent-color: var(--vm-blue);">
@@ -354,46 +354,46 @@
                     </label>
                     <label class="text-sm" style="color: var(--vm-text);">
                         <input type="checkbox" value="other" checked style="accent-color: var(--vm-blue);">
-                        Ovriga
+                        Övriga
                     </label>
                 </div>
             </div>
         </section>
 
-        <section class="chart-card p-4 mb-6" aria-label="Fordelning av styrelsens forslag">
-            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens forslag: fordelning (filtrerat urval)</h2>
-            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger pa styrelsens forslag i kallelser till arsstamma.</p>
+        <section class="chart-card p-4 mb-6" aria-label="Fördelning av styrelsens förslag">
+            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens förslag: fördelning (filtrerat urval)</h2>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger på styrelsens förslag i kallelser till årsstämma.</p>
             <div class="w-full max-w-sm mx-auto">
-                <canvas id="resolution-pie-chart" aria-label="Styrelsens forslag fordelning i cirkeldiagram" role="img"></canvas>
+                <canvas id="resolution-pie-chart" aria-label="Styrelsens förslag fördelning i cirkeldiagram" role="img"></canvas>
             </div>
         </section>
 
-        <section class="chart-card p-4 mb-6" aria-label="Styrelsens forslag per ar">
-            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens forslag per ar (filtrerat urval)</h2>
-            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger pa styrelsens forslag i kallelser till arsstamma.</p>
+        <section class="chart-card p-4 mb-6" aria-label="Styrelsens förslag per år">
+            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Styrelsens förslag per år (filtrerat urval)</h2>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Bygger på styrelsens förslag i kallelser till årsstämma.</p>
             <div class="w-full bar-chart-wrap">
-                <canvas id="resolution-bar-chart" aria-label="Antal positiva, negativa och ovriga styrelseforslag per ar" role="img"></canvas>
+                <canvas id="resolution-bar-chart" aria-label="Antal positiva, negativa och övriga styrelseförslag per år" role="img"></canvas>
             </div>
         </section>
 
-        <section class="chart-card p-4 mb-6" aria-label="Om stamma foljer styrelsens forslag">
-            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Foljde stamma styrelsens forslag?</h2>
-            <p class="text-xs mb-3" style="color: var(--vm-muted);">Jammerfor stammans beslut i motesprotokoll med styrelsens forslag i kallelser.</p>
+        <section class="chart-card p-4 mb-6" aria-label="Om stämman följer styrelsens förslag">
+            <h2 class="text-sm uppercase tracking-wide mb-1" style="color: var(--vm-muted);">Följde stämman styrelsens förslag?</h2>
+            <p class="text-xs mb-3" style="color: var(--vm-muted);">Jämför stämmans beslut i mötesprotokoll med styrelsens förslag i kallelser.</p>
             <div class="w-full max-w-sm mx-auto mb-4">
-                <canvas id="stamma-alignment-pie-chart" aria-label="Fordelning av om stamma foljde styrelsens forslag i cirkeldiagram" role="img"></canvas>
+                <canvas id="stamma-alignment-pie-chart" aria-label="Fördelning av om stämman följde styrelsens förslag i cirkeldiagram" role="img"></canvas>
             </div>
             <div class="w-full bar-chart-wrap">
-                <canvas id="stamma-alignment-chart" aria-label="Antal motioner per ar dar stamma foljde eller inte foljde styrelsens forslag" role="img"></canvas>
+                <canvas id="stamma-alignment-chart" aria-label="Antal motioner per år där stämman följde eller inte följde styrelsens förslag" role="img"></canvas>
             </div>
             <p id="stamma-alignment-summary" class="text-sm mt-3" style="color: var(--vm-text);"></p>
         </section>
 
-        <section class="filter-card p-4 mb-4" aria-label="Visa eller dolj tabellkolumner">
+        <section class="filter-card p-4 mb-4" aria-label="Visa eller dölj tabellkolumner">
             <div class="text-xs uppercase tracking-wide mb-2" style="color: var(--vm-muted);">Kolumner i tabellen</div>
             <div class="flex flex-wrap gap-4" id="column-filters">
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="year" checked style="accent-color: var(--vm-blue);">
-                    Ar
+                    År
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="motionNumber" checked style="accent-color: var(--vm-blue);">
@@ -405,19 +405,19 @@
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="resolution" checked style="accent-color: var(--vm-blue);">
-                    Styrelsens forslag
+                    Styrelsens förslag
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="stammaDecision" checked style="accent-color: var(--vm-blue);">
-                    Stammans beslut
+                    Stämmans beslut
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="followsStyrelseSuggestion" checked style="accent-color: var(--vm-blue);">
-                    F
+                    Följde förslaget
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="authors" style="accent-color: var(--vm-blue);">
-                    Forfattare
+                    Författare
                 </label>
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="file" style="accent-color: var(--vm-blue);">
@@ -443,20 +443,20 @@
             Inga motioner hittades i data/motions.csv.
         </div>
 
-        <section class="chart-card p-4 mb-4" aria-label="Narvaro pa arsstamma">
-            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Narvaro pa arsstamma</h2>
+        <section class="chart-card p-4 mb-4" aria-label="Närvaro på årsstämma">
+            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Närvaro på årsstämma</h2>
             <div class="w-full bar-chart-wrap">
-                <canvas id="attendance-bar-chart" aria-label="Narvarande medlemmar och fullmakter per ar" role="img"></canvas>
+                <canvas id="attendance-bar-chart" aria-label="Närvarande medlemmar och fullmakter per år" role="img"></canvas>
             </div>
         </section>
 
-        <section class="chart-card p-4 mb-6" aria-label="Tabell med arsstamma-narvaro">
-            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Arsstamma narvaro per ar</h2>
+        <section class="chart-card p-4 mb-6" aria-label="Tabell med årsstämma-närvaro">
+            <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Årsstämma närvaro per år</h2>
             <div class="overflow-x-auto rounded-lg">
                 <table class="motions-table" id="attendance-table">
                     <thead>
                         <tr>
-                            <th class="col-year">Ar</th>
+                            <th class="col-year">År</th>
                             <th>Medlemmar</th>
                             <th>Fullmakter</th>
                         </tr>
@@ -465,13 +465,13 @@
                 </table>
             </div>
             <div id="attendance-empty-state" class="empty-state mt-4 p-4 text-sm hidden">
-                Inga uppgifter hittades i data/general_states.csv for kategorierna narvaro/fullmakter.
+                Inga uppgifter hittades i data/general_states.csv för kategorierna närvaro/fullmakter.
             </div>
         </section>
 
         <section class="chart-card p-4 mb-6" aria-label="Styrelsedeltagare per ar">
             <h2 class="text-sm uppercase tracking-wide mb-3" style="color: var(--vm-muted);">Styrelsedeltagare per ar</h2>
-            <div class="mb-4 flex flex-wrap gap-4" id="board-column-filters" aria-label="Visa eller dolj kolumner for styrelse">
+            <div class="mb-4 flex flex-wrap gap-4" id="board-column-filters" aria-label="Visa eller dölj kolumner för styrelse">
                 <label class="text-sm" style="color: var(--vm-text);">
                     <input type="checkbox" value="year" checked style="accent-color: var(--vm-blue);">
                     Ar
@@ -502,7 +502,7 @@
                 </table>
             </div>
             <div id="board-participants-empty-state" class="empty-state mt-4 p-4 text-sm hidden">
-                Inga uppgifter hittades i data/general_states.csv for kategorierna styrelse.
+                Inga uppgifter hittades i data/general_states.csv för kategorierna styrelse.
             </div>
         </section>
     </section>
@@ -681,7 +681,7 @@
                     highlightNote.textContent = '';
                 } else {
                     highlightNote.style.display = 'block';
-                    highlightNote.textContent = 'Ingen markeringsruta finns sparad for detta beslut. PDF visas pa ratt sida utan highlight.';
+                    highlightNote.textContent = 'Ingen markeringsruta finns sparad för detta beslut. PDF visas på rätt sida utan highlight.';
                 }
             }
 
@@ -865,10 +865,10 @@
             { key: 'year', label: 'Ar', className: 'col-year' },
             { key: 'motionNumber', label: 'Nr', className: 'col-motion' },
             { key: 'title', label: 'Titel', className: '' },
-            { key: 'resolution', label: 'Styrelsens forslag', className: '' },
-            { key: 'stammaDecision', label: 'Stammans beslut', className: '' },
-            { key: 'followsStyrelseSuggestion', label: 'F', className: 'col-motion' },
-            { key: 'authors', label: 'Forfattare', className: '' },
+            { key: 'resolution', label: 'Styrelsens förslag', className: '' },
+            { key: 'stammaDecision', label: 'Stämmans beslut', className: '' },
+            { key: 'followsStyrelseSuggestion', label: 'Följde förslaget', className: '' },
+            { key: 'authors', label: 'Författare', className: '' },
             { key: 'file', label: 'Fil', className: '' },
             { key: 'page', label: 'Sida', className: 'col-motion' }
         ];
@@ -952,7 +952,7 @@
                 return {
                     icon: '&#x2611;',
                     label: 'Ja',
-                    title: 'Stamma foljde styrelsens forslag',
+                    title: 'Stämman följde styrelsens förslag',
                     bg: '#dcfce7',
                     color: '#166534',
                     border: '#86efac'
@@ -962,7 +962,7 @@
                 return {
                     icon: '&#x2612;',
                     label: 'Nej',
-                    title: 'Stamma avvek fran styrelsens forslag',
+                    title: 'Stämman avvek från styrelsens förslag',
                     bg: '#fee2e2',
                     color: '#991b1b',
                     border: '#fca5a5'
@@ -970,8 +970,8 @@
             }
             return {
                 icon: '&#x25A1;',
-                label: 'Okant',
-                title: 'Okant om stamma foljde styrelsens forslag',
+                label: 'Okänt',
+                title: 'Okänt om stämman följde styrelsens förslag',
                 bg: '#e2e8f0',
                 color: '#334155',
                 border: '#cbd5e1'
@@ -1007,7 +1007,33 @@
 
                     if (col.key === 'followsStyrelseSuggestion') {
                         const agreement = getStammaAgreementDisplay(record.followsStyrelseSuggestion);
-                        td.innerHTML = `<span title="${agreement.title}" aria-label="${agreement.title}" style="display:inline-flex;align-items:center;gap:0.38rem;padding:0.14rem 0.48rem;border-radius:999px;border:1px solid ${agreement.border};background:${agreement.bg};color:${agreement.color};font-weight:700;font-size:0.86rem;line-height:1;"><span style="font-size:1.05rem;line-height:1;">${agreement.icon}</span><span>${agreement.label}</span></span>`;
+                        const badge = document.createElement('span');
+                        badge.title = agreement.title;
+                        badge.setAttribute('aria-label', agreement.title);
+                        badge.style.cssText = `display:inline-flex;align-items:center;gap:0.38rem;padding:0.14rem 0.48rem;border-radius:999px;border:1px solid ${agreement.border};background:${agreement.bg};color:${agreement.color};font-weight:700;font-size:0.86rem;line-height:1;`;
+                        badge.innerHTML = `<span style="font-size:1.05rem;line-height:1;">${agreement.icon}</span><span>${agreement.label}</span>`;
+                        if (record.stammaProtocolFile) {
+                            badge.className = 'clickable-cell';
+                            badge.style.cursor = 'pointer';
+                            badge.addEventListener('click', () => {
+                                const protocolPage = Number(record.stammaDecisionPage) || 1;
+                                const highlight = {
+                                    page: protocolPage,
+                                    x: Number(record.stammaDecisionX),
+                                    y: Number(record.stammaDecisionY),
+                                    width: Number(record.stammaDecisionWidth),
+                                    height: Number(record.stammaDecisionHeight)
+                                };
+                                openMotionPdf(
+                                    record.stammaProtocolFile,
+                                    protocolPage,
+                                    `Stämmans beslut – Motion ${record.motionNumber || ''} (${record.year})`,
+                                    highlight,
+                                    'stamma_protocols'
+                                );
+                            });
+                        }
+                        td.appendChild(badge);
                         tr.appendChild(td);
                         continue;
                     }
@@ -1033,8 +1059,8 @@
                         if (col.key === 'title') label = record.title || 'Motion';
                         if (col.key === 'file') label = `Fil ${record.file}`;
                         if (col.key === 'page') label = `Sida ${record.page || ''}`;
-                        if (col.key === 'resolution') label = `Styrelsens forslag: ${record.resolution || ''}`;
-                        if (col.key === 'stammaDecision') label = `Stammans beslut: ${record.stammaDecision || ''}`;
+                        if (col.key === 'resolution') label = `Styrelsens förslag: ${record.resolution || ''}`;
+                        if (col.key === 'stammaDecision') label = `Stämmans beslut: ${record.stammaDecision || ''}`;
 
                         span.addEventListener('click', () => {
                             if (col.key === 'stammaDecision') {
@@ -1127,7 +1153,7 @@
             const raw = (value || '').trim();
             const normalized = normalizeDecisionText(raw);
             if (!normalized) return 'Saknas';
-            if (normalized === 'avslas' || normalized === 'avslag' || normalized === 'avstyrker') return 'Avslas/Avstyrker';
+            if (normalized === 'avslas' || normalized === 'avslag' || normalized === 'avstyrker') return 'Avslås/Avstyrker';
             if (normalized === 'bifalls' || normalized === 'bifall' || normalized === 'tillstyrker' || normalized === 'tillstyrks') return 'Bifalls/Tillstyrks';
             if (normalized === 'besvarad') return 'Besvarad';
             return raw;
@@ -1283,11 +1309,11 @@
             const totalAll = totalKnown + unknown;
             const mismatchPct = totalKnown > 0 ? Math.round((didNotFollow / totalKnown) * 100) : 0;
             if (totalKnown > 0) {
-                summary.textContent = `${didNotFollow} av ${totalKnown} motioner (${mismatchPct} %) avvek fran styrelsens forslag i valt arsintervall. Totalt ${totalAll} motioner, varav ${unknown} med okant utfall.`;
+                summary.textContent = `${didNotFollow} av ${totalKnown} motioner (${mismatchPct} %) avvek från styrelsens förslag i valt årsintervall. Totalt ${totalAll} motioner, varav ${unknown} med okänt utfall.`;
             } else {
                 summary.textContent = totalAll > 0
-                    ? `Totalt ${totalAll} motioner i valt arsintervall, men samtliga har okant utfall mot styrelsens forslag.`
-                    : 'Ingen tillracklig data for att avgora om stamma foljde styrelsens forslag i valt arsintervall.';
+                    ? `Totalt ${totalAll} motioner i valt årsintervall, men samtliga har okänt utfall mot styrelsens förslag.`
+                    : 'Ingen tillräcklig data för att avgöra om stämman följde styrelsens förslag i valt årsintervall.';
             }
 
             const yearly = getYearlyStammaAlignmentCounts(records);
@@ -1296,7 +1322,7 @@
             const didNotFollowSeries = yearly.didNotFollow;
             const unknownSeries = yearly.unknown;
             const pieValues = [followed, didNotFollow, unknown];
-            const pieLabels = ['Foljde styrelsen', 'Avvek fran styrelsen', 'Okant'];
+            const pieLabels = ['Följde styrelsen', 'Avvek från styrelsen', 'Okänt'];
             const pieColors = ['#16a34a', '#dc2626', '#8a95a8'];
             const formatSliceLabel = (label, value, total) => {
                 const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
@@ -1356,17 +1382,17 @@
                     labels,
                     datasets: [
                         {
-                            label: 'Foljde styrelsen',
+                            label: 'Följde styrelsen',
                             data: followedSeries,
                             backgroundColor: '#16a34a'
                         },
                         {
-                            label: 'Avvek fran styrelsen',
+                            label: 'Avvek från styrelsen',
                             data: didNotFollowSeries,
                             backgroundColor: '#dc2626'
                         },
                         {
-                            label: 'Okant',
+                            label: 'Okänt',
                             data: unknownSeries,
                             backgroundColor: '#8a95a8'
                         }
@@ -1429,7 +1455,7 @@
             if (!canvas || typeof Chart === 'undefined') return;
 
             const data = [positiveCount, negativeCount, otherCount];
-            const labels = ['Tillstyrker', 'Avslas/Avstyrker', 'Ovriga'];
+            const labels = ['Tillstyrker', 'Avslås/Avstyrker', 'Övriga'];
             const colors = ['#2f8f46', '#cf4f4f', '#8a95a8'];
             const total = data.reduce((sum, value) => sum + Number(value || 0), 0);
             const formatSliceLabel = (label, value, total) => {
@@ -1552,12 +1578,12 @@
                             backgroundColor: colors.positive
                         },
                         {
-                            label: 'Avslas/Avstyrker',
+                            label: 'Avslås/Avstyrker',
                             data: negative,
                             backgroundColor: colors.negative
                         },
                         {
-                            label: 'Ovriga',
+                            label: 'Övriga',
                             data: other,
                             backgroundColor: colors.other
                         }
@@ -1863,7 +1889,7 @@
 
             const canLink = ref?.file && hasValidHighlightRef(ref);
             if (!canLink) {
-                if (label === 'Ledamoter') {
+                if (label === 'Ledamöter') {
                     cell.innerHTML = normalizeBoardList(escapeHtml(text));
                 } else {
                     cell.textContent = text;
@@ -1873,8 +1899,8 @@
 
             const span = document.createElement('span');
             span.className = 'clickable-cell';
-            span.title = 'Visa markering i arsredovisning-PDF';
-            if (label === 'Ledamoter') {
+            span.title = 'Visa markering i årsredovisning-PDF';
+            if (label === 'Ledamöter') {
                 span.innerHTML = normalizeBoardList(escapeHtml(text));
             } else {
                 span.textContent = text;
@@ -1924,7 +1950,7 @@
                     } else if (col.key === 'viceChair') {
                         renderBoardCell(td, row.viceChair, 'Vice ordförande', row.viceChairRef, row.year);
                     } else if (col.key === 'members') {
-                        renderBoardCell(td, row.members, 'Ledamoter', row.membersRef, row.year);
+                        renderBoardCell(td, row.members, 'Ledamöter', row.membersRef, row.year);
                     } else if (col.key === 'valberedning') {
                         renderBoardCell(td, row.valberedning, 'Valberedare', row.valberedningRef, row.year);
                     }
@@ -1979,7 +2005,7 @@
                     labels,
                     datasets: [
                         {
-                            label: 'Narvarande medlemmar',
+                            label: 'Närvarande medlemmar',
                             data: members,
                             backgroundColor: '#1d4ed8'
                         },
@@ -2053,7 +2079,7 @@
                         openMotionPdf(
                             row.membersRef.file,
                             row.membersRef.page,
-                            `Arsstamma ${row.year} - medlemmar`,
+                            `Årsstämma ${row.year} - medlemmar`,
                             row.membersRef,
                             'stamma_protocols'
                         );
@@ -2075,7 +2101,7 @@
                         openMotionPdf(
                             row.proxiesRef.file,
                             row.proxiesRef.page,
-                            `Arsstamma ${row.year} - fullmakter`,
+                            `Årsstämma ${row.year} - fullmakter`,
                             row.proxiesRef,
                             'stamma_protocols'
                         );

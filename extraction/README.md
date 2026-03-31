@@ -20,6 +20,7 @@ This folder groups reusable data-extraction assets in one place.
 - Script: `scripts/extract_legacy_events_candidates.py`
 - Script: `scripts/extract_pre2009_states_events.py`
 - Method doc: `methods/financial_states_events_legacy.md`
+- Reference: `methods/domain_conventions.md` (M-numbers, abbreviations)
 
 ## Macro data note (inflation)
 
