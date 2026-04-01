@@ -451,6 +451,12 @@
                             <select id="year-select">
                                 <!-- Years will be populated dynamically -->
                             </select>
+                            <label for="unit-select" style="margin-left: 16px;">Visa:</label>
+                            <select id="unit-select">
+                                <option value="total">Totalt (SEK)</option>
+                                <option value="kvm">Per kvm (51 666 kvm)</option>
+                                <option value="apt">Per lägenhet (613 lgh)</option>
+                            </select>
                         </div>
 
                         <div class="section-header">
@@ -469,7 +475,7 @@
                             <thead>
                                 <tr>
                                     <th>Kategori</th>
-                                    <th style="text-align: right;">Belopp (SEK)</th>
+                                    <th style="text-align: right;" id="events-amount-header">Belopp (SEK)</th>
                                     <th>Typ</th>
                                 </tr>
                             </thead>
@@ -492,9 +498,9 @@
                             <thead>
                                 <tr>
                                     <th>Kategori</th>
-                                    <th style="text-align: right;">Årets början (SEK)</th>
-                                    <th style="text-align: right;">Årets slut (SEK)</th>
-                                    <th style="text-align: right;">Förändring (SEK)</th>
+                                    <th style="text-align: right;" id="states-start-header">Årets början (SEK)</th>
+                                    <th style="text-align: right;" id="states-end-header">Årets slut (SEK)</th>
+                                    <th style="text-align: right;" id="states-diff-header">Förändring (SEK)</th>
                                 </tr>
                             </thead>
                             <tbody id="states-body"></tbody>
@@ -534,7 +540,7 @@
                             <thead>
                                 <tr>
                                     <th>Kategori</th>
-                                    <th style="text-align: right;">Belopp (SEK)</th>
+                                    <th style="text-align: right;" id="costs-amount-header">Belopp (SEK)</th>
                                 </tr>
                             </thead>
                             <tbody id="costs-breakdown-body"></tbody>
@@ -699,6 +705,24 @@
             return new Intl.NumberFormat('sv-SE').format(num);
         }
 
+        const TOTAL_KVM = 51666;
+        const TOTAL_APARTMENTS = 613;
+
+        function getUnitConfig() {
+            const sel = document.getElementById('unit-select');
+            const mode = sel ? sel.value : 'total';
+            if (mode === 'kvm') return { divisor: TOTAL_KVM, suffix: 'kr/kvm', label: 'kr/kvm' };
+            if (mode === 'apt') return { divisor: TOTAL_APARTMENTS, suffix: 'kr/lgh', label: 'kr/lgh' };
+            return { divisor: 1, suffix: 'SEK', label: 'SEK' };
+        }
+
+        function formatAmount(num) {
+            const { divisor, suffix } = getUnitConfig();
+            const val = num / divisor;
+            if (divisor === 1) return formatNumber(num) + ' SEK';
+            return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(val)) + ' ' + suffix;
+        }
+
         function getCategoryType(amount) {
             if (amount > 0) return 'Inflöde';
             if (amount < 0) return 'Utflöde';
@@ -792,28 +816,36 @@
                 });
 
                 const netCashCell = document.getElementById('net-cash');
-                netCashCell.textContent = formatNumber(netTotal) + ' SEK';
+                netCashCell.textContent = formatAmount(netTotal);
                 netCashCell.className = getAmountClass(netTotal);
                 document.getElementById('event-count').textContent = `${yearEvents.length} rader (${parentlessEvents.length} toppkategorier)`;
 
-                /* ── Plotly waterfall ──────────────────── */
-                const x = waterfallData.map(d => d.amount);
-                const y = waterfallData.map(d => d.categoryName);
-                const text = x.map(val => formatNumber(val) + ' SEK');
+                // Update table headers with current unit
+                const unitLabel = getUnitConfig().label;
+                document.getElementById('events-amount-header').textContent = 'Belopp (' + unitLabel + ')';
+                document.getElementById('states-start-header').textContent = 'Årets början (' + unitLabel + ')';
+                document.getElementById('states-end-header').textContent = 'Årets slut (' + unitLabel + ')';
+                document.getElementById('states-diff-header').textContent = 'Förändring (' + unitLabel + ')';
 
-                x.push(netTotal);
+                /* ── Plotly waterfall ──────────────────── */
+                const unitCfg = getUnitConfig();
+                const x = waterfallData.map(d => d.amount / unitCfg.divisor);
+                const y = waterfallData.map(d => d.categoryName);
+                const text = waterfallData.map(d => formatAmount(d.amount));
+
+                x.push(netTotal / unitCfg.divisor);
                 y.push('Nettokassaförändring');
-                text.push(formatNumber(netTotal) + ' SEK');
+                text.push(formatAmount(netTotal));
 
                 const measure = x.map((val, idx) => idx === x.length - 1 ? 'total' : 'relative');
 
                 const annotations = [];
                 waterfallData.forEach((d, idx) => {
-                    const rightEdge = Math.max(d.startValue, d.endValue);
+                    const rightEdge = Math.max(d.startValue, d.endValue) / unitCfg.divisor;
                     annotations.push({
                         x: rightEdge,
                         y: d.categoryName,
-                        text: formatNumber(d.amount) + ' SEK',
+                        text: formatAmount(d.amount),
                         xanchor: 'left',
                         yanchor: 'middle',
                         xshift: 8,
@@ -821,11 +853,11 @@
                         font: { size: 12 }
                     });
                 });
-                const totalRight = Math.max(0, netTotal);
+                const totalRight = Math.max(0, netTotal) / unitCfg.divisor;
                 annotations.push({
                     x: totalRight,
                     y: 'Nettokassaförändring',
-                    text: formatNumber(netTotal) + ' SEK',
+                    text: formatAmount(netTotal),
                     xanchor: 'left',
                     yanchor: 'middle',
                     xshift: 8,
@@ -857,7 +889,7 @@
                     showlegend: false,
                     annotations: annotations,
                     xaxis: {
-                        title: 'SEK',
+                        title: unitCfg.label,
                         tickformat: ',.0f',
                         separatethousands: true
                     },
@@ -913,8 +945,8 @@
                 tableRows.forEach((data) => {
                     const row = document.createElement('tr');
                     const amountHtml = data.file && data.page
-                        ? `<span class="clickable-amount" onclick="showPDF('${data.file}', ${data.page}, ${data.x}, ${data.y}, ${data.width}, ${data.height}, '${data.categoryName}')">${formatNumber(data.amount)} SEK</span>`
-                        : `${formatNumber(data.amount)} SEK`;
+                        ? `<span class="clickable-amount" onclick="showPDF('${data.file}', ${data.page}, ${data.x}, ${data.y}, ${data.width}, ${data.height}, '${data.categoryName}')">${formatAmount(data.amount)}</span>`
+                        : `${formatAmount(data.amount)}`;
 
                     const indent = data.depth ? `padding-left:${10 + data.depth * 18}px; color:#5e6b80;` : '';
                     const nameLabel = data.depth ? `↳ ${data.categoryName}` : data.categoryName;
@@ -965,26 +997,26 @@
                     const startState = statesStart[catId];
                     const endState = statesEnd[catId];
                     const startHtml = startState && startState.file
-                        ? `<span class="clickable-amount" onclick="showPDF('${startState.file}', ${startState.page}, ${startState.x}, ${startState.y}, ${startState.width}, ${startState.height}, '${catName} (${prevYear})')">${formatNumber(startVal)} SEK</span>`
-                        : `${formatNumber(startVal)} SEK`;
+                        ? `<span class="clickable-amount" onclick="showPDF('${startState.file}', ${startState.page}, ${startState.x}, ${startState.y}, ${startState.width}, ${startState.height}, '${catName} (${prevYear})')">${formatAmount(startVal)}</span>`
+                        : `${formatAmount(startVal)}`;
                     const endHtml = endState && endState.file
-                        ? `<span class="clickable-amount" onclick="showPDF('${endState.file}', ${endState.page}, ${endState.x}, ${endState.y}, ${endState.width}, ${endState.height}, '${catName} (${selectedYear})')">${formatNumber(endVal)} SEK</span>`
-                        : `${formatNumber(endVal)} SEK`;
+                        ? `<span class="clickable-amount" onclick="showPDF('${endState.file}', ${endState.page}, ${endState.x}, ${endState.y}, ${endState.width}, ${endState.height}, '${catName} (${selectedYear})')">${formatAmount(endVal)}</span>`
+                        : `${formatAmount(endVal)}`;
 
                     row.innerHTML = `
                         <td>${catName}</td>
                         <td style="text-align: right;">${startHtml}</td>
                         <td style="text-align: right;">${endHtml}</td>
-                        <td style="text-align: right;" class="${getAmountClass(diff)}">${formatNumber(diff)} SEK</td>
+                        <td style="text-align: right;" class="${getAmountClass(diff)}">${formatAmount(diff)}</td>
                     `;
                     statesBody.appendChild(row);
                 });
 
                 const totalDiff = totalEnd - totalStart;
-                document.getElementById('states-start-total').textContent = formatNumber(totalStart) + ' SEK';
-                document.getElementById('states-end-total').textContent = formatNumber(totalEnd) + ' SEK';
+                document.getElementById('states-start-total').textContent = formatAmount(totalStart);
+                document.getElementById('states-end-total').textContent = formatAmount(totalEnd);
                 const diffCell = document.getElementById('states-diff-total');
-                diffCell.textContent = formatNumber(totalDiff) + ' SEK';
+                diffCell.textContent = formatAmount(totalDiff);
                 diffCell.className = getAmountClass(totalDiff);
 
             } catch (error) {
@@ -1100,15 +1132,19 @@
 
         /* ── Costs treemap ──────────────────────────────── */
         const fmtLong = v => {
-            const a = Math.abs(v);
+            const { divisor, suffix } = getUnitConfig();
+            const a = Math.abs(v / divisor);
             const s = v < 0 ? '−' : '';
+            if (divisor > 1) return s + new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(a)) + ' ' + suffix;
             if (a >= 1e6) return s + (a / 1e6).toFixed(2) + ' M SEK';
             if (a >= 1e3) return s + (a / 1e3).toFixed(0) + ' k SEK';
             return s + a.toLocaleString('sv-SE') + ' SEK';
         };
         const fmtShort = v => {
-            const a = Math.abs(v);
+            const { divisor, suffix } = getUnitConfig();
+            const a = Math.abs(v / divisor);
             const s = v < 0 ? '−' : '';
+            if (divisor > 1) return s + new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(a)) + ' ' + suffix;
             if (a >= 1e6) return s + (a / 1e6).toFixed(2) + ' M';
             if (a >= 1e3) return s + (a / 1e3).toFixed(0) + ' k';
             return s + a.toLocaleString('sv-SE');
@@ -1207,6 +1243,7 @@
             section.style.display = 'block';
 
             document.getElementById('costs-tm-total').textContent = fmtShort(totalCost);
+            document.getElementById('costs-amount-header').textContent = 'Belopp (' + getUnitConfig().label + ')';
 
             lastCostItems = costItems;
             lastTotalCost = totalCost;
@@ -1397,7 +1434,7 @@
             function addRows(items, depth) {
                 items.forEach(item => {
                     const val = nodeValue(item);
-                    const amtHtml = srcLink(item.src, item.name, formatNumber(-val) + ' SEK');
+                    const amtHtml = srcLink(item.src, item.name, formatAmount(-val));
                     const row = document.createElement('tr');
                     if (depth === 0) {
                         row.innerHTML = `<td style="font-weight:600;">${item.name}</td><td style="text-align:right;" class="amount-negative">${amtHtml}</td>`;
@@ -1413,7 +1450,7 @@
             }
 
             addRows(costItems, 0);
-            document.getElementById('costs-breakdown-total').textContent = formatNumber(-totalCost) + ' SEK';
+            document.getElementById('costs-breakdown-total').textContent = formatAmount(-totalCost);
         }
 
         document.addEventListener('keydown', e => {
@@ -1431,10 +1468,9 @@
         init();
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('year-select').addEventListener('change', () => {
-                loadData();
-                loadCostsTreemap();
-            });
+            const reload = () => { loadData(); loadCostsTreemap(); };
+            document.getElementById('year-select').addEventListener('change', reload);
+            document.getElementById('unit-select').addEventListener('change', reload);
             loadFromHash();
         });
     </script>
