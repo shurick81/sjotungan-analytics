@@ -1,0 +1,4 @@
+annual_reports:
+  - url: "https://www.brfbjorkbacken.se/download.php?id=314015&auth=bc77653666"
+    finance_period: 2024
+    local_path: "data/annual_reports/HSB Brf Bjorkbacken i Tyreso AR och RB 2024.pdf"
