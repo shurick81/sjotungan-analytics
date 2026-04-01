@@ -282,6 +282,36 @@
             text-decoration: underline;
         }
 
+        /* ── Normalization toggle ─────────────────────── */
+        .norm-toggle {
+            display: inline-flex;
+            border: 1px solid var(--vm-border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0 4px;
+        }
+        .norm-toggle label {
+            padding: 5px 14px;
+            font-size: 13px;
+            color: #33486f;
+            cursor: pointer;
+            border-right: 1px solid var(--vm-border);
+            user-select: none;
+            transition: background .15s, color .15s;
+        }
+        .norm-toggle label:last-child { border-right: none; }
+        .norm-toggle input { display: none; }
+        .norm-toggle input:checked + span {
+            background: var(--vm-blue);
+            color: #fff;
+        }
+        .norm-toggle label span {
+            display: block;
+            padding: 5px 14px;
+            margin: -5px -14px;
+            border-radius: 0;
+        }
+
         /* ── Macro source box ─────────────────────────── */
         .macro-source-box {
             margin-top: 14px;
@@ -319,6 +349,11 @@
         <input type="checkbox" id="inflationToggle">
         Visa inflationsjusterade belopp
     </label>
+    <div class="norm-toggle" id="normToggle">
+        <label><input type="radio" name="norm" value="1" checked><span>Totalt</span></label>
+        <label><input type="radio" name="norm" value="kvm"><span>Per m² (51 666)</span></label>
+        <label><input type="radio" name="norm" value="apt"><span>Per lägenhet (613)</span></label>
+    </div>
     <p id="inflationHelp" class="inflation-help">Nar laget ar pa raknas belopp om med KPI till ett fast penningvarde (basar enligt inflationsdatan), sa att ar kan jamforas rattvisare. Se avsnittet <a href="#" onclick="scrollToInflationSection(event)">"Inflation och kronans kopkraft"</a> langre ner for metod och underlag. PDF-kallor visar fortfarande originalsiffror i respektive arsredovisning.</p>
 
     <!-- Main Chart -->
@@ -326,22 +361,6 @@
         <h2 class="chart-title">Skuldutveckling</h2>
         <p class="chart-conclusion">Under de senaste sju åren har våra skulder till kreditinstitut nästan fördubblats, från 119 miljoner till 234 miljoner kronor.</p>
         <div id="debtChart"></div>
-        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
-    </div>
-
-    <!-- Debt per m² Chart -->
-    <div class="chart-container">
-        <h2 class="chart-title">Skuld per kvadratmeter</h2>
-        <p class="chart-conclusion">Total skuld till kreditinstitut dividerat med föreningens totala yta (51 666 m²). Ett mått på hur mycket av skulden varje kvadratmeter "bär".</p>
-        <div id="debtPerSqmChart"></div>
-        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
-    </div>
-
-    <!-- Debt per apartment Chart -->
-    <div class="chart-container">
-        <h2 class="chart-title">Skuld per bostadsrätt</h2>
-        <p class="chart-conclusion">Total skuld till kreditinstitut dividerat med antalet bostadsrätter i föreningen (613 lägenheter). Visar hur stor skuld en genomsnittlig lägenhet "bär".</p>
-        <div id="debtPerApartmentChart"></div>
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
@@ -847,14 +866,16 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             return new Intl.NumberFormat('sv-SE', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
-            }).format(value) + ' SEK';
+            }).format(Math.round(value)) + ' SEK' + normSuffix;
         }
 
         function getRealValue(value, year) {
-            if (!adjustForInflation) return value;
-            const idx = macroPriceIndexByYear[year];
-            if (!idx || idx <= 0) return value;
-            return value * (100 / idx);
+            let v = value;
+            if (adjustForInflation) {
+                const idx = macroPriceIndexByYear[year];
+                if (idx && idx > 0) v = v * (100 / idx);
+            }
+            return normDivisor === 1 ? v : v / normDivisor;
         }
 
         function updateInflationNote() {
@@ -970,7 +991,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     showgrid: false
                 },
                 yaxis: {
-                    title: isMobile ? '' : (adjustForInflation
+                    title: isMobile ? '' : normYAxisTitle(adjustForInflation
                         ? `Belopp (SEK, ${macroBaseYear} ars penningvarde)`
                         : 'Belopp (SEK)'),
                     tickfont: { size: isMobile ? 10 : 12 },
@@ -1031,6 +1052,14 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
         const TOTAL_AREA_SQM = 51666;
         const TOTAL_APARTMENTS = 613;
+        let normDivisor = 1;
+        let normSuffix = '';
+
+        function normYAxisTitle(baseTitle) {
+            if (normDivisor === TOTAL_AREA_SQM) return baseTitle.replace('SEK', 'SEK/m²');
+            if (normDivisor === TOTAL_APARTMENTS) return baseTitle.replace('SEK', 'SEK/lgh');
+            return baseTitle;
+        }
 
         function renderChart(debtData, cashData) {
             const years = debtData.map(d => d.year);
@@ -1107,7 +1136,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     gridcolor: '#e9ecef'
                 },
                 yaxis: {
-                    title: isMobile ? '' : (adjustForInflation
+                    title: isMobile ? '' : normYAxisTitle(adjustForInflation
                         ? `Belopp (SEK, ${macroBaseYear} ars penningvarde)`
                         : 'Belopp (SEK)'),
                     tickfont: { size: isMobile ? 10 : 12 },
@@ -1145,120 +1174,6 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             };
 
             Plotly.newPlot('debtChart', [trace4, trace1, trace2, trace3], layout, config);
-        }
-
-        function renderDebtPerSqmChart(debtData) {
-            const years = debtData.map(d => d.year);
-            const debtPerSqm = debtData.map(d => Math.round(getRealValue(d.total, d.year) / TOTAL_AREA_SQM));
-
-            const trace = {
-                x: years,
-                y: debtPerSqm,
-                name: 'Skuld per m²',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: {
-                    color: '#9c27b0',
-                    width: 3
-                },
-                marker: {
-                    size: 10,
-                    symbol: 'diamond',
-                    color: '#9c27b0'
-                },
-                fill: 'tozeroy',
-                fillcolor: 'rgba(156, 39, 176, 0.08)',
-                hovertemplate: '%{x}: %{y:,.0f} SEK/m²<extra></extra>'
-            };
-
-            const isMobile = window.innerWidth <= 768;
-
-            const layout = {
-                height: isMobile ? 300 : 400,
-                margin: isMobile
-                    ? { t: 10, r: 10, b: 80, l: 80 }
-                    : { t: 20, r: 20, b: 60, l: 80 },
-                xaxis: {
-                    title: 'År',
-                    tickfont: { size: isMobile ? 10 : 12 },
-                    showgrid: true,
-                    gridcolor: '#e9ecef'
-                },
-                yaxis: {
-                    title: isMobile ? '' : (adjustForInflation
-                        ? `SEK / m² (${macroBaseYear} ars penningvarde)`
-                        : 'SEK / m²'),
-                    tickfont: { size: isMobile ? 10 : 12 },
-                    tickformat: ',.0f',
-                    showgrid: true,
-                    gridcolor: '#e9ecef'
-                },
-                showlegend: false,
-                hovermode: 'x unified',
-                plot_bgcolor: 'white',
-                paper_bgcolor: 'white'
-            };
-
-            const config = { responsive: true, displayModeBar: false };
-
-            Plotly.newPlot('debtPerSqmChart', [trace], layout, config);
-        }
-
-        function renderDebtPerApartmentChart(debtData) {
-            const years = debtData.map(d => d.year);
-            const debtPerApartment = debtData.map(d => Math.round(getRealValue(d.total, d.year) / TOTAL_APARTMENTS));
-
-            const trace = {
-                x: years,
-                y: debtPerApartment,
-                name: 'Skuld per bostadsrätt',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: {
-                    color: '#00897b',
-                    width: 3
-                },
-                marker: {
-                    size: 10,
-                    symbol: 'square',
-                    color: '#00897b'
-                },
-                fill: 'tozeroy',
-                fillcolor: 'rgba(0, 137, 123, 0.1)',
-                hovertemplate: '%{x}: %{y:,.0f} SEK/lägenhet<extra></extra>'
-            };
-
-            const isMobile = window.innerWidth <= 768;
-
-            const layout = {
-                height: isMobile ? 300 : 400,
-                margin: isMobile
-                    ? { t: 10, r: 10, b: 80, l: 80 }
-                    : { t: 20, r: 20, b: 60, l: 80 },
-                xaxis: {
-                    title: 'År',
-                    tickfont: { size: isMobile ? 10 : 12 },
-                    showgrid: true,
-                    gridcolor: '#e9ecef'
-                },
-                yaxis: {
-                    title: isMobile ? '' : (adjustForInflation
-                        ? `SEK / lagenhet (${macroBaseYear} ars penningvarde)`
-                        : 'SEK / lagenhet'),
-                    tickfont: { size: isMobile ? 10 : 12 },
-                    tickformat: ',.0f',
-                    showgrid: true,
-                    gridcolor: '#e9ecef'
-                },
-                showlegend: false,
-                hovermode: 'x unified',
-                plot_bgcolor: 'white',
-                paper_bgcolor: 'white'
-            };
-
-            const config = { responsive: true, displayModeBar: false };
-
-            Plotly.newPlot('debtPerApartmentChart', [trace], layout, config);
         }
 
         function renderInterestChart(debtData, interestData) {
@@ -1300,7 +1215,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     gridcolor: '#e9ecef'
                 },
                 yaxis: {
-                    title: isMobile ? '' : (adjustForInflation
+                    title: isMobile ? '' : normYAxisTitle(adjustForInflation
                         ? `Rantekostnader (SEK, ${macroBaseYear} ars penningvarde)`
                         : 'Rantekostnader (SEK)'),
                     tickfont: { size: isMobile ? 10 : 12 },
@@ -1454,7 +1369,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                             width: 1.5
                         }
                     },
-                    hovertemplate: '%{x}: %{y:,.0f} SEK<extra>Totalt kassaflöde</extra>'
+                    hovertemplate: `%{x}: %{y:,.0f} SEK${normSuffix}<extra>Totalt kassaflöde</extra>`
                 });
             }
 
@@ -1481,7 +1396,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     mode: 'lines+markers',
                     line: { color, width: isChild ? 2 : 3, dash },
                     marker: { size: isChild ? 7 : 9, color, symbol },
-                    hovertemplate: `%{x}: %{y:,.0f} SEK<extra>${cat.name}</extra>`
+                    hovertemplate: `%{x}: %{y:,.0f} SEK${normSuffix}<extra>${cat.name}</extra>`
                 });
                 traceIdx++;
             }
@@ -1499,7 +1414,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     showgrid: false
                 },
                 yaxis: {
-                    title: isMobile ? '' : (adjustForInflation
+                    title: isMobile ? '' : normYAxisTitle(adjustForInflation
                         ? `Belopp (SEK, ${macroBaseYear} ars penningvarde)`
                         : 'Belopp (SEK)'),
                     tickfont: { size: isMobile ? 10 : 12 },
@@ -1782,8 +1697,6 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 currentFlowsData = flowsData;
                 const cashData = await loadCashData();
                 renderChart(debtData, cashData);
-                renderDebtPerSqmChart(debtData);
-                renderDebtPerApartmentChart(debtData);
                 renderInterestChart(debtData, interestData);
                 renderInterestRatioChart(interestData, flowsData);
                 renderMacroChart(inflationDisplayRows);
@@ -1806,16 +1719,28 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     inflationToggle.addEventListener('change', (event) => {
                         adjustForInflation = event.target.checked;
                         updateInflationNote();
-                        renderChart(currentDebtData, currentCashData);
-                        renderDebtPerSqmChart(currentDebtData);
-                        renderDebtPerApartmentChart(currentDebtData);
-                        renderInterestChart(currentDebtData, currentInterestData);
-                        renderCashChart(currentCashData);
-                        renderCashTable(currentCashData);
-                        renderTable(currentDebtData, currentInterestData);
-                        renderFlowsChart(currentFlowsData);
-                        renderFlowsTable(currentFlowsData);
+                        reRenderAll();
                     });
+                }
+
+                document.querySelectorAll('#normToggle input[name="norm"]').forEach(radio => {
+                    radio.addEventListener('change', (event) => {
+                        const v = event.target.value;
+                        if (v === 'kvm') { normDivisor = TOTAL_AREA_SQM; normSuffix = '/m²'; }
+                        else if (v === 'apt') { normDivisor = TOTAL_APARTMENTS; normSuffix = '/lgh'; }
+                        else { normDivisor = 1; normSuffix = ''; }
+                        reRenderAll();
+                    });
+                });
+
+                function reRenderAll() {
+                    renderChart(currentDebtData, currentCashData);
+                    renderInterestChart(currentDebtData, currentInterestData);
+                    renderCashChart(currentCashData);
+                    renderCashTable(currentCashData);
+                    renderTable(currentDebtData, currentInterestData);
+                    renderFlowsChart(currentFlowsData);
+                    renderFlowsTable(currentFlowsData);
                 }
 
                 renderTable(debtData, interestData);
