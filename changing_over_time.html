@@ -380,6 +380,14 @@
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
+    <!-- Effective Interest Rate Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Effektiv ränta (räntekostnader / total skuld)</h2>
+        <p class="chart-conclusion">Föreningens genomsnittliga räntekostnad i procent per år: räntekostnader delat med total skuld vid årets början. Jämförs med Riksbankens styrränta (årsgenomsnitt) för att se hur föreningens lånevillkor förhåller sig till den allmänna räntenivån.</p>
+        <div id="effectiveRateChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
+    </div>
+
     <!-- Data Table -->
     <div class="chart-container">
         <h2 class="chart-title">Detaljerad data</h2>
@@ -401,8 +409,8 @@
 
     <!-- Inflation / purchasing power chart -->
     <div class="chart-container" id="inflation-section">
-        <h2 class="chart-title">Inflation och kronans köpkraft</h2>
-        <p class="chart-conclusion">Lokalt sparad årsdata för inflation (KPI, procent). Tabellen visar även hur mycket som återstår av 1 kronas köpkraft i <span id="inflationBaseYearText">basårets</span> penningvärde.</p>
+        <h2 class="chart-title">Inflation, styrränta och kronans köpkraft</h2>
+        <p class="chart-conclusion">Lokalt sparad årsdata för inflation (KPI, procent) och Riksbankens styrränta (årsgenomsnitt). Tabellen visar även hur mycket som återstår av 1 kronas köpkraft i <span id="inflationBaseYearText">basårets</span> penningvärde.</p>
         <div id="inflationChart"></div>
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
 
@@ -412,6 +420,7 @@
                 <tr>
                     <th>År</th>
                     <th class="number">Inflation (KPI, %)</th>
+                    <th class="number">Styrränta (%)</th>
                     <th class="number" id="inflationPriceIndexHeader">Prisnivå (basår = 100)</th>
                     <th class="number" id="inflationPurchasingPowerHeader">Kvar av 1 kr (basårets köpkraft)</th>
                 </tr>
@@ -472,6 +481,28 @@
                 </tr>
             </thead>
             <tbody id="flowsTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Sparande Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Sparande per år</h2>
+        <p class="chart-conclusion">Sparande visar hur mycket föreningen faktiskt "sparar" varje år — årets resultat plus avskrivningar och kostnadsfört underhåll (BFNAR 2023:1). Ett positivt sparande innebär att fastigheten inte bara underhålls utan också att pengar samlas för framtida investeringar.</p>
+        <div id="sparandeChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
+
+        <h3 style="margin-top:32px;font-size:17px;color:var(--vm-blue);border-top:2px solid var(--vm-border);padding-top:18px;">Detaljerad data</h3>
+        <p class="chart-conclusion">Sparande = Årets resultat + Avskrivningar + Planerat underhåll (BFNAR 2023:1, punkt 8). Avskrivningar ingår inte i vår resultaträknings-CSV, så IS-poster = Resultat + Avskrivningar.</p>
+        <table class="data-table" id="sparandeTable">
+            <thead>
+                <tr>
+                    <th>År</th>
+                    <th class="number">IS-poster</th>
+                    <th class="number">Underhåll (återtillägg)</th>
+                    <th class="number">Sparande</th>
+                </tr>
+            </thead>
+            <tbody id="sparandeTableBody"></tbody>
         </table>
     </div>
 </section>
@@ -591,12 +622,14 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             45: '#558b2f', 46: '#4e342e', 47: '#00bfa5', 48: '#dd2c00',
             49: '#0d47a1',
             50: '#8d6e63', 51: '#bcaaa4', 52: '#795548',
-            53: '#6d4c41', 54: '#a1887f', 55: '#4e342e'
+            53: '#6d4c41', 54: '#a1887f', 55: '#4e342e',
+            999: '#00897b'  // Sparande (synthetic)
         };
         const DASH_PATTERNS = ['solid', 'dash', 'dot', 'dashdot', 'longdash', 'longdashdot'];
         const MARKER_SYMBOLS = ['circle', 'square', 'diamond', 'triangle-up', 'cross', 'x',
                                 'star', 'pentagon', 'hexagon', 'triangle-down', 'bowtie', 'hourglass'];
         let allEventCategories = [];
+        let currentSparandeData = [];
         let selectedFlowCats = new Set([0, 1, 8, 17]);
         let showCashflowBar = true;
         let currentFlowsData = null;
@@ -606,6 +639,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         let currentDebtData = [];
         let currentCashData = [];
         let currentInterestData = {};
+        let currentInflationDisplayRows = [];
 
         // Load PDF sources from YAML
         async function loadPDFSources() {
@@ -728,7 +762,8 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             const rows = (payload.data || [])
                 .map(row => ({
                     year: String(row.year),
-                    inflationYoY: Number(row.inflation_yoy_pct)
+                    inflationYoY: Number(row.inflation_yoy_pct),
+                    policyRate: row.riksbank_policy_rate_pct != null ? Number(row.riksbank_policy_rate_pct) : null
                 }))
                 .sort((a, b) => a.year.localeCompare(b.year));
 
@@ -765,6 +800,109 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             }));
 
             return enriched;
+        }
+
+        // Categories excluded from sparande (cash-flow / balance items)
+        const SPARANDE_CF_CATS = new Set([3, 8, 9, 10, 11, 12, 13, 14]);
+        // Underhåll categories (may be top-level or subcategories depending on year)
+        const SPARANDE_UH_CATS = new Set([16, 31]);
+
+        const SPARANDE_SYNTHETIC_ID = 999;
+
+        function computeSparandeData(flowsData) {
+            const catMap = {};
+            allEventCategories.forEach(c => { catMap[c.id] = c; });
+
+            return flowsData.map(yd => {
+                // Top-level IS events: exclude CF/balance categories and subcategories
+                let isTotal = 0;
+                let underhallTotal = 0;
+                for (const [cidStr, entry] of Object.entries(yd.cats)) {
+                    const cid = parseInt(cidStr);
+                    if (cid === SPARANDE_SYNTHETIC_ID) continue;
+                    const amt = entry.amount;
+                    // Accumulate underhåll (can be sub or top)
+                    if (SPARANDE_UH_CATS.has(cid)) {
+                        underhallTotal += amt;
+                    }
+                    // Top-level IS events only
+                    if (!SPARANDE_CF_CATS.has(cid) && !(catMap[cid] && catMap[cid].parent !== null)) {
+                        isTotal += amt;
+                    }
+                }
+                const underhallAbs = Math.abs(underhallTotal);
+                const sparande = isTotal + underhallAbs;
+                return { year: yd.year, isTotal, underhallAbs, sparande };
+            });
+        }
+
+        function injectSparandeIntoCats(flowsData, sparandeData) {
+            sparandeData.forEach((sd, i) => {
+                flowsData[i].cats[SPARANDE_SYNTHETIC_ID] = { amount: sd.sparande, source: {} };
+            });
+        }
+
+        function renderSparandeChart(sparandeData) {
+            const years = sparandeData.map(d => d.year);
+            const values = sparandeData.map(d => getRealValue(d.sparande, d.year));
+            const colors = values.map(v => v >= 0 ? '#4caf50' : '#e53935');
+
+            const traceBar = {
+                x: years,
+                y: values,
+                type: 'bar',
+                marker: { color: colors },
+                name: 'Sparande',
+                hovertemplate: '%{x}: %{y:,.0f}' + normSuffix + '<extra></extra>'
+            };
+
+            const isMobile = window.innerWidth <= 768;
+            const layout = {
+                height: isMobile ? 350 : 500,
+                margin: isMobile
+                    ? { t: 10, r: 10, b: 80, l: 80 }
+                    : { t: 20, r: 20, b: 60, l: 80 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                yaxis: {
+                    title: isMobile ? '' : normYAxisTitle(adjustForInflation
+                        ? `Belopp (SEK, ${macroBaseYear} års penningvärde)`
+                        : 'Belopp (SEK)'),
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    tickformat: ',.0f',
+                    showgrid: true,
+                    gridcolor: '#e9ecef',
+                    zeroline: true,
+                    zerolinecolor: '#999',
+                    zerolinewidth: 1
+                },
+                showlegend: false,
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+            Plotly.newPlot('sparandeChart', [traceBar], layout, config);
+        }
+
+        function renderSparandeTable(sparandeData) {
+            const tbody = document.getElementById('sparandeTableBody');
+            tbody.innerHTML = sparandeData.map(d => {
+                const is = getRealValue(d.isTotal, d.year);
+                const uh = getRealValue(d.underhallAbs, d.year);
+                const sp = getRealValue(d.sparande, d.year);
+                const spColor = sp >= 0 ? 'color:#2e7d32' : 'color:#c62828';
+                return `<tr>
+                    <td><strong>${d.year}</strong></td>
+                    <td class="number">${formatCurrency(is)}</td>
+                    <td class="number">${formatCurrency(uh)}</td>
+                    <td class="number" style="${spColor}"><strong>${formatCurrency(sp)}</strong></td>
+                </tr>`;
+            }).join('');
         }
 
         // Load flows data (insättning, driftkostnad, investeringar)
@@ -1268,6 +1406,20 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 hovertemplate: '%{x}: %{y:.1f}<extra>Prisnivå</extra>'
             };
 
+            const policyRateYears = macroData.filter(d => d.policyRate != null);
+            const policyRateTrace = {
+                x: policyRateYears.map(d => d.year),
+                y: policyRateYears.map(d => d.policyRate),
+                name: 'Riksbankens styrränta (%)',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#7b1fa2', width: 2.5 },
+                marker: { size: 6, color: '#7b1fa2', symbol: 'diamond' },
+                hovertemplate: '%{x}: %{y:.2f}%<extra>Styrränta</extra>'
+            };
+
+            const traces = [inflationTrace, policyRateTrace, priceIndexTrace];
+
             const layout = {
                 barmode: 'group',
                 height: isMobile ? 350 : 460,
@@ -1307,19 +1459,21 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
             const config = { responsive: true, displayModeBar: false };
 
-            Plotly.newPlot('inflationChart', [inflationTrace, priceIndexTrace], layout, config);
+            Plotly.newPlot('inflationChart', traces, layout, config);
         }
 
         function renderMacroTable(macroData) {
             const tbody = document.getElementById('inflationTableBody');
             const rows = macroData.map(row => {
                 const inflationText = `${row.inflationYoY.toFixed(1)}%`;
+                const policyRateText = row.policyRate != null ? `${row.policyRate.toFixed(2)}%` : '–';
                 const priceIdxText = row.priceIndex.toFixed(1);
                 const powerText = `${row.purchasingPowerOre.toFixed(1)} ore`;
 
                 return `<tr>
                     <td><strong>${row.year}</strong></td>
                     <td class="number">${inflationText}</td>
+                    <td class="number">${policyRateText}</td>
                     <td class="number">${priceIdxText}</td>
                     <td class="number">${powerText}</td>
                 </tr>`;
@@ -1333,15 +1487,21 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             if (!box) return;
 
             const inflationSource = meta.sources && meta.sources.inflation_yoy_pct ? meta.sources.inflation_yoy_pct : null;
+            const policyRateSource = meta.sources && meta.sources.riksbank_policy_rate_pct ? meta.sources.riksbank_policy_rate_pct : null;
             const updatedAt = meta.updated_at || 'okant datum';
 
             const inflationLine = inflationSource
                 ? `Inflation (KPI): <a href="${inflationSource.url}" target="_blank" rel="noopener">${inflationSource.name}</a>`
                 : 'Inflation (KPI): saknad kallreferens';
 
+            const policyRateLine = policyRateSource
+                ? `Styrr&auml;nta: <a href="${policyRateSource.url}" target="_blank" rel="noopener">${policyRateSource.name}</a>`
+                : '';
+
             box.innerHTML = `
                 <strong>Kallor och uppdatering</strong><br>
                 ${inflationLine}<br>
+                ${policyRateLine ? policyRateLine + '<br>' : ''}
                 Senast manuellt uppdaterad: ${updatedAt}
             `;
         }
@@ -1663,6 +1823,91 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             Plotly.newPlot('interestRatioChart', [trace], layout, config);
         }
 
+        function renderEffectiveRateChart(debtData, interestData, macroDisplayRows) {
+            // Build a map of total debt by year (used as start-of-year balance = prior year-end)
+            const debtByYear = {};
+            debtData.forEach(d => { debtByYear[d.year] = d.total; });
+
+            // Build policy rate lookup from macro rows
+            const policyRateByYear = {};
+            if (macroDisplayRows) {
+                macroDisplayRows.forEach(d => {
+                    if (d.policyRate != null) policyRateByYear[d.year] = d.policyRate;
+                });
+            }
+
+            const years = debtData.map(d => d.year).filter(y => {
+                const prevYear = String(parseInt(y) - 1);
+                return debtByYear[prevYear] && debtByYear[prevYear] > 0 && interestData[y];
+            });
+
+            const effectiveRates = years.map(y => {
+                const prevYear = String(parseInt(y) - 1);
+                const debtStart = debtByYear[prevYear];
+                const interest = interestData[y];
+                return parseFloat(((interest / debtStart) * 100).toFixed(2));
+            });
+
+            const policyRates = years.map(y => policyRateByYear[y] != null ? policyRateByYear[y] : null);
+
+            const isMobile = window.innerWidth <= 768;
+
+            const effectiveTrace = {
+                x: years,
+                y: effectiveRates,
+                name: 'Effektiv ränta BRF',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#e53935', width: 3 },
+                marker: { size: 8, color: '#e53935' },
+                hovertemplate: '%{x}: %{y:.2f}%<extra>Effektiv ränta</extra>'
+            };
+
+            const policyTrace = {
+                x: years,
+                y: policyRates,
+                name: 'Riksbankens styrränta',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#7b1fa2', width: 2, dash: 'dash' },
+                marker: { size: 6, color: '#7b1fa2', symbol: 'diamond' },
+                hovertemplate: '%{x}: %{y:.2f}%<extra>Styrränta</extra>'
+            };
+
+            const layout = {
+                height: isMobile ? 300 : 400,
+                margin: isMobile
+                    ? { t: 10, r: 10, b: 80, l: 60 }
+                    : { t: 20, r: 20, b: 60, l: 60 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                yaxis: {
+                    title: isMobile ? '' : 'Ränta (%)',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    ticksuffix: '%',
+                    showgrid: true,
+                    gridcolor: '#e9ecef'
+                },
+                legend: {
+                    orientation: 'h',
+                    y: -0.24,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: isMobile ? 10 : 12 }
+                },
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+
+            Plotly.newPlot('effectiveRateChart', [effectiveTrace, policyTrace], layout, config);
+        }
+
         // Initialize the page
         async function init() {
             try {
@@ -1693,20 +1938,27 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     macroPriceIndexByYear[row.year] = row.priceIndex;
                 });
                 const inflationDisplayRows = indexedMacroRows.filter(row => eventYears.has(String(row.year)));
+                currentInflationDisplayRows = inflationDisplayRows;
                 updateInflationStaticLabels();
                 currentFlowsData = flowsData;
                 const cashData = await loadCashData();
                 renderChart(debtData, cashData);
                 renderInterestChart(debtData, interestData);
                 renderInterestRatioChart(interestData, flowsData);
+                renderEffectiveRateChart(debtData, interestData, inflationDisplayRows);
                 renderMacroChart(inflationDisplayRows);
                 renderMacroTable(inflationDisplayRows);
                 renderMacroSourceInfo(macroPayload.meta);
                 renderCashChart(cashData);
                 renderCashTable(cashData);
+                currentSparandeData = computeSparandeData(flowsData);
+                injectSparandeIntoCats(flowsData, currentSparandeData);
+                allEventCategories.push({ id: SPARANDE_SYNTHETIC_ID, name: 'Sparande', parent: null });
                 renderFlowsCategoryFilter();
                 renderFlowsChart(flowsData);
                 renderFlowsTable(flowsData);
+                renderSparandeChart(currentSparandeData);
+                renderSparandeTable(currentSparandeData);
                 updateInflationNote();
 
                 currentDebtData = debtData;
@@ -1736,11 +1988,14 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 function reRenderAll() {
                     renderChart(currentDebtData, currentCashData);
                     renderInterestChart(currentDebtData, currentInterestData);
+                    renderEffectiveRateChart(currentDebtData, currentInterestData, currentInflationDisplayRows);
                     renderCashChart(currentCashData);
                     renderCashTable(currentCashData);
                     renderTable(currentDebtData, currentInterestData);
                     renderFlowsChart(currentFlowsData);
                     renderFlowsTable(currentFlowsData);
+                    renderSparandeChart(currentSparandeData);
+                    renderSparandeTable(currentSparandeData);
                 }
 
                 renderTable(debtData, interestData);
