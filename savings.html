@@ -520,9 +520,16 @@
                                         Någon har sagt: <span style="font-style: italic;">«Det visar hur mycket pengar vi får över i den löpande driften.»</span>
                                         Siken har lägre driftkostnader per kvm, men ändå lägre sparande – det beror på lägre intäkter och högre räntekostnader.
                                     </p>
-                                    <div id="sparande-siken-simple-chart" style="width: 100%;"></div>
-                                    <h4 style="font-size: 0.95em; font-weight: 600; color: #475569; margin: 18px 0 4px 0;">Vad bygger sparandet?</h4>
+                                    <div id="sparande-siken-simple-chart" style="width: 100%; display: none;"></div>
                                     <div id="sparande-siken-chart" style="width: 100%;"></div>
+                                </div>
+                                <div id="sparande-bjorkbacken-section" style="display: none; margin-top: 24px;">
+                                    <h3 style="font-size: 1.1em; font-weight: 700; color: var(--vm-blue); margin: 0 0 4px 0;">BRF Björkbacken i Tyresö, för jämförelse</h3>
+                                    <p style="color: #64748b; font-size: 0.82em; margin: 0 0 12px 0; line-height: 1.4;">
+                                        Samma beräkning för BRF Björkbacken i Tyresö (35 946 kvm).
+                                    </p>
+                                    <div id="sparande-bjorkbacken-simple-chart" style="width: 100%; display: none;"></div>
+                                    <div id="sparande-bjorkbacken-chart" style="width: 100%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -596,6 +603,7 @@
         let pdfSources = {};
         let annualReportsYAML = [];
         let sikenAnnualReportsYAML = [];
+        let bjorkbackenAnnualReportsYAML = [];
 
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
@@ -627,6 +635,12 @@
                 const sikenData = jsyaml.load(sikenYaml);
                 if (sikenData && sikenData.annual_reports) sikenAnnualReportsYAML = sikenData.annual_reports;
             } catch (e) { /* Siken sources not available */ }
+            try {
+                const bjResp = await fetch('source_bjorkbacken.yaml?t=' + new Date().getTime(), { cache: 'no-store' });
+                const bjYaml = await bjResp.text();
+                const bjData = jsyaml.load(bjYaml);
+                if (bjData && bjData.annual_reports) bjorkbackenAnnualReportsYAML = bjData.annual_reports;
+            } catch (e) { /* Björkbacken sources not available */ }
         }
 
         function renderPDFSourceList(reports) {
@@ -664,6 +678,7 @@
 
         const TOTAL_KVM = 51666;
         const SIKEN_KVM = 17263;
+        const BJORKBACKEN_KVM = 35946;
         const TOTAL_APARTMENTS = 613;
 
         function getUnitConfig() {
@@ -1126,8 +1141,7 @@
 
             if (items.length === 0) {
                 detailSection.style.display = 'none';
-                return;
-            }
+            } else {
             detailSection.style.display = 'block';
 
             const dLabels  = items.map(i => i.label).concat(['Sparande']);
@@ -1174,12 +1188,14 @@
                 annotations: dAnnots
             }, { responsive: true, displayModeBar: false });
 
+            } // end detail items else
+
             // ── Siken: same waterfall ──
             const sikenSection = document.getElementById('sparande-siken-section');
             try {
                 const sikenEvents = await loadCSV('data/financial_events_siken.csv');
                 const sikenYear = sikenEvents.filter(e => e.year === year);
-                if (sikenYear.length === 0) { sikenSection.style.display = 'none'; return; }
+                if (sikenYear.length === 0) { sikenSection.style.display = 'none'; throw 'no-data'; }
 
                 const sikenIS = sikenYear.filter(e =>
                     !SPARANDE_CF_CATS.has(e.category_id) &&
@@ -1297,7 +1313,7 @@
                     }
                 });
 
-                if (sItems.length === 0) { sikenSection.style.display = 'none'; return; }
+                if (sItems.length === 0) { sikenSection.style.display = 'none'; throw 'no-data'; }
                 sikenSection.style.display = 'block';
 
                 // Add non-normal adjustments to detailed breakdown
@@ -1361,6 +1377,190 @@
                 }, { responsive: true, displayModeBar: false });
             } catch (e) {
                 sikenSection.style.display = 'none';
+            }
+
+            // ── Björkbacken: same waterfall ──
+            const bjSection = document.getElementById('sparande-bjorkbacken-section');
+            try {
+                const bjEvents = await loadCSV('data/financial_events_bjorkbacken.csv');
+                const bjYear = bjEvents.filter(e => e.year === year);
+                if (bjYear.length === 0) { bjSection.style.display = 'none'; throw 'no-data'; }
+
+                const bjIS = bjYear.filter(e =>
+                    !SPARANDE_CF_CATS.has(e.category_id) &&
+                    !(catMap[e.category_id] && catMap[e.category_id].parent)
+                );
+                const bjUH = bjYear.filter(e => SPARANDE_UH_CATS.has(e.category_id));
+                const bjUHRaw = bjUH.reduce((s, e) => s + parseInt(e.amount), 0);
+                const bjISTotal = bjIS.reduce((s, e) => s + parseInt(e.amount), 0);
+                const bjAdjs = await getSparandeAdjustmentsFromCSV(year, bjorkbackenAnnualReportsYAML);
+                const bjAdjTotal = bjAdjs.reduce((s, a) => s + a.amount, 0);
+                const bjTotal = bjISTotal + Math.abs(bjUHRaw) + bjAdjTotal;
+
+                // ── Björkbacken simple 3-component waterfall ──
+                const bjDivisor0 = unitCfg.divisor === 1 ? 1 : BJORKBACKEN_KVM;
+                const fmtBj0 = (num) => {
+                    const v = num / bjDivisor0;
+                    if (bjDivisor0 === 1) return formatNumber(num) + ' SEK';
+                    const bjSuffix0 = unitCfg.label.includes('kvm') ? 'kr/kvm' : 'SEK';
+                    return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(v)) + ' ' + bjSuffix0;
+                };
+                {
+                    const bjUHAbs = Math.abs(bjUHRaw);
+                    const bjAvsk = await getAvskrivningarFromCSV(year, bjorkbackenAnnualReportsYAML) || 0;
+                    const bjResultat = bjISTotal - bjAvsk;
+                    const bLabels0 = ['Årets resultat', 'Avskrivningar', 'Kostnadsfört underhåll'];
+                    const bX0 = [bjResultat / bjDivisor0, bjAvsk / bjDivisor0, bjUHAbs / bjDivisor0];
+                    const bText0 = [fmtBj0(bjResultat), fmtBj0(bjAvsk), fmtBj0(bjUHAbs)];
+                    const bMeasure0 = ['relative', 'relative', 'relative'];
+                    bjAdjs.forEach(adj => {
+                        bLabels0.push(adj.label);
+                        bX0.push(adj.amount / bjDivisor0);
+                        bText0.push(fmtBj0(adj.amount));
+                        bMeasure0.push('relative');
+                    });
+                    bLabels0.push('Sparande');
+                    bX0.push(bjTotal / bjDivisor0);
+                    bText0.push(fmtBj0(bjTotal));
+                    bMeasure0.push('total');
+                    const bAnn0 = [];
+                    let bRun0 = 0;
+                    const compVals0b = [bjResultat, bjAvsk, bjUHAbs, ...bjAdjs.map(a => a.amount)];
+                    compVals0b.forEach((val, i) => {
+                        const start = bRun0; bRun0 += val;
+                        bAnn0.push({ x: Math.max(start, bRun0) / bjDivisor0, y: bLabels0[i], text: bText0[i],
+                            xanchor: 'left', xshift: 8, showarrow: false, font: { size: 11 } });
+                    });
+                    bAnn0.push({ x: Math.max(0, bjTotal) / bjDivisor0, y: 'Sparande',
+                        text: bText0[bText0.length - 1], xanchor: 'left', xshift: 8, showarrow: false,
+                        font: { size: 11, color: '#3b82f6' } });
+
+                    Plotly.newPlot('sparande-bjorkbacken-simple-chart', [{
+                        type: 'waterfall', orientation: 'h',
+                        x: bX0, y: bLabels0, measure: bMeasure0,
+                        text: bText0, textposition: 'none',
+                        connector: { line: { color: '#94a3b8', width: 1 } },
+                        increasing: { marker: { color: '#22c55e' } },
+                        decreasing: { marker: { color: '#ef4444' } },
+                        totals: { marker: { color: '#3b82f6' } },
+                        hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+                    }], {
+                        showlegend: false,
+                        margin: { l: 200, r: 140, t: 10, b: 30 },
+                        xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+                        yaxis: { autorange: 'reversed' },
+                        height: Math.max(200, (bLabels0.length) * 40 + 40),
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        annotations: bAnn0
+                    }, { responsive: true, displayModeBar: false });
+                }
+
+                const bjUHByParent = {};
+                bjUH.forEach(e => {
+                    const parent = catMap[e.category_id] && catMap[e.category_id].parent;
+                    if (parent) bjUHByParent[parent] = (bjUHByParent[parent] || 0) + parseInt(e.amount);
+                });
+
+                const bjSubsByParent = {};
+                bjYear.forEach(e => {
+                    const cat = catMap[e.category_id];
+                    if (cat && cat.parent) {
+                        if (!bjSubsByParent[cat.parent]) bjSubsByParent[cat.parent] = [];
+                        bjSubsByParent[cat.parent].push(e);
+                    }
+                });
+
+                const bItems = [];
+                bjIS.sort((a, b) => parseInt(b.amount) - parseInt(a.amount)).forEach(e => {
+                    const cid = e.category_id;
+                    if (SPARANDE_UH_CATS.has(cid)) return;
+                    let val = parseInt(e.amount);
+                    let label = catMap[cid] ? catMap[cid].name : 'Okänd';
+                    if (bjUHByParent[cid]) {
+                        val -= bjUHByParent[cid];
+                        label += ' (exkl. underhåll)';
+                    }
+                    const subs = cid === '0' ? (bjSubsByParent[cid] || [])
+                        .filter(s => !SPARANDE_UH_CATS.has(s.category_id)) : [];
+                    if (subs.length > 0) {
+                        const subItems = subs.map(s => ({
+                            label: '  ' + (catMap[s.category_id] ? catMap[s.category_id].name : 'Okänd'),
+                            value: parseInt(s.amount)
+                        })).sort((a, b) => b.value - a.value);
+                        const subTotal = subItems.reduce((s, i) => s + i.value, 0);
+                        const residual = val - subTotal;
+                        subItems.forEach(si => bItems.push(si));
+                        if (Math.abs(residual) > 1) {
+                            bItems.push({ label: '  Övrigt (' + (catMap[cid] ? catMap[cid].name.toLowerCase() : '') + ')', value: residual });
+                        }
+                    } else {
+                        bItems.push({ label, value: val });
+                    }
+                });
+
+                if (bItems.length === 0) { bjSection.style.display = 'none'; throw 'no-data'; }
+                bjSection.style.display = 'block';
+
+                bjAdjs.forEach(adj => {
+                    bItems.push({ label: adj.label, value: adj.amount });
+                });
+
+                const bjSel = document.getElementById('unit-select');
+                const bjMode = bjSel ? bjSel.value : 'total';
+                const bjDivisor = bjMode === 'kvm' ? BJORKBACKEN_KVM : 1;
+                const bjSuffix = bjMode === 'kvm' ? 'kr/kvm' : 'SEK';
+                const fmtBj = (num) => {
+                    const v = num / bjDivisor;
+                    if (bjDivisor === 1) return formatNumber(num) + ' SEK';
+                    return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(v)) + ' ' + bjSuffix;
+                };
+
+                const bLabels  = bItems.map(i => i.label).concat(['Sparande']);
+                const bX       = bItems.map(i => i.value / bjDivisor).concat([bjTotal / bjDivisor]);
+                const bText    = bItems.map(i => fmtBj(i.value)).concat([fmtBj(bjTotal)]);
+                const bMeasure = bItems.map(() => 'relative').concat(['total']);
+
+                let bRun = 0;
+                const bAnnots = [];
+                bItems.forEach((it) => {
+                    const s = bRun;
+                    bRun += it.value;
+                    const edge = Math.max(s, bRun) / bjDivisor;
+                    bAnnots.push({
+                        x: edge, y: it.label, text: fmtBj(it.value),
+                        xanchor: 'left', xshift: 8, showarrow: false,
+                        font: { size: 10 }
+                    });
+                });
+                bAnnots.push({
+                    x: Math.max(0, bjTotal) / bjDivisor, y: 'Sparande',
+                    text: fmtBj(bjTotal), xanchor: 'left', xshift: 8,
+                    showarrow: false, font: { size: 11, color: '#3b82f6' }
+                });
+
+                Plotly.newPlot('sparande-bjorkbacken-chart', [{
+                    type: 'waterfall',
+                    orientation: 'h',
+                    x: bX, y: bLabels, measure: bMeasure,
+                    text: bText, textposition: 'none',
+                    connector: { line: { color: '#94a3b8', width: 1 } },
+                    increasing: { marker: { color: '#22c55e' } },
+                    decreasing: { marker: { color: '#ef4444' } },
+                    totals:     { marker: { color: '#3b82f6' } },
+                    hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+                }], {
+                    showlegend: false,
+                    margin: { l: 280, r: 140, t: 10, b: 30 },
+                    xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+                    yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
+                    height: Math.max(200, (bItems.length + 1) * 40 + 40),
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    annotations: bAnnots
+                }, { responsive: true, displayModeBar: false });
+            } catch (e) {
+                bjSection.style.display = 'none';
             }
         }
 
