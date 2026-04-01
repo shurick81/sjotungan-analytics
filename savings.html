@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Myggan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <style>
+        body { font-size: 1rem; }
+        .hint-touch { display: none; }
+        @media (pointer: coarse) {
+            .hint-desktop { display: none; }
+            .hint-touch { display: inline; }
+        }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        /* ── Content area ──────────────────────────────── */
+        .content {
+            padding: 0;
+        }
+
+        /* ── Year selector ─────────────────────────────── */
+        .year-selector {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .year-selector label {
+            font-weight: 600;
+            color: var(--vm-blue);
+        }
+
+        .year-selector select {
+            padding: 8px 12px;
+            border: 1px solid var(--vm-border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: #f6f9ff;
+            color: var(--vm-text);
+            cursor: pointer;
+            min-width: 100px;
+        }
+
+        .year-selector select:focus {
+            outline: none;
+            border-color: var(--vm-blue-light);
+            box-shadow: 0 0 0 3px rgba(125, 174, 242, 0.2);
+        }
+
+        /* ── Section header ────────────────────────────── */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            background: var(--vm-blue);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ── Waterfall chart ───────────────────────────── */
+        .waterfall-chart {
+            margin: 0;
+            padding: 20px 24px;
+            background: #eff6ff;
+            border-left: 4px solid #93c5fd;
+            border-radius: 8px;
+        }
+
+        .waterfall-chart h3 {
+            font-size: 18px;
+            color: var(--vm-blue);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        #waterfall-container {
+            width: 100%;
+            height: 650px;
+        }
+
+        /* ── Tables ────────────────────────────────────── */
+        .events-table,
+        .states-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: none;
+        }
+
+        .events-table thead,
+        .states-table thead,
+        .events-table tr:hover,
+        .states-table tr:hover,
+        .events-table tfoot {
+            background: #eef3fb;
+        }
+
+        .events-table th,
+        .events-table td,
+        .states-table th,
+        .states-table td {
+            padding: 15px;
+            border-bottom: 1px solid #dde6f4;
+            color: var(--vm-text);
+            font-size: 14px;
+        }
+
+        .events-table th,
+        .states-table th {
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #33486f;
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .events-table tfoot {
+            border-top: 2px solid var(--vm-blue-light);
+        }
+
+        .events-table tfoot td {
+            font-weight: bold;
+            font-size: 16px;
+            padding: 20px 15px;
+        }
+
+        .events-table tfoot tr:hover {
+            background: #eef3fb;
+        }
+
+        .states-table tfoot {
+            background: #eef3fb;
+            border-top: 2px solid var(--vm-blue-light);
+        }
+
+        .states-table tfoot td {
+            font-weight: 700;
+            font-size: 15px;
+            padding: 16px 15px;
+        }
+
+        /* ── Amount colours ────────────────────────────── */
+        .amount-positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .amount-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .amount-neutral {
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        /* ── Clickable amounts ─────────────────────────── */
+        .clickable-amount {
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .clickable-amount:hover {
+            opacity: 0.7;
+        }
+
+        /* ── Loading ───────────────────────────────────── */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--vm-muted);
+        }
+
+        /* ── Modal ─────────────────────────────────────── */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .pdf-viewer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pdf-controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pdf-controls button {
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .pdf-controls button:hover {
+            background: #2c54bf;
+        }
+
+        .pdf-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pdf-controls span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+
+        #pdf-url {
+            color: var(--vm-blue) !important;
+        }
+
+        /* ── Costs treemap ──────────────────────────────── */
+        .costs-treemap-wrapper {
+            margin-top: 30px;
+        }
+        .costs-treemap-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            margin-top: 12px;
+        }
+        .costs-total-banner {
+            background: white;
+            border-radius: 10px;
+            padding: 14px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .costs-total-label {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .costs-total-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #dc2626;
+        }
+
+        @media (max-width: 640px) {
+            #costs-treemap-chart { height: 400px !important; }
+        }
+
+        /* ── Fullscreen treemap overlay ─────────────── */
+        .expand-btn-row {
+            display: none;
+            justify-content: center;
+            margin-top: 14px;
+        }
+        @media (min-width: 768px) {
+            .expand-btn-row { display: flex; }
+        }
+        .expand-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 6px rgba(31,63,149,0.25);
+        }
+        .expand-btn:hover { background: #2c54bf; }
+        .expand-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .treemap-fullscreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #f0f2f5;
+            padding: 20px;
+            flex-direction: column;
+        }
+        .treemap-fullscreen.active { display: flex; }
+        .treemap-fs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .treemap-fs-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .treemap-fs-header .fs-total {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #dc2626;
+            margin-left: 12px;
+        }
+        .treemap-fs-close {
+            background: none;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #374151;
+            font-weight: 600;
+        }
+        .treemap-fs-close:hover { background: #e5e7eb; }
+        #costs-treemap-fs-chart { flex: 1; min-height: 0; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center py-4">
+<span class="font-semibold text-lg">Sparande – BRF Sjötungan</span>
+</nav>
+</header>
+
+<div class="md:hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-center text-sm py-2 px-4">
+  Sidan visas bäst på en större skärm, t.ex. dator eller surfplatta.
+</div>
+
+<main class="container mx-auto mt-8 p-4">
+        <!-- ── Start: Kassaflödessammanfattning ───────── -->
+        <section id="start" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+                <h1 class="text-blue-900 font-extrabold text-3xl mb-6 border-b-4 border-blue-300 pb-2">Sparande</h1>
+                <p class="text-gray-600 mb-4">Sparande-analys för BRF Sjötungan</p>
+
+                <div class="content">
+                    <div id="loading" class="loading">
+                        Laddar finansiell data...
+                    </div>
+
+                    <div id="main-content" style="display: none;">
+                        <div class="year-selector">
+                            <label for="year-select">År:</label>
+                            <select id="year-select">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                            <label for="unit-select" style="margin-left: 16px;">Visa:</label>
+                            <select id="unit-select">
+                                <option value="total">Totalt (SEK)</option>
+                                <option value="kvm" selected>Per kvm (51 666 kvm)</option>
+                                <option value="apt">Per lägenhet (613 lgh)</option>
+                            </select>
+                        </div>
+
+
+                    </div>
+
+                    <!-- ── Sparande ─────────────────────── -->
+                    <div id="sparande-section" style="display: none; margin-top: 30px;">
+                        <div class="section-header">
+                            <h2 class="text-blue-700 font-semibold text-2xl">Sparande</h2>
+                        </div>
+
+                        <div id="sparande-card" style="border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                                <div>
+                                    <div id="sparande-label" style="font-size: 0.85em; font-weight: 600; margin-bottom: 4px;">Sparande</div>
+                                    <div id="sparande-total" style="font-size: 2.2em; font-weight: 800;"></div>
+                                </div>
+                            </div>
+                            <div id="sparande-chart" style="width: 100%; height: 200px; margin-top: 12px;"></div>
+                            <p style="color: #4b5563; font-size: 0.85em; margin-top: 12px; line-height: 1.5;">
+                                <span class="clickable-amount" onclick="showPDF('HSB Brf Bjorkbacken i Tyreso AR och RB 2024.pdf', 11, 139, 1162, 595, 44, 'Sparande – definition')" style="font-style: italic;">«Sparande: Årets resultat med återläggning av avskrivningar, kostnader för planerat underhåll, eventuella utrangeringar och intäkter och kostnader som är väsentliga och som inte är en del av den normala verksamheten per kvadratmeter totalyta (boyta och lokalyta). Sparandetalet ämnar åskådliggöra det utrymme som finns i föreningen för att möte ett långsiktigt genomsnittligt underhåll. Förenklat visar sparandetalet det underliggande kassaflödet från den löpande verksamheten per kvadratmeter.»</span>
+
+                            </p>
+                            <p style="color: var(--vm-blue); font-size: 0.9em; margin-top: 10px; line-height: 1.5; font-weight: 600;">
+                                Förstår du vad ovanstående betyder? Vi gissar att 99 % av medlemmarna inte gör det – därför förklarar vi det i bilden nedan.
+                            </p>
+                        </div>
+
+                        <!-- Expanded inner composition -->
+                        <div id="sparande-detail-section" style="display: none; margin-top: 20px;">
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+                                <h3 style="font-size: 1.1em; font-weight: 700; color: var(--vm-blue); margin: 0 0 4px 0;">Vad bygger sparandet?</h3>
+                                <p style="color: #64748b; font-size: 0.82em; margin: 0 0 8px 0; line-height: 1.4;">
+                                    Sparande = Årets resultat + Avskrivningar + Planerat underhåll (BFNAR 2023:1).
+                                    Avskrivningar är en bokföringsmässig kostnad (ej kassaflöde) och läggs tillbaka.
+                                    Underhållet har lyfts ur kostnaderna eftersom det bevarar fastighetens värde.
+                                </p>
+                                <p style="color: #64748b; font-size: 0.82em; margin: 0 0 8px 0; line-height: 1.4;">
+                                    Någon har sagt: <span style="font-style: italic;">«Ju högre siffra desto bättre.»</span>
+                                    Men stämmer det? Ett högt sparande kan också betyda att medlemmarna betalar onödigt höga avgifter.
+                                    Enligt <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/sparande" target="_blank" rel="noopener" style="color: #2563eb; text-decoration: underline;">HSB:s Bostadsrättskollen</a>
+                                    bör sparandet ligga på minst 200 kr/kvm, och många rådgivare pekar på intervallet
+                                    <strong>200–300 kr/kvm</strong> som en rimlig nivå.
+                                    Under 100 kr/kvm signalerar risk för framtida avgiftshöjningar eller eftersatt underhåll;
+                                    över 300 kr/kvm kan tyda på att avgifterna är onödigt höga eller att planerat underhåll skjuts upp.
+                                </p>
+                                <p style="color: #64748b; font-size: 0.82em; margin: 0 0 12px 0; line-height: 1.4;">
+                                    ⚠️ Sparande är dock ett <em>förenklat nyckeltal</em> baserat på bokföringsmässiga poster
+                                    (resultat + avskrivningar) – inte faktiska kassaflöden.
+                                    Björn Lundén och Ulf Bokelund Svensson argumenterar i
+                                    <a href="https://tidningenbalans.se/artikel/replik-avskrivningar-och-sparande-i-bostadsrattsforeningar" target="_blank" rel="noopener" style="color: #2563eb; text-decoration: underline;">Tidningen Balans</a>
+                                    att resultaträkningen är ett <em>«dåligt instrument»</em> för att bedöma en förenings ekonomi:
+                                    avskrivningar speglar inte verkliga utbetalningar, och kassaflödesanalysen –
+                                    med amorteringar och faktiskt underhåll – ger en mer rättvisande bild.
+                                    Se även kassaflödesanalysen ovan.
+                                </p>
+                                <div id="sparande-detail-chart" style="width: 100%;"></div>
+                                <div id="sparande-siken-section" style="display: none; margin-top: 24px;">
+                                    <h3 style="font-size: 1.1em; font-weight: 700; color: var(--vm-blue); margin: 0 0 4px 0;">BRF Siken, för jämförelse</h3>
+                                    <p style="color: #64748b; font-size: 0.82em; margin: 0 0 12px 0; line-height: 1.4;">
+                                        Samma beräkning för BRF Siken (17 263 kvm), inkl. justeringar för icke-normala poster (BFNAR 2023:1).
+                                        Någon har sagt: <span style="font-style: italic;">«Det visar hur mycket pengar vi får över i den löpande driften.»</span>
+                                        Siken har lägre driftkostnader per kvm, men ändå lägre sparande – det beror på lägre intäkter och högre räntekostnader.
+                                    </p>
+                                    <div id="sparande-siken-simple-chart" style="width: 100%;"></div>
+                                    <h4 style="font-size: 0.95em; font-weight: 600; color: #475569; margin: 18px 0 4px 0;">Vad bygger sparandet?</h4>
+                                    <div id="sparande-siken-chart" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="events-table">
+                            <thead>
+                                <tr>
+                                    <th>Komponent</th>
+                                    <th style="text-align: right;" id="sparande-amount-header">Belopp (SEK)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sparande-body"></tbody>
+                            <tfoot>
+                                <tr style="font-weight: 600;">
+                                    <td>Sparande</td>
+                                    <td style="text-align: right;" id="sparande-footer-total" class="amount-positive">-</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+
+                </div>
+        </section>
+
+
+</main>
+
+<section class="max-w-6xl mx-auto mt-10 mb-4 px-6">
+  <h2 class="text-lg font-semibold text-gray-600 mb-3">Källdokument (PDF)</h2>
+  <ul id="pdf-source-list" class="space-y-1 text-sm text-gray-600"></ul>
+</section>
+
+<footer class="text-center text-gray-500 text-sm py-4 mt-8">
+&copy; 2026 Vision Myggan – En medlemsrörelse i BRF Sjötungan
+</footer>
+
+
+
+    <!-- PDF Modal -->
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Källdokument</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="pdf-viewer">
+                <div class="pdf-controls">
+                    <button id="prev-page" onclick="changePage(-1)">← Föregående</button>
+                    <span>Sida <span id="page-num">1</span> av <span id="page-count">-</span></span>
+                    <button id="next-page" onclick="changePage(1)">Nästa →</button>
+                </div>
+                <canvas id="pdf-canvas"></canvas>
+                <div id="pdf-source-link" style="margin-top: 20px; text-align: center;">
+                    <a href="#" target="_blank" id="pdf-url" style="color: var(--vm-blue); text-decoration: none; font-size: 12px; word-wrap: break-word;"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ── PDF.js setup ──────────────────────────────── */
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let highlightBox = null;
+        let pdfSources = {};
+        let annualReportsYAML = [];
+        let sikenAnnualReportsYAML = [];
+
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+
+        /* ── Load PDF sources from YAML ────────────────── */
+        async function loadPDFSources() {
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`sources.yaml?t=${timestamp}`, { cache: 'no-store' });
+                const yamlText = await response.text();
+                const data = jsyaml.load(yamlText);
+
+                if (data.annual_reports) {
+                    annualReportsYAML = data.annual_reports;
+                    data.annual_reports.forEach(source => {
+                        const filename = source.local_path.split('/').pop();
+                        pdfSources[filename] = source.url;
+                    });
+                    renderPDFSourceList(data.annual_reports);
+                }
+
+                console.log('Loaded PDF sources:', pdfSources);
+            } catch (error) {
+                console.error('Error loading PDF sources:', error);
+            }
+            try {
+                const sikenResp = await fetch('source_siken.yaml?t=' + new Date().getTime(), { cache: 'no-store' });
+                const sikenYaml = await sikenResp.text();
+                const sikenData = jsyaml.load(sikenYaml);
+                if (sikenData && sikenData.annual_reports) sikenAnnualReportsYAML = sikenData.annual_reports;
+            } catch (e) { /* Siken sources not available */ }
+        }
+
+        function renderPDFSourceList(reports) {
+            const list = document.getElementById('pdf-source-list');
+            if (!list) return;
+            const sorted = [...reports].sort((a, b) => b.finance_period - a.finance_period);
+            list.innerHTML = sorted.map(r => {
+                return `<li>${r.finance_period} – <a href="${r.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${r.url}</a></li>`;
+            }).join('');
+        }
+
+        /* ── CSV loader ────────────────────────────────── */
+        async function loadCSV(url) {
+            const timestamp = new Date().getTime();
+            const cacheBustedUrl = url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
+            const response = await fetch(cacheBustedUrl, { cache: 'no-store' });
+            const text = await response.text();
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+
+            return lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim());
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header] = values[i];
+                });
+                return obj;
+            });
+        }
+
+        /* ── Helpers ───────────────────────────────────── */
+        function formatNumber(num) {
+            return new Intl.NumberFormat('sv-SE').format(num);
+        }
+
+        const TOTAL_KVM = 51666;
+        const SIKEN_KVM = 17263;
+        const TOTAL_APARTMENTS = 613;
+
+        function getUnitConfig() {
+            const sel = document.getElementById('unit-select');
+            const mode = sel ? sel.value : 'total';
+            if (mode === 'kvm') return { divisor: TOTAL_KVM, suffix: 'kr/kvm', label: 'kr/kvm' };
+            if (mode === 'apt') return { divisor: TOTAL_APARTMENTS, suffix: 'kr/lgh', label: 'kr/lgh' };
+            return { divisor: 1, suffix: 'SEK', label: 'SEK' };
+        }
+
+        function formatAmount(num) {
+            const { divisor, suffix } = getUnitConfig();
+            const val = num / divisor;
+            if (divisor === 1) return formatNumber(num) + ' SEK';
+            return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(val)) + ' ' + suffix;
+        }
+
+        function getAmountClass(amount) {
+            if (amount > 0) return 'amount-positive';
+            if (amount < 0) return 'amount-negative';
+            return 'amount-neutral';
+        }
+
+        /* ── Year selector ─────────────────────────────── */
+        async function populateYearSelector() {
+            try {
+                const events = await loadCSV('data/financial_events.csv');
+                const years = [...new Set(events.map(e => e.year))].sort((a, b) => b - a);
+
+                const yearSelect = document.getElementById('year-select');
+                yearSelect.innerHTML = '';
+
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                });
+
+                if (years.length > 0) {
+                    yearSelect.value = years[0];
+                }
+            } catch (error) {
+                console.error('Error populating year selector:', error);
+            }
+        }
+
+        /* ── Show content ──────────────────────────── */
+        async function loadData() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }
+
+        /* ── PDF Modal ─────────────────────────────────── */
+        function showPDF(file, page, x, y, width, height, categoryName) {
+            const modal = document.getElementById('pdfModal');
+            const title = document.getElementById('modal-title');
+            const urlLink = document.getElementById('pdf-url');
+
+            title.textContent = `Källdokument: ${file} - ${categoryName}`;
+
+            if (pdfSources[file]) {
+                urlLink.href = pdfSources[file];
+                urlLink.textContent = pdfSources[file];
+                document.getElementById('pdf-source-link').style.display = 'block';
+            } else {
+                document.getElementById('pdf-source-link').style.display = 'none';
+            }
+
+            highlightBox = { pageNum: page, x: x, y: y, width: width, height: height };
+            modal.style.display = 'block';
+            loadPDF('data/annual_reports/' + file, page);
+        }
+
+        function closeModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+            highlightBox = null;
+            pdfDoc = null;
+        }
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('pdfModal')) {
+                closeModal();
+            }
+        };
+
+        async function loadPDF(pdfPath, targetPage) {
+            try {
+                pageNum = targetPage || 1;
+                const loadingTask = pdfjsLib.getDocument(pdfPath);
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Kunde inte ladda PDF: ' + pdfPath);
+            }
+        }
+
+        async function renderPage(num) {
+            pageRendering = true;
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: scale });
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+            if (highlightBox && highlightBox.pageNum === num) {
+                drawHighlight(highlightBox, viewport);
+            }
+
+            pageRendering = false;
+
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+
+            document.getElementById('page-num').textContent = num;
+            updateButtons();
+        }
+
+        function drawHighlight(box, viewport) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+            ctx.strokeStyle = 'rgb(255, 152, 0)';
+            ctx.lineWidth = 3;
+            ctx.fillRect(box.x, box.y, box.width, box.height);
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.strokeStyle = 'rgba(102, 126, 234, 0.8)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
+            ctx.restore();
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('prev-page').disabled = (pageNum <= 1);
+            document.getElementById('next-page').disabled = (pageNum >= pdfDoc.numPages);
+        }
+
+        function changePage(offset) {
+            pageNum += offset;
+            if (pageNum < 1) pageNum = 1;
+            if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+            queueRenderPage(pageNum);
+        }
+
+        /* (Costs treemap removed – Sparande-only page) */
+
+        /* ── Sparande ──────────────────────────────────── */
+        // Categories excluded from sparande (cash-flow / balance items)
+        const SPARANDE_CF_CATS = new Set(['3', '8', '9', '10', '11', '12', '13', '14']);
+        // Underhåll categories (may be top-level or subcategories depending on year)
+        const SPARANDE_UH_CATS = new Set(['16', '31']);
+
+        async function getAvskrivningarFromCSV(year, sourceList) {
+            const sources = sourceList || annualReportsYAML;
+            const entry = sources.find(r => String(r.finance_period) === String(year));
+            if (!entry) return null;
+            const primaryCSV = entry.local_path.replace(/\.pdf$/i, '.csv');
+            const fallbackCSV = 'data/annual_reports/stamma' + (parseInt(year) + 1) + '.csv';
+            const skipWords = ['ackumulera', 'utgående', 'ingående', 'summa', 'årets', 'not 3', 'återförda'];
+            for (const csvPath of [primaryCSV, fallbackCSV]) {
+                try {
+                    const resp = await fetch(csvPath + '?t=' + Date.now(), { cache: 'no-store' });
+                    if (!resp.ok) continue;
+                    const text = await resp.text();
+                    const lines = text.trim().split('\n')
+                        .filter(l => l.trim() && !l.trim().startsWith('#'));
+                    if (lines.length < 2) continue;
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    for (let i = 1; i < lines.length; i++) {
+                        const vals = lines[i].split(',').map(v => v.trim());
+                        const row = {};
+                        headers.forEach((h, idx) => { row[h] = vals[idx] || ''; });
+                        const cat = (row.category || row.item || '').toLowerCase();
+                        if (!cat.includes('avskriv') && !cat.includes('nedskriv')) continue;
+                        if (skipWords.some(w => cat.includes(w))) continue;
+                        let val = row.amount;
+                        if (!val || isNaN(parseInt(val))) val = row[String(year)];
+                        if (!val || isNaN(parseInt(val))) {
+                            const yearCols = headers.filter(h => /^\d{4}$/.test(h)).sort().reverse();
+                            for (const yc of yearCols) {
+                                if (row[yc] && !isNaN(parseInt(row[yc]))) { val = row[yc]; break; }
+                            }
+                        }
+                        if (val) {
+                            const num = parseInt(val);
+                            if (num < 0) return Math.abs(num);
+                        }
+                    }
+                } catch (e) { /* CSV not found */ }
+            }
+            return null;
+        }
+
+        async function getSparandeAdjustmentsFromCSV(year, sourceList) {
+            const sources = sourceList || annualReportsYAML;
+            const entry = sources.find(r => String(r.finance_period) === String(year));
+            if (!entry) return [];
+            const primaryCSV = entry.local_path.replace(/\.pdf$/i, '.csv');
+            const fallbackCSV = 'data/annual_reports/stamma' + (parseInt(year) + 1) + '.csv';
+            for (const csvPath of [primaryCSV, fallbackCSV]) {
+                try {
+                    const resp = await fetch(csvPath + '?t=' + Date.now(), { cache: 'no-store' });
+                    if (!resp.ok) continue;
+                    const text = await resp.text();
+                    const adjs = [];
+                    for (const line of text.trim().split('\n')) {
+                        const l = line.trim();
+                        if (!l.startsWith('sparande_adj:')) continue;
+                        const parts = l.split(',');
+                        if (parts.length < 2) continue;
+                        const label = parts[0].replace('sparande_adj:', '').trim();
+                        const val = parseInt(parts[parts.length - 1]);
+                        if (!isNaN(val)) adjs.push({ label, amount: val });
+                    }
+                    if (adjs.length > 0) return adjs;
+                } catch (e) { /* CSV not found */ }
+            }
+            return [];
+        }
+
+        async function loadSparande() {
+            const year = document.getElementById('year-select').value;
+            const section = document.getElementById('sparande-section');
+
+            const [events, categories] = await Promise.all([
+                loadCSV('data/financial_events.csv'),
+                loadCSV('data/event_categories.csv')
+            ]);
+
+            const catMap = {};
+            categories.forEach(c => { catMap[c.id] = c; });
+
+            const yearEvents = events.filter(e => e.year === year);
+            if (yearEvents.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            // Top-level income-statement events (exclude CF/balance items)
+            const isTopEvents = yearEvents.filter(e =>
+                !SPARANDE_CF_CATS.has(e.category_id) &&
+                !(catMap[e.category_id] && catMap[e.category_id].parent)
+            );
+
+            // Underhåll events (can be top-level OR subcategories)
+            const underhallEvents = yearEvents.filter(e => SPARANDE_UH_CATS.has(e.category_id));
+            const underhallRaw = underhallEvents.reduce((s, e) => s + parseInt(e.amount), 0); // negative
+            const underhallAbs = Math.abs(underhallRaw);
+
+            // IS total = resultat + avskrivningar (events exclude depreciation)
+            const isTotal = isTopEvents.reduce((s, e) => s + parseInt(e.amount), 0);
+
+            // Sparande = IS total + |underhåll|
+            const total = isTotal + underhallAbs;
+            const unitCfg = getUnitConfig();
+            const isPositive = total > 0;
+
+            // Try to get avskrivningar from annual report CSV
+            const avskrivningar = await getAvskrivningarFromCSV(year);
+            const hasAvsk = avskrivningar !== null;
+            const resultat = hasAvsk ? isTotal - avskrivningar : null;
+
+            // Card styling
+            const card = document.getElementById('sparande-card');
+            card.style.background = isPositive
+                ? 'linear-gradient(135deg, #f0fdf4, #ecfdf5)'
+                : 'linear-gradient(135deg, #fef2f2, #fff1f2)';
+            card.style.border = isPositive
+                ? '2px solid #86efac'
+                : '2px solid #fca5a5';
+
+            document.getElementById('sparande-label').style.color = isPositive ? '#166534' : '#991b1b';
+            const totalEl = document.getElementById('sparande-total');
+            totalEl.textContent = formatAmount(total);
+            totalEl.style.color = isPositive ? '#15803d' : '#dc2626';
+
+            document.getElementById('sparande-amount-header').textContent =
+                'Belopp (' + unitCfg.label + ')';
+
+            // Simple waterfall: 3 bars when avskrivningar known, 2 otherwise
+            let labels, xValues, textValues, measures;
+            if (hasAvsk) {
+                labels = ['Årets resultat', 'Avskrivningar', 'Kostnadsfört underhåll', 'Sparande'];
+                xValues = [
+                    resultat / unitCfg.divisor,
+                    avskrivningar / unitCfg.divisor,
+                    underhallAbs / unitCfg.divisor,
+                    total / unitCfg.divisor
+                ];
+                textValues = [
+                    formatAmount(resultat),
+                    formatAmount(avskrivningar),
+                    formatAmount(underhallAbs),
+                    formatAmount(total)
+                ];
+                measures = ['relative', 'relative', 'relative', 'total'];
+            } else {
+                labels = ['Resultat + Avskrivningar', 'Kostnadsfört underhåll', 'Sparande'];
+                xValues = [
+                    isTotal / unitCfg.divisor,
+                    underhallAbs / unitCfg.divisor,
+                    total / unitCfg.divisor
+                ];
+                textValues = [
+                    formatAmount(isTotal),
+                    formatAmount(underhallAbs),
+                    formatAmount(total)
+                ];
+                measures = ['relative', 'relative', 'total'];
+            }
+
+            const annots = [];
+            let running = 0;
+            const componentCount = hasAvsk ? 3 : 2;
+            const componentValues = hasAvsk
+                ? [resultat, avskrivningar, underhallAbs]
+                : [isTotal, underhallAbs];
+            componentValues.forEach((val, i) => {
+                const start = running;
+                running += val;
+                const edge = Math.max(start, running) / unitCfg.divisor;
+                annots.push({
+                    x: edge, y: labels[i], text: textValues[i],
+                    xanchor: 'left', xshift: 8, showarrow: false,
+                    font: { size: 11 }
+                });
+            });
+            annots.push({
+                x: Math.max(0, total) / unitCfg.divisor, y: 'Sparande',
+                text: textValues[componentCount], xanchor: 'left', xshift: 8,
+                showarrow: false, font: { size: 11, color: '#3b82f6' }
+            });
+
+            Plotly.newPlot('sparande-chart', [{
+                type: 'waterfall',
+                orientation: 'h',
+                x: xValues,
+                y: labels,
+                measure: measures,
+                text: textValues,
+                textposition: 'none',
+                connector: { line: { color: '#94a3b8', width: 1 } },
+                increasing: { marker: { color: '#22c55e' } },
+                decreasing: { marker: { color: '#ef4444' } },
+                totals: { marker: { color: '#3b82f6' } },
+                hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+            }], {
+                showlegend: false,
+                margin: { l: 200, r: 140, t: 10, b: 30 },
+                xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+                yaxis: { autorange: 'reversed' },
+                height: hasAvsk ? 200 : 180,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                annotations: annots
+            }, { responsive: true, displayModeBar: false });
+
+            // Table
+            const tbody = document.getElementById('sparande-body');
+            tbody.innerHTML = '';
+            const tableRows = hasAvsk
+                ? [
+                    { name: 'Årets resultat', amount: resultat },
+                    { name: 'Avskrivningar', amount: avskrivningar },
+                    { name: 'Kostnadsfört underhåll', amount: underhallAbs },
+                  ]
+                : [
+                    { name: 'Resultat + Avskrivningar', amount: isTotal },
+                    { name: 'Kostnadsfört underhåll', amount: underhallAbs },
+                  ];
+            tableRows.forEach(c => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${c.name}</td>
+                    <td style="text-align: right;" class="${getAmountClass(c.amount)}">${formatAmount(c.amount)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            const footerTotal = document.getElementById('sparande-footer-total');
+            footerTotal.textContent = formatAmount(total);
+            footerTotal.className = getAmountClass(total);
+
+            // ── Detail: per-category breakdown ──
+            const detailSection = document.getElementById('sparande-detail-section');
+
+            // Build items: each IS top-level event, with underhåll stripped from parents
+            // Category names for underhåll parents
+            const uhParentIds = new Set();
+            underhallEvents.forEach(e => {
+                const parent = catMap[e.category_id] && catMap[e.category_id].parent;
+                if (parent) uhParentIds.add(parent);
+            });
+
+            // Sum underhåll per parent
+            const uhByParent = {};
+            underhallEvents.forEach(e => {
+                const parent = catMap[e.category_id] && catMap[e.category_id].parent;
+                if (parent) {
+                    uhByParent[parent] = (uhByParent[parent] || 0) + parseInt(e.amount);
+                }
+            });
+
+            const items = [];
+            // Build sub-category lookup: parent_id → [child events this year]
+            const subEventsByParent = {};
+            yearEvents.forEach(e => {
+                const cat = catMap[e.category_id];
+                if (cat && cat.parent) {
+                    if (!subEventsByParent[cat.parent]) subEventsByParent[cat.parent] = [];
+                    subEventsByParent[cat.parent].push(e);
+                }
+            });
+
+            isTopEvents
+                .sort((a, b) => parseInt(b.amount) - parseInt(a.amount))
+                .forEach(e => {
+                    const cid = e.category_id;
+                    if (SPARANDE_UH_CATS.has(cid)) return; // skip top-level underhåll (cancelled by add-back)
+                    let val = parseInt(e.amount);
+                    let label = catMap[cid] ? catMap[cid].name : 'Okänd';
+                    // Strip embedded underhåll from parent categories
+                    if (uhByParent[cid]) {
+                        val -= uhByParent[cid]; // uhByParent is negative, subtracting makes val less negative
+                        label += ' (exkl. underhåll)';
+                    }
+
+                    // Expand Nettoomsättning (id 0) into subcategories if available
+                    const subs = cid === '0' ? (subEventsByParent[cid] || [])
+                        .filter(s => !SPARANDE_UH_CATS.has(s.category_id)) : [];
+                    if (subs.length > 0) {
+                        const subItems = subs.map(s => ({
+                            label: '  ' + (catMap[s.category_id] ? catMap[s.category_id].name : 'Okänd'),
+                            value: parseInt(s.amount)
+                        })).sort((a, b) => b.value - a.value);
+                        const subTotal = subItems.reduce((s, i) => s + i.value, 0);
+                        const residual = val - subTotal;
+                        subItems.forEach(si => items.push(si));
+                        if (Math.abs(residual) > 1) {
+                            items.push({ label: '  Övrigt (' + (catMap[cid] ? catMap[cid].name.toLowerCase() : '') + ')', value: residual });
+                        }
+                    } else {
+                        items.push({ label, value: val });
+                    }
+                });
+
+            if (items.length === 0) {
+                detailSection.style.display = 'none';
+                return;
+            }
+            detailSection.style.display = 'block';
+
+            const dLabels  = items.map(i => i.label).concat(['Sparande']);
+            const dX       = items.map(i => i.value / unitCfg.divisor).concat([total / unitCfg.divisor]);
+            const dText    = items.map(i => formatAmount(i.value)).concat([formatAmount(total)]);
+            const dMeasure = items.map(() => 'relative').concat(['total']);
+
+            let dRun = 0;
+            const dAnnots = [];
+            items.forEach((it) => {
+                const s = dRun;
+                dRun += it.value;
+                const edge = Math.max(s, dRun) / unitCfg.divisor;
+                dAnnots.push({
+                    x: edge, y: it.label, text: formatAmount(it.value),
+                    xanchor: 'left', xshift: 8, showarrow: false,
+                    font: { size: 10 }
+                });
+            });
+            dAnnots.push({
+                x: Math.max(0, total) / unitCfg.divisor, y: 'Sparande',
+                text: formatAmount(total), xanchor: 'left', xshift: 8,
+                showarrow: false, font: { size: 11, color: '#3b82f6' }
+            });
+
+            Plotly.newPlot('sparande-detail-chart', [{
+                type: 'waterfall',
+                orientation: 'h',
+                x: dX, y: dLabels, measure: dMeasure,
+                text: dText, textposition: 'none',
+                connector: { line: { color: '#94a3b8', width: 1 } },
+                increasing: { marker: { color: '#22c55e' } },
+                decreasing: { marker: { color: '#ef4444' } },
+                totals:     { marker: { color: '#3b82f6' } },
+                hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+            }], {
+                showlegend: false,
+                margin: { l: 280, r: 140, t: 10, b: 30 },
+                xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+                yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
+                height: Math.max(200, (items.length + 1) * 40 + 40),
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                annotations: dAnnots
+            }, { responsive: true, displayModeBar: false });
+
+            // ── Siken: same waterfall ──
+            const sikenSection = document.getElementById('sparande-siken-section');
+            try {
+                const sikenEvents = await loadCSV('data/financial_events_siken.csv');
+                const sikenYear = sikenEvents.filter(e => e.year === year);
+                if (sikenYear.length === 0) { sikenSection.style.display = 'none'; return; }
+
+                const sikenIS = sikenYear.filter(e =>
+                    !SPARANDE_CF_CATS.has(e.category_id) &&
+                    !(catMap[e.category_id] && catMap[e.category_id].parent)
+                );
+                const sikenUH = sikenYear.filter(e => SPARANDE_UH_CATS.has(e.category_id));
+                const sikenUHRaw = sikenUH.reduce((s, e) => s + parseInt(e.amount), 0);
+                const sikenISTotal = sikenIS.reduce((s, e) => s + parseInt(e.amount), 0);
+                // BFNAR 2023:1 non-normal adjustments
+                const sikenAdjs = await getSparandeAdjustmentsFromCSV(year, sikenAnnualReportsYAML);
+                const sikenAdjTotal = sikenAdjs.reduce((s, a) => s + a.amount, 0);
+                const sikenTotal = sikenISTotal + Math.abs(sikenUHRaw) + sikenAdjTotal;
+
+                // ── Siken simple 3-component waterfall ──
+                const sDivisor0 = unitCfg.divisor === 1 ? 1 : SIKEN_KVM;
+                const fmtSiken0 = (num) => {
+                    const v = num / sDivisor0;
+                    if (sDivisor0 === 1) return formatNumber(num) + ' SEK';
+                    const sSuffix0 = unitCfg.label.includes('kvm') ? 'kr/kvm' : 'SEK';
+                    return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(v)) + ' ' + sSuffix0;
+                };
+                {
+                    const sikenUHAbs = Math.abs(sikenUHRaw);
+                    // Get avskrivningar from annual report CSV
+                    const sikenAvsk = await getAvskrivningarFromCSV(year, sikenAnnualReportsYAML) || 0;
+                    const sikenResultat = sikenISTotal - sikenAvsk;
+                    const sLabels0 = ['Årets resultat', 'Avskrivningar', 'Kostnadsfört underhåll'];
+                    const sX0 = [sikenResultat / sDivisor0, sikenAvsk / sDivisor0, sikenUHAbs / sDivisor0];
+                    const sText0 = [fmtSiken0(sikenResultat), fmtSiken0(sikenAvsk), fmtSiken0(sikenUHAbs)];
+                    const sMeasure0 = ['relative', 'relative', 'relative'];
+                    // Add non-normal adjustments as waterfall bars
+                    sikenAdjs.forEach(adj => {
+                        sLabels0.push(adj.label);
+                        sX0.push(adj.amount / sDivisor0);
+                        sText0.push(fmtSiken0(adj.amount));
+                        sMeasure0.push('relative');
+                    });
+                    sLabels0.push('Sparande');
+                    sX0.push(sikenTotal / sDivisor0);
+                    sText0.push(fmtSiken0(sikenTotal));
+                    sMeasure0.push('total');
+                    const sAnn0 = [];
+                    let sRun0 = 0;
+                    const compVals0 = [sikenResultat, sikenAvsk, sikenUHAbs, ...sikenAdjs.map(a => a.amount)];
+                    compVals0.forEach((val, i) => {
+                        const start = sRun0; sRun0 += val;
+                        sAnn0.push({ x: Math.max(start, sRun0) / sDivisor0, y: sLabels0[i], text: sText0[i],
+                            xanchor: 'left', xshift: 8, showarrow: false, font: { size: 11 } });
+                    });
+                    sAnn0.push({ x: Math.max(0, sikenTotal) / sDivisor0, y: 'Sparande',
+                        text: sText0[sText0.length - 1], xanchor: 'left', xshift: 8, showarrow: false,
+                        font: { size: 11, color: '#3b82f6' } });
+
+                    Plotly.newPlot('sparande-siken-simple-chart', [{
+                        type: 'waterfall', orientation: 'h',
+                        x: sX0, y: sLabels0, measure: sMeasure0,
+                        text: sText0, textposition: 'none',
+                        connector: { line: { color: '#94a3b8', width: 1 } },
+                        increasing: { marker: { color: '#22c55e' } },
+                        decreasing: { marker: { color: '#ef4444' } },
+                        totals: { marker: { color: '#3b82f6' } },
+                        hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+                    }], {
+                        showlegend: false,
+                        margin: { l: 200, r: 140, t: 10, b: 30 },
+                        xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+                        yaxis: { autorange: 'reversed' },
+                        height: Math.max(200, (sLabels0.length) * 40 + 40),
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        annotations: sAnn0
+                    }, { responsive: true, displayModeBar: false });
+                }
+
+                const sikenUHByParent = {};
+                sikenUH.forEach(e => {
+                    const parent = catMap[e.category_id] && catMap[e.category_id].parent;
+                    if (parent) sikenUHByParent[parent] = (sikenUHByParent[parent] || 0) + parseInt(e.amount);
+                });
+
+                const sikenSubsByParent = {};
+                sikenYear.forEach(e => {
+                    const cat = catMap[e.category_id];
+                    if (cat && cat.parent) {
+                        if (!sikenSubsByParent[cat.parent]) sikenSubsByParent[cat.parent] = [];
+                        sikenSubsByParent[cat.parent].push(e);
+                    }
+                });
+
+                const sItems = [];
+                sikenIS.sort((a, b) => parseInt(b.amount) - parseInt(a.amount)).forEach(e => {
+                    const cid = e.category_id;
+                    if (SPARANDE_UH_CATS.has(cid)) return;
+                    let val = parseInt(e.amount);
+                    let label = catMap[cid] ? catMap[cid].name : 'Okänd';
+                    if (sikenUHByParent[cid]) {
+                        val -= sikenUHByParent[cid];
+                        label += ' (exkl. underhåll)';
+                    }
+                    const subs = cid === '0' ? (sikenSubsByParent[cid] || [])
+                        .filter(s => !SPARANDE_UH_CATS.has(s.category_id)) : [];
+                    if (subs.length > 0) {
+                        const subItems = subs.map(s => ({
+                            label: '  ' + (catMap[s.category_id] ? catMap[s.category_id].name : 'Okänd'),
+                            value: parseInt(s.amount)
+                        })).sort((a, b) => b.value - a.value);
+                        const subTotal = subItems.reduce((s, i) => s + i.value, 0);
+                        const residual = val - subTotal;
+                        subItems.forEach(si => sItems.push(si));
+                        if (Math.abs(residual) > 1) {
+                            sItems.push({ label: '  Övrigt (' + (catMap[cid] ? catMap[cid].name.toLowerCase() : '') + ')', value: residual });
+                        }
+                    } else {
+                        sItems.push({ label, value: val });
+                    }
+                });
+
+                if (sItems.length === 0) { sikenSection.style.display = 'none'; return; }
+                sikenSection.style.display = 'block';
+
+                // Add non-normal adjustments to detailed breakdown
+                sikenAdjs.forEach(adj => {
+                    sItems.push({ label: adj.label, value: adj.amount });
+                });
+
+                // Siken uses its own kvm divisor
+                const sel = document.getElementById('unit-select');
+                const sMode = sel ? sel.value : 'total';
+                const sDivisor = sMode === 'kvm' ? SIKEN_KVM : 1;
+                const sSuffix = sMode === 'kvm' ? 'kr/kvm' : 'SEK';
+                const fmtSiken = (num) => {
+                    const v = num / sDivisor;
+                    if (sDivisor === 1) return formatNumber(num) + ' SEK';
+                    return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(v)) + ' ' + sSuffix;
+                };
+
+                const sLabels  = sItems.map(i => i.label).concat(['Sparande']);
+                const sX       = sItems.map(i => i.value / sDivisor).concat([sikenTotal / sDivisor]);
+                const sText    = sItems.map(i => fmtSiken(i.value)).concat([fmtSiken(sikenTotal)]);
+                const sMeasure = sItems.map(() => 'relative').concat(['total']);
+
+                let sRun = 0;
+                const sAnnots = [];
+                sItems.forEach((it) => {
+                    const s = sRun;
+                    sRun += it.value;
+                    const edge = Math.max(s, sRun) / sDivisor;
+                    sAnnots.push({
+                        x: edge, y: it.label, text: fmtSiken(it.value),
+                        xanchor: 'left', xshift: 8, showarrow: false,
+                        font: { size: 10 }
+                    });
+                });
+                sAnnots.push({
+                    x: Math.max(0, sikenTotal) / sDivisor, y: 'Sparande',
+                    text: fmtSiken(sikenTotal), xanchor: 'left', xshift: 8,
+                    showarrow: false, font: { size: 11, color: '#3b82f6' }
+                });
+
+                Plotly.newPlot('sparande-siken-chart', [{
+                    type: 'waterfall',
+                    orientation: 'h',
+                    x: sX, y: sLabels, measure: sMeasure,
+                    text: sText, textposition: 'none',
+                    connector: { line: { color: '#94a3b8', width: 1 } },
+                    increasing: { marker: { color: '#22c55e' } },
+                    decreasing: { marker: { color: '#ef4444' } },
+                    totals:     { marker: { color: '#3b82f6' } },
+                    hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+                }], {
+                    showlegend: false,
+                    margin: { l: 280, r: 140, t: 10, b: 30 },
+                    xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+                    yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
+                    height: Math.max(200, (sItems.length + 1) * 40 + 40),
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    annotations: sAnnots
+                }, { responsive: true, displayModeBar: false });
+            } catch (e) {
+                sikenSection.style.display = 'none';
+            }
+        }
+
+        /* ── Initialise ───────────────────────────────── */
+        async function init() {
+            await loadPDFSources();
+            await populateYearSelector();
+            await loadData();
+            await loadSparande();
+        }
+
+        init();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const reload = () => { loadSparande(); };
+            document.getElementById('year-select').addEventListener('change', reload);
+            document.getElementById('unit-select').addEventListener('change', reload);
+        });
+    </script>
+</body>
+</html>
