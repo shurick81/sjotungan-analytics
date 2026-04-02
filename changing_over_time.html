@@ -383,7 +383,7 @@
     <!-- Effective Interest Rate Chart -->
     <div class="chart-container">
         <h2 class="chart-title">Effektiv ränta (räntekostnader / total skuld)</h2>
-        <p class="chart-conclusion">Föreningens genomsnittliga räntekostnad i procent per år: räntekostnader delat med total skuld vid årets början. Jämförs med Riksbankens styrränta (årsgenomsnitt) för att se hur föreningens lånevillkor förhåller sig till den allmänna räntenivån.</p>
+        <p class="chart-conclusion">Föreningens genomsnittliga räntekostnad i procent per år: räntekostnader delat med genomsnittlig total skuld (medelvärdet av skuld vid årets början och slut). Jämförs med Riksbankens styrränta (årsgenomsnitt) för att se hur föreningens lånevillkor förhåller sig till den allmänna räntenivån.</p>
         <div id="effectiveRateChart"></div>
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
@@ -1838,14 +1838,18 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
             const years = debtData.map(d => d.year).filter(y => {
                 const prevYear = String(parseInt(y) - 1);
-                return debtByYear[prevYear] && debtByYear[prevYear] > 0 && interestData[y];
+                const debtStart = debtByYear[prevYear];
+                const debtEnd = debtByYear[y];
+                return debtStart && debtStart > 0 && debtEnd != null && interestData[y];
             });
 
             const effectiveRates = years.map(y => {
                 const prevYear = String(parseInt(y) - 1);
                 const debtStart = debtByYear[prevYear];
+                const debtEnd = debtByYear[y];
+                const avgDebt = (debtStart + debtEnd) / 2;
                 const interest = interestData[y];
-                return parseFloat(((interest / debtStart) * 100).toFixed(2));
+                return parseFloat(((interest / avgDebt) * 100).toFixed(2));
             });
 
             const policyRates = years.map(y => policyRateByYear[y] != null ? policyRateByYear[y] : null);
