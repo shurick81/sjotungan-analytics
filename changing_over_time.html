@@ -388,6 +388,14 @@
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
+    <!-- Interest Rate Sensitivity Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Räntekänslighet</h2>
+        <p class="chart-conclusion">Visar hur många procent årsavgifterna skulle behöva höjas om räntan stiger med en procentenhet. Beräknas enligt BFN:s allmänna råd (BFNAR 2023:1): 1 % av räntebärande skulder delat med årsavgiftsintäkter. Ju högre värde, desto mer exponerad är föreningen för ränteförändringar.</p>
+        <div id="interestSensitivityChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
+    </div>
+
     <!-- Data Table -->
     <div class="chart-container">
         <h2 class="chart-title">Detaljerad data</h2>
@@ -1912,6 +1920,66 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             Plotly.newPlot('effectiveRateChart', [effectiveTrace, policyTrace], layout, config);
         }
 
+        function renderInterestSensitivityChart(debtData, flowsData) {
+            const years = debtData
+                .filter(d => {
+                    const flow = flowsData.find(f => f.year === d.year);
+                    return flow && flow.avgift && flow.avgift > 0 && d.total > 0;
+                })
+                .map(d => d.year);
+
+            const sensitivities = years.map(y => {
+                const debt = debtData.find(d => d.year === y);
+                const flow = flowsData.find(f => f.year === y);
+                return parseFloat(((debt.total * 0.01) / flow.avgift * 100).toFixed(1));
+            });
+
+            const trace = {
+                x: years,
+                y: sensitivities,
+                name: 'Räntekänslighet',
+                type: 'bar',
+                marker: {
+                    color: sensitivities.map(s => s >= 15 ? '#e53935' : s >= 10 ? '#ffa726' : '#66bb6a'),
+                    line: { color: sensitivities.map(s => s >= 15 ? '#b71c1c' : s >= 10 ? '#f57c00' : '#388e3c'), width: 1 }
+                },
+                text: sensitivities.map(s => s.toFixed(1) + '%'),
+                textposition: 'outside',
+                textfont: { size: 13, color: '#333' },
+                hovertemplate: '%{x}: %{y:.1f}%<extra>Räntekänslighet</extra>'
+            };
+
+            const isMobile = window.innerWidth <= 768;
+
+            const layout = {
+                height: isMobile ? 300 : 400,
+                margin: isMobile
+                    ? { t: 30, r: 10, b: 80, l: 60 }
+                    : { t: 30, r: 20, b: 60, l: 60 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                yaxis: {
+                    title: isMobile ? '' : 'Avgiftshöjning vid +1%-enhet ränta (%)',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    ticksuffix: '%',
+                    showgrid: true,
+                    gridcolor: '#e9ecef',
+                    rangemode: 'tozero'
+                },
+                showlegend: false,
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+
+            Plotly.newPlot('interestSensitivityChart', [trace], layout, config);
+        }
+
         // Initialize the page
         async function init() {
             try {
@@ -1950,6 +2018,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 renderInterestChart(debtData, interestData);
                 renderInterestRatioChart(interestData, flowsData);
                 renderEffectiveRateChart(debtData, interestData, inflationDisplayRows);
+                renderInterestSensitivityChart(debtData, flowsData);
                 renderMacroChart(inflationDisplayRows);
                 renderMacroTable(inflationDisplayRows);
                 renderMacroSourceInfo(macroPayload.meta);
@@ -1993,6 +2062,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     renderChart(currentDebtData, currentCashData);
                     renderInterestChart(currentDebtData, currentInterestData);
                     renderEffectiveRateChart(currentDebtData, currentInterestData, currentInflationDisplayRows);
+                    renderInterestSensitivityChart(currentDebtData, currentFlowsData);
                     renderCashChart(currentCashData);
                     renderCashTable(currentCashData);
                     renderTable(currentDebtData, currentInterestData);
