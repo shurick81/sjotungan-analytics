@@ -396,6 +396,14 @@
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
+    <!-- Refinancing Risk Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Refinansieringsrisk (kortfristiga skulder / totala skulder)</h2>
+        <p class="chart-conclusion">Andelen av föreningens totala skulder till kreditinstitut som förfaller inom ett år. Hög andel innebär att stora lån snart måste omförhandlas – med risk för sämre villkor om ränteläget ändrats. Enligt <a href="https://www.gmtresearch.com/en/accounting-ratio/short-term-debttotal-debt/" target="_blank" rel="noopener" style="color: #2563eb; text-decoration: underline;">GMT Research</a> bör andelen hållas under 60 %; överstiger den det signalerar det hög sårbarhet för likviditetschocker.</p>
+        <div id="refinancingRiskChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
+    </div>
+
     <!-- Data Table -->
     <div class="chart-container">
         <h2 class="chart-title">Detaljerad data</h2>
@@ -1980,6 +1988,70 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
             Plotly.newPlot('interestSensitivityChart', [trace], layout, config);
         }
 
+        function renderRefinancingRiskChart(debtData) {
+            const filtered = debtData.filter(d => d.total > 0);
+            const years = filtered.map(d => d.year);
+            const ratios = filtered.map(d => parseFloat((d.shortTerm / d.total * 100).toFixed(1)));
+
+            const trace = {
+                x: years,
+                y: ratios,
+                name: 'Refinansieringsrisk',
+                type: 'bar',
+                marker: {
+                    color: ratios.map(r => r >= 60 ? '#e53935' : r >= 30 ? '#ffa726' : '#66bb6a'),
+                    line: { color: ratios.map(r => r >= 60 ? '#b71c1c' : r >= 30 ? '#f57c00' : '#388e3c'), width: 1 }
+                },
+                text: ratios.map(r => r.toFixed(1) + '%'),
+                textposition: 'outside',
+                textfont: { size: 13, color: '#333' },
+                hovertemplate: '%{x}: %{y:.1f}%<extra>Kortfristiga / Totala skulder</extra>'
+            };
+
+            const isMobile = window.innerWidth <= 768;
+
+            const layout = {
+                height: isMobile ? 300 : 400,
+                margin: isMobile
+                    ? { t: 30, r: 10, b: 80, l: 60 }
+                    : { t: 30, r: 20, b: 60, l: 60 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                yaxis: {
+                    title: isMobile ? '' : 'Kortfristiga skulder / Totala skulder (%)',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    ticksuffix: '%',
+                    showgrid: true,
+                    gridcolor: '#e9ecef',
+                    rangemode: 'tozero'
+                },
+                shapes: [{
+                    type: 'line',
+                    x0: 0, x1: 1, xref: 'paper',
+                    y0: 60, y1: 60,
+                    line: { color: '#e53935', width: 2, dash: 'dot' }
+                }],
+                annotations: [{
+                    x: 1, xref: 'paper', xanchor: 'right',
+                    y: 60, yanchor: 'bottom',
+                    text: 'Varningsgräns 60%',
+                    showarrow: false,
+                    font: { size: 11, color: '#e53935' }
+                }],
+                showlegend: false,
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+
+            Plotly.newPlot('refinancingRiskChart', [trace], layout, config);
+        }
+
         // Initialize the page
         async function init() {
             try {
@@ -2019,6 +2091,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 renderInterestRatioChart(interestData, flowsData);
                 renderEffectiveRateChart(debtData, interestData, inflationDisplayRows);
                 renderInterestSensitivityChart(debtData, flowsData);
+                renderRefinancingRiskChart(debtData);
                 renderMacroChart(inflationDisplayRows);
                 renderMacroTable(inflationDisplayRows);
                 renderMacroSourceInfo(macroPayload.meta);
@@ -2063,6 +2136,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     renderInterestChart(currentDebtData, currentInterestData);
                     renderEffectiveRateChart(currentDebtData, currentInterestData, currentInflationDisplayRows);
                     renderInterestSensitivityChart(currentDebtData, currentFlowsData);
+                    renderRefinancingRiskChart(currentDebtData);
                     renderCashChart(currentCashData);
                     renderCashTable(currentCashData);
                     renderTable(currentDebtData, currentInterestData);
