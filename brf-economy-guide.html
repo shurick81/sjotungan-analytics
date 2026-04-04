@@ -193,6 +193,60 @@
             text-decoration: underline;
         }
 
+        /* ── Normalization toggle ─────────────────────── */
+        .norm-toggle {
+            display: inline-flex;
+            border: 1px solid var(--vm-border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0 4px;
+        }
+        .norm-toggle label {
+            padding: 5px 14px;
+            font-size: 13px;
+            color: #33486f;
+            cursor: pointer;
+            border-right: 1px solid var(--vm-border);
+            user-select: none;
+            transition: background .15s, color .15s;
+        }
+        .norm-toggle label:last-child { border-right: none; }
+        .norm-toggle input { display: none; }
+        .norm-toggle input:checked + span {
+            background: var(--vm-blue);
+            color: #fff;
+        }
+        .norm-toggle label span {
+            display: block;
+            padding: 5px 14px;
+            margin: -5px -14px;
+            border-radius: 0;
+        }
+        /* ── Inflation toggle ────────────────────────── */
+        .inflation-toggle {
+            margin: 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #33486f;
+            font-size: 13px;
+        }
+        .inflation-toggle input { transform: translateY(1px); }
+        .mobile-hint {
+            display: none;
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #92400e;
+            line-height: 1.45;
+            margin: 12px 0;
+        }
+        @media (max-width: 800px) {
+            .mobile-hint { display: block; }
+        }
+
         @media (max-width: 768px) {
             .guide-section { padding: 16px; }
             .two-col { grid-template-columns: 1fr; }
@@ -214,7 +268,7 @@
 
 <section class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-4xl mx-auto scroll-mt-24">
     <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Förstå din förenings ekonomi</h1>
-    <p class="text-gray-500 mb-6 text-sm">En guide för medlemmar i BRF Sjötungan · Framtagen av medlemmar, för medlemmar</p>
+    <p class="text-gray-500 mb-6 text-sm">En guide för medlemmar i BRF Sjötungan · Framtagen av medlemmar, för medlemmar · <a href="brf-economy-guide.pdf" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">Ladda ner som PDF</a></p>
 
     <!-- Inledning -->
     <div class="guide-section">
@@ -331,16 +385,31 @@
 
         <p>Tittar man längre tillbaka — ända till 2003 — har Sjötungans sparande varierat mellan ca 145 och 290 kr/kvm. Nivån på 245 kr/kvm (2024) är alltså inte ovanlig historiskt sett, utan ligger i linje med föreningens långsiktiga genomsnitt.</p>
 
-        <!-- Chart 1: Historical sparande per kvm -->
+        <!-- Chart 1: Historical sparande toggles -->
+        <div class="norm-toggle" id="sparandeNormToggle">
+            <label><input type="radio" name="sparandeNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="sparandeNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="sparandeNorm" value="1"><span>Totalt</span></label>
+        </div>
+        <label class="inflation-toggle">
+            <input type="checkbox" id="sparandeInflationToggle">
+            Visa inflationsjusterade belopp
+        </label>
         <div id="sparandeHistoryChart" style="width:100%; margin: 20px 0;"></div>
-        <p class="source-ref">Sparande per kvm för BRF Sjötungan, 2003–2024. Källa: årsredovisningar.</p>
+        <p class="source-ref">Sparande för BRF Sjötungan, 2003–2024. Källa: årsredovisningar.</p>
 
         <h3>Vad bygger sparandet?</h3>
         <p>Sparande = intäkter minus kostnader, men utan avskrivningar och planerat underhåll (dessa läggs tillbaka eftersom avskrivningar inte är en faktisk utbetalning, och underhåll bevarar fastighetens värde). Diagrammet nedan visar hur Sjötungans sparande byggs upp för 2024:</p>
 
         <!-- Chart 2: Waterfall sparande breakdown -->
+        <div class="mobile-hint">Det här diagrammet visas bäst på en större skärm. Vänd telefonen eller öppna sidan på en dator.</div>
+        <div class="norm-toggle" id="waterfallNormToggle">
+            <label><input type="radio" name="waterfallNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="waterfallNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="waterfallNorm" value="1"><span>Totalt</span></label>
+        </div>
         <div id="sparandeWaterfallChart" style="width:100%; margin: 20px 0;"></div>
-        <p class="source-ref">Grönt = intäkter/tillägg, rött = kostnader, blått = sparande. Avskrivningar och planerat underhåll ingår inte i kostnaden (de läggs tillbaka). Alla siffror i kr/kvm.</p>
+        <p class="source-ref">Grönt = intäkter/tillägg, rött = kostnader, blått = sparande. Avskrivningar och planerat underhåll ingår inte i kostnaden (de läggs tillbaka).</p>
 
         <h3>Vad kan styrelsen göra?</h3>
         <p>I praktiken har styrelsen tre verktyg för att påverka sparandet:</p>
@@ -399,8 +468,16 @@ function showSection(id) {
 }
 
 const TOTAL_KVM = 51666;
+const TOTAL_APARTMENTS = 613;
 const SPARANDE_CF_CATS = new Set([3, 8, 9, 10, 11, 12, 13, 14]);
 const SPARANDE_UH_CATS = new Set([16, 31]);
+
+let sparandeNormDivisor = TOTAL_KVM;
+let sparandeNormSuffix = '/m²';
+let sparandeAdjustInflation = false;
+let sparandePriceIndexByYear = {};
+let sparandeMacroBaseYear = '';
+let sparandeByYearData = [];
 
 async function loadCSV(url) {
     const resp = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
@@ -415,18 +492,117 @@ async function loadCSV(url) {
     });
 }
 
+async function loadMacroData() {
+    const resp = await fetch('data/macro_sweden.json?t=' + Date.now(), { cache: 'no-store' });
+    const payload = await resp.json();
+    const rows = (payload.data || [])
+        .map(row => ({ year: String(row.year), inflationYoY: Number(row.inflation_yoy_pct) }))
+        .sort((a, b) => a.year.localeCompare(b.year));
+    return { meta: payload, rows };
+}
+
+function buildMacroIndex(rows, baseYear) {
+    if (!rows.length) return [];
+    const baseIdx = Math.max(0, rows.findIndex(r => r.year === String(baseYear)));
+    const out = rows.map(r => ({ ...r, priceIndex: null }));
+    out[baseIdx].priceIndex = 100;
+    for (let i = baseIdx + 1; i < out.length; i++)
+        out[i].priceIndex = out[i - 1].priceIndex * (1 + out[i].inflationYoY / 100);
+    for (let i = baseIdx - 1; i >= 0; i--)
+        out[i].priceIndex = out[i + 1].priceIndex / (1 + out[i + 1].inflationYoY / 100);
+    return out;
+}
+
+function getSparandeDisplayValue(rawTotal, year) {
+    let v = rawTotal;
+    if (sparandeAdjustInflation) {
+        const idx = sparandePriceIndexByYear[String(year)];
+        if (idx && idx > 0) v = v * (100 / idx);
+    }
+    return v / sparandeNormDivisor;
+}
+
+function renderSparandeHistoryChart() {
+    // HSB thresholds are defined as kr/kvm; scale when unit changes
+    const bandScale = TOTAL_KVM / sparandeNormDivisor;
+    const hsbBands = [
+        { y0: 0, y1: 120 * bandScale, color: 'rgba(239,68,68,0.08)' },
+        { y0: 120 * bandScale, y1: 200 * bandScale, color: 'rgba(251,191,36,0.08)' },
+        { y0: 200 * bandScale, y1: 300 * bandScale, color: 'rgba(34,197,94,0.08)' },
+        { y0: 300 * bandScale, y1: 450 * bandScale, color: 'rgba(96,165,250,0.08)' }
+    ];
+    const shapes = hsbBands.map(b => ({
+        type: 'rect', xref: 'paper', x0: 0, x1: 1,
+        yref: 'y', y0: b.y0, y1: b.y1,
+        fillcolor: b.color, line: { width: 0 }, layer: 'below'
+    }));
+    const hsbLines = [120, 200, 300].map(v => ({
+        type: 'line', xref: 'paper', x0: 0, x1: 1,
+        yref: 'y', y0: v * bandScale, y1: v * bandScale,
+        line: { color: '#94a3b8', width: 1, dash: 'dot' }, layer: 'below'
+    }));
+    const annots = [
+        { y: 60 * bandScale, text: 'Mycket lågt', color: '#dc2626' },
+        { y: 160 * bandScale, text: 'Lågt–måttligt', color: '#d97706' },
+        { y: 250 * bandScale, text: 'Måttligt–högt', color: '#16a34a' },
+        { y: 350 * bandScale, text: 'Högt', color: '#2563eb' }
+    ].map(a => ({
+        x: 1, xref: 'paper', xanchor: 'right', y: a.y,
+        text: a.text, showarrow: false, font: { size: 10, color: a.color }
+    }));
+
+    const displayData = sparandeByYearData.map(d => ({
+        year: d.year,
+        value: getSparandeDisplayValue(d.total, d.year)
+    }));
+
+    const unitLabel = sparandeNormDivisor === TOTAL_KVM ? 'kr/kvm'
+        : sparandeNormDivisor === TOTAL_APARTMENTS ? 'kr/lgh' : 'kr';
+    const inflLabel = sparandeAdjustInflation ? ` (${sparandeMacroBaseYear} års värde)` : '';
+
+    const isMobile = window.innerWidth <= 768;
+    Plotly.newPlot('sparandeHistoryChart', [{
+        x: displayData.map(d => d.year),
+        y: displayData.map(d => Math.round(d.value)),
+        type: 'bar',
+        marker: { color: displayData.map(d => {
+            const perKvm = d.value * sparandeNormDivisor / TOTAL_KVM;
+            return perKvm < 120 ? '#ef4444' : perKvm < 200 ? '#f59e0b' : perKvm < 300 ? '#22c55e' : '#3b82f6';
+        })},
+        hovertemplate: '%{x}: %{y:,.0f} ' + unitLabel + '<extra></extra>'
+    }], {
+        height: isMobile ? 300 : 400,
+        margin: isMobile ? { t: 10, r: 10, b: 50, l: 50 } : { t: 20, r: 20, b: 50, l: 60 },
+        xaxis: { title: 'År', tickfont: { size: isMobile ? 9 : 12 }, showgrid: false, dtick: 2 },
+        yaxis: { title: unitLabel + inflLabel, tickfont: { size: isMobile ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', zeroline: true },
+        shapes: [...shapes, ...hsbLines],
+        annotations: annots,
+        showlegend: false, hovermode: 'x unified',
+        plot_bgcolor: 'white', paper_bgcolor: 'white'
+    }, { responsive: true, displayModeBar: false });
+}
+
 (async function() {
-    const [events, categories] = await Promise.all([
+    const [events, categories, macroPayload] = await Promise.all([
         loadCSV('data/financial_events.csv'),
-        loadCSV('data/event_categories.csv')
+        loadCSV('data/event_categories.csv'),
+        loadMacroData()
     ]);
 
     const catMap = {};
     categories.forEach(c => { catMap[c.id] = c; });
 
-    // ── Chart 1: Historical sparande per kvm ──
+    // Build inflation index
+    const eventYears = new Set(events.map(e => e.year));
+    const macroYears = new Set(macroPayload.rows.map(r => r.year));
+    const commonYears = [...eventYears].filter(y => macroYears.has(y)).sort();
+    sparandeMacroBaseYear = commonYears.length ? commonYears[commonYears.length - 1] : '';
+    const indexed = buildMacroIndex(macroPayload.rows, sparandeMacroBaseYear);
+    sparandePriceIndexByYear = {};
+    indexed.forEach(r => { sparandePriceIndexByYear[r.year] = r.priceIndex; });
+
+    // ── Chart 1: Historical sparande ──
     const years = [...new Set(events.map(e => e.year))].sort();
-    const sparandeByYear = [];
     for (const year of years) {
         const ye = events.filter(e => e.year === year);
         let isTotal = 0, uhTotal = 0;
@@ -438,58 +614,28 @@ async function loadCSV(url) {
                 isTotal += amt;
             }
         }
-        const sparande = isTotal + Math.abs(uhTotal);
-        const perKvm = Math.round(sparande / TOTAL_KVM);
-        sparandeByYear.push({ year: parseInt(year), perKvm });
+        sparandeByYearData.push({ year: parseInt(year), total: isTotal + Math.abs(uhTotal) });
     }
 
-    const hsbBands = [
-        { y0: 0, y1: 120, color: 'rgba(239,68,68,0.08)', label: 'Mycket lågt' },
-        { y0: 120, y1: 200, color: 'rgba(251,191,36,0.08)', label: 'Lågt–måttligt' },
-        { y0: 200, y1: 300, color: 'rgba(34,197,94,0.08)', label: 'Måttligt–högt' },
-        { y0: 300, y1: 450, color: 'rgba(96,165,250,0.08)', label: 'Högt' }
-    ];
+    renderSparandeHistoryChart();
 
-    const shapes = hsbBands.map(b => ({
-        type: 'rect', xref: 'paper', x0: 0, x1: 1,
-        yref: 'y', y0: b.y0, y1: b.y1,
-        fillcolor: b.color, line: { width: 0 }, layer: 'below'
-    }));
-
-    const hsbLines = [120, 200, 300].map(v => ({
-        type: 'line', xref: 'paper', x0: 0, x1: 1,
-        yref: 'y', y0: v, y1: v,
-        line: { color: '#94a3b8', width: 1, dash: 'dot' }, layer: 'below'
-    }));
-
-    const annots = [
-        { x: 1, xref: 'paper', xanchor: 'right', y: 60, text: 'Mycket lågt', showarrow: false, font: { size: 10, color: '#dc2626' } },
-        { x: 1, xref: 'paper', xanchor: 'right', y: 160, text: 'Lågt–måttligt', showarrow: false, font: { size: 10, color: '#d97706' } },
-        { x: 1, xref: 'paper', xanchor: 'right', y: 250, text: 'Måttligt–högt', showarrow: false, font: { size: 10, color: '#16a34a' } },
-        { x: 1, xref: 'paper', xanchor: 'right', y: 350, text: 'Högt', showarrow: false, font: { size: 10, color: '#2563eb' } }
-    ];
-
-    const isMobile = window.innerWidth <= 768;
-    Plotly.newPlot('sparandeHistoryChart', [{
-        x: sparandeByYear.map(d => d.year),
-        y: sparandeByYear.map(d => d.perKvm),
-        type: 'bar',
-        marker: { color: sparandeByYear.map(d =>
-            d.perKvm < 120 ? '#ef4444' :
-            d.perKvm < 200 ? '#f59e0b' :
-            d.perKvm < 300 ? '#22c55e' : '#3b82f6'
-        )},
-        hovertemplate: '%{x}: %{y} kr/kvm<extra></extra>'
-    }], {
-        height: isMobile ? 300 : 400,
-        margin: isMobile ? { t: 10, r: 10, b: 50, l: 50 } : { t: 20, r: 20, b: 50, l: 60 },
-        xaxis: { title: 'År', tickfont: { size: isMobile ? 9 : 12 }, showgrid: false, dtick: 2 },
-        yaxis: { title: 'kr/kvm', tickfont: { size: isMobile ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', zeroline: true },
-        shapes: [...shapes, ...hsbLines],
-        annotations: annots,
-        showlegend: false, hovermode: 'x unified',
-        plot_bgcolor: 'white', paper_bgcolor: 'white'
-    }, { responsive: true, displayModeBar: false });
+    // Toggle handlers
+    document.querySelectorAll('#sparandeNormToggle input[name="sparandeNorm"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const v = event.target.value;
+            if (v === 'kvm') { sparandeNormDivisor = TOTAL_KVM; sparandeNormSuffix = '/m²'; }
+            else if (v === 'apt') { sparandeNormDivisor = TOTAL_APARTMENTS; sparandeNormSuffix = '/lgh'; }
+            else { sparandeNormDivisor = 1; sparandeNormSuffix = ''; }
+            renderSparandeHistoryChart();
+        });
+    });
+    const inflToggle = document.getElementById('sparandeInflationToggle');
+    if (inflToggle) {
+        inflToggle.addEventListener('change', (event) => {
+            sparandeAdjustInflation = event.target.checked;
+            renderSparandeHistoryChart();
+        });
+    }
 
     // ── Chart 2: Waterfall breakdown for 2024 (matching savings.html detail style) ──
     const ye2024 = events.filter(e => e.year === '2024');
@@ -502,8 +648,8 @@ async function loadCSV(url) {
     const underhallEvents = ye2024.filter(e => SPARANDE_UH_CATS.has(parseInt(e.category_id)));
     const underhallRaw = underhallEvents.reduce((s, e) => s + parseInt(e.amount), 0);
     const underhallAbs = Math.abs(underhallRaw);
-    const isTotal = isTopEvents.reduce((s, e) => s + parseInt(e.amount), 0);
-    const totalSparande = isTotal + underhallAbs;
+    const wfIsTotal = isTopEvents.reduce((s, e) => s + parseInt(e.amount), 0);
+    const wfTotalSparande = wfIsTotal + underhallAbs;
 
     // Sum underhåll per parent category
     const uhByParent = {};
@@ -523,7 +669,7 @@ async function loadCSV(url) {
     });
 
     // Build detail items, expanding Nettoomsättning into subs, stripping embedded underhåll
-    const items = [];
+    const wfItems = [];
     isTopEvents
         .sort((a, b) => parseInt(b.amount) - parseInt(a.amount))
         .forEach(e => {
@@ -544,59 +690,84 @@ async function loadCSV(url) {
                 })).sort((a, b) => b.value - a.value);
                 const subTotal = subItems.reduce((s, i) => s + i.value, 0);
                 const residual = val - subTotal;
-                subItems.forEach(si => items.push(si));
+                subItems.forEach(si => wfItems.push(si));
                 if (Math.abs(residual) > 1) {
-                    items.push({ label: '  Övrigt (' + (catMap[cid] ? catMap[cid].name.toLowerCase() : '') + ')', value: residual });
+                    wfItems.push({ label: '  Övrigt (' + (catMap[cid] ? catMap[cid].name.toLowerCase() : '') + ')', value: residual });
                 }
             } else {
-                items.push({ label, value: val });
+                wfItems.push({ label, value: val });
             }
         });
 
-    const dLabels  = items.map(i => i.label).concat(['Sparande']);
-    const dX       = items.map(i => i.value / TOTAL_KVM).concat([totalSparande / TOTAL_KVM]);
-    const dMeasure = items.map(() => 'relative').concat(['total']);
+    let waterfallNormDivisor = TOTAL_KVM;
 
-    // Build annotations positioned at the edge of each bar
-    const fmt = v => { const a = Math.abs(v); return (v < 0 ? '−' : '') + (a >= 1e6 ? (a/1e6).toFixed(1) + ' MSEK' : Math.round(a/1e3) + ' TSEK'); };
-    let dRun = 0;
-    const dAnnots = [];
-    items.forEach(it => {
-        const s = dRun;
-        dRun += it.value;
-        const edge = Math.max(s, dRun) / TOTAL_KVM;
+    function renderWaterfallChart() {
+        const div = waterfallNormDivisor;
+        const unitLabel = div === TOTAL_KVM ? 'kr/kvm' : div === TOTAL_APARTMENTS ? 'kr/lgh' : 'kr';
+        const fmt = v => {
+            const a = Math.abs(v);
+            const sign = v < 0 ? '−' : '';
+            if (div === 1) {
+                return sign + (a >= 1e6 ? (a/1e6).toFixed(1) + ' MSEK' : Math.round(a/1e3) + ' TSEK');
+            }
+            return sign + Math.round(a).toLocaleString('sv-SE') + ' ' + unitLabel;
+        };
+
+        const dLabels  = wfItems.map(i => i.label).concat(['Sparande']);
+        const dX       = wfItems.map(i => i.value / div).concat([wfTotalSparande / div]);
+        const dMeasure = wfItems.map(() => 'relative').concat(['total']);
+
+        let dRun = 0;
+        const dAnnots = [];
+        wfItems.forEach(it => {
+            const s = dRun;
+            dRun += it.value;
+            const edge = Math.max(s, dRun) / div;
+            dAnnots.push({
+                x: edge, y: it.label, text: fmt(it.value / div),
+                xanchor: 'left', xshift: 8, showarrow: false,
+                font: { size: 10 }
+            });
+        });
         dAnnots.push({
-            x: edge, y: it.label, text: fmt(it.value),
-            xanchor: 'left', xshift: 8, showarrow: false,
-            font: { size: 10 }
+            x: Math.max(0, wfTotalSparande) / div, y: 'Sparande',
+            text: fmt(wfTotalSparande / div), xanchor: 'left', xshift: 8,
+            showarrow: false, font: { size: 11, color: '#3b82f6' }
+        });
+
+        Plotly.newPlot('sparandeWaterfallChart', [{
+            type: 'waterfall',
+            orientation: 'h',
+            x: dX, y: dLabels, measure: dMeasure,
+            text: dX.map(v => Math.round(v) + ' ' + unitLabel),
+            textposition: 'none',
+            connector: { line: { color: '#94a3b8', width: 1 } },
+            increasing: { marker: { color: '#22c55e' } },
+            decreasing: { marker: { color: '#ef4444' } },
+            totals: { marker: { color: '#3b82f6' } },
+            hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+        }], {
+            showlegend: false,
+            height: Math.max(200, (wfItems.length + 1) * 40 + 40),
+            margin: { l: 280, r: 140, t: 10, b: 30 },
+            xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+            yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
+            plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)',
+            annotations: dAnnots
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    renderWaterfallChart();
+
+    document.querySelectorAll('#waterfallNormToggle input[name="waterfallNorm"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const v = event.target.value;
+            if (v === 'kvm') waterfallNormDivisor = TOTAL_KVM;
+            else if (v === 'apt') waterfallNormDivisor = TOTAL_APARTMENTS;
+            else waterfallNormDivisor = 1;
+            renderWaterfallChart();
         });
     });
-    dAnnots.push({
-        x: Math.max(0, totalSparande) / TOTAL_KVM, y: 'Sparande',
-        text: fmt(totalSparande), xanchor: 'left', xshift: 8,
-        showarrow: false, font: { size: 11, color: '#3b82f6' }
-    });
-
-    Plotly.newPlot('sparandeWaterfallChart', [{
-        type: 'waterfall',
-        orientation: 'h',
-        x: dX, y: dLabels, measure: dMeasure,
-        text: dX.map(v => Math.round(v) + ' kr/kvm'),
-        textposition: 'none',
-        connector: { line: { color: '#94a3b8', width: 1 } },
-        increasing: { marker: { color: '#22c55e' } },
-        decreasing: { marker: { color: '#ef4444' } },
-        totals: { marker: { color: '#3b82f6' } },
-        hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
-    }], {
-        showlegend: false,
-        height: Math.max(200, (items.length + 1) * 40 + 40),
-        margin: { l: 280, r: 140, t: 10, b: 30 },
-        xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
-        yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
-        plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)',
-        annotations: dAnnots
-    }, { responsive: true, displayModeBar: false });
 
     // ── Chart 3: Comparison bar chart (vertical, PDF style) ──
     const compData = [
