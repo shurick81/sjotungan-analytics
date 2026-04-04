@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Myggan — Förstå din förenings ekonomi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <style>
+        body { font-size: 1rem; }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-bg: #d9dbe1;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        .guide-section {
+            margin-bottom: 40px;
+            padding: 24px 28px;
+            background: #eff6ff;
+            border-left: 4px solid #93c5fd;
+            border-radius: 8px;
+        }
+
+        .guide-section h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--vm-blue);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .guide-section h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--vm-blue);
+            margin: 20px 0 10px;
+        }
+
+        .guide-section p {
+            color: var(--vm-text);
+            font-size: 15px;
+            line-height: 1.65;
+            margin-bottom: 12px;
+        }
+
+        .guide-section ul, .guide-section ol {
+            color: var(--vm-text);
+            font-size: 15px;
+            line-height: 1.65;
+            margin: 8px 0 12px 20px;
+        }
+
+        .guide-section li { margin-bottom: 6px; }
+
+        .nyckeltal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+
+        .nyckeltal-card {
+            background: white;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .nyckeltal-card .number {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--vm-blue);
+            margin-bottom: 4px;
+        }
+
+        .nyckeltal-card .label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--vm-text);
+            margin-bottom: 6px;
+        }
+
+        .nyckeltal-card .desc {
+            font-size: 12px;
+            color: var(--vm-muted);
+            line-height: 1.4;
+        }
+
+        .riktvarde-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 16px;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .riktvarde-table th {
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #33486f;
+            background: #eef3fb;
+            border-bottom: 2px solid var(--vm-border);
+        }
+
+        .riktvarde-table td {
+            padding: 8px 14px;
+            border-bottom: 1px solid #dde6f4;
+            color: var(--vm-text);
+            font-size: 14px;
+        }
+
+        .riktvarde-table tbody tr:last-child td { border-bottom: none; }
+
+        .callout {
+            background: #fef9c3;
+            border-left: 4px solid #eab308;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.55;
+            color: #713f12;
+        }
+
+        .callout-blue {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.55;
+            color: #1e3a5f;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 12px 0;
+        }
+
+        .two-col-card {
+            background: white;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .two-col-card h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--vm-blue);
+            margin-bottom: 6px;
+        }
+
+        .two-col-card p {
+            font-size: 13px;
+            color: var(--vm-muted);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .source-ref {
+            font-size: 12px;
+            color: var(--vm-muted);
+            margin-top: 10px;
+            line-height: 1.45;
+        }
+
+        .source-ref a {
+            color: var(--vm-blue);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .guide-section { padding: 16px; }
+            .two-col { grid-template-columns: 1fr; }
+            .nyckeltal-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+<button onclick="showSection('start')" class="hover:text-yellow-400 font-semibold">Start</button>
+<button onclick="showSection('vision')" class="hover:text-yellow-400 font-semibold">Vision</button>
+<button onclick="showSection('motioner')" class="hover:text-yellow-400 font-semibold">Motioner</button>
+<button onclick="showSection('forum')" class="hover:text-yellow-400 font-semibold">Forum</button>
+</nav>
+</header>
+
+<main class="container mx-auto mt-8 p-4">
+
+<section class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-4xl mx-auto scroll-mt-24">
+    <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Förstå din förenings ekonomi</h1>
+    <p class="text-gray-500 mb-6 text-sm">En guide för medlemmar i BRF Sjötungan · Framtagen av medlemmar, för medlemmar</p>
+
+    <!-- Inledning -->
+    <div class="guide-section">
+        <h2>Inledning</h2>
+        <p>Den här guiden är skriven av medlemmar, för medlemmar. Syftet är att hjälpa dig förstå BRF Sjötungans ekonomi — utan att ta ställning i pågående diskussioner.</p>
+        <p>Som medlem äger du en andel i hela föreningen. Föreningens ekonomi påverkar dig på två sätt:</p>
+
+        <div class="two-col">
+            <div class="two-col-card">
+                <h4>🏠 Ditt boende</h4>
+                <p>Din avgift finansierar drift och underhåll. En sund ekonomi innebär att renoveringar kan planeras i tid.</p>
+            </div>
+            <div class="two-col-card">
+                <h4>💰 Din plånbok</h4>
+                <p>Avgiftens storlek och föreningens nyckeltal påverkar marknadsvärdet på din lägenhet.</p>
+            </div>
+        </div>
+
+        <div class="callout-blue">
+            <strong>Nya lagkrav från 2023:</strong> Sedan 2023 måste alla bostadsrättsföreningar redovisa nyckeltal som räntekänslighet, skuldsättning, sparande, årsavgifter och energikostnader i årsredovisningen, samt en kassaflödesanalys.
+        </div>
+
+        <p>I den här guiden använder vi <a href="https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/stamma2025.pdf" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">BRF Sjötungans årsredovisning för 2024</a> som genomgående exempel.</p>
+    </div>
+
+    <!-- HSB Bostadsrättskollen -->
+    <div class="guide-section">
+        <h2>HSB:s Bostadsrättskollen</h2>
+        <p>HSB har tagit fram <em>Bostadsrättskollen</em> — ett verktyg som bygger på sju nyckeltal som tillsammans ger en översiktlig bild av föreningens ekonomiska hälsa. Det är viktigt att inte titta på ett enskilt nyckeltal isolerat — det är <strong>helheten</strong> som räknas.</p>
+
+        <h3>De sju nyckeltalen i översikt</h3>
+        <div class="nyckeltal-grid">
+            <div class="nyckeltal-card">
+                <div class="number">1</div>
+                <div class="label">Sparande</div>
+                <div class="desc">Hur mycket som sparas för framtida behov.</div>
+            </div>
+            <div class="nyckeltal-card">
+                <div class="number">2</div>
+                <div class="label">Investeringsbehov</div>
+                <div class="desc">När fönster, tak och dylikt behöver bytas (50-årsplan).</div>
+            </div>
+            <div class="nyckeltal-card">
+                <div class="number">3</div>
+                <div class="label">Skuldsättning</div>
+                <div class="desc">Vilka lån som föreningen har som den betalar räntor på.</div>
+            </div>
+            <div class="nyckeltal-card">
+                <div class="number">4</div>
+                <div class="label">Energikostnad</div>
+                <div class="desc">Kostnader för uppvärmning, el och vatten.</div>
+            </div>
+            <div class="nyckeltal-card">
+                <div class="number">5</div>
+                <div class="label">Räntekänslighet</div>
+                <div class="desc">Hur föreningen kan påverkas av höjda räntor.</div>
+            </div>
+            <div class="nyckeltal-card">
+                <div class="number">6</div>
+                <div class="label">Tomträtt</div>
+                <div class="desc">Äger föreningen själv marken eller har den en tomträtt?</div>
+            </div>
+            <div class="nyckeltal-card">
+                <div class="number">7</div>
+                <div class="label">Årsavgift</div>
+                <div class="desc">Vad medlemmarna årligen betalar in till föreningen.</div>
+            </div>
+        </div>
+
+        <p>Nedan går vi igenom varje nyckeltal i detalj med HSB:s riktvärden, förklaring och — där det är relevant — BRF Sjötungans egna siffror.</p>
+        <p class="source-ref">Källa: <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/" target="_blank" rel="noopener">HSB Bostadsrättskollen — Nyckeltal</a></p>
+    </div>
+
+    <!-- 1. Sparande -->
+    <div class="guide-section">
+        <h2>1. Sparande</h2>
+        <p>Visar hur mycket föreningen sparar per år för att klara framtida renoveringsbehov eller kostnadsökningar. Sparandet är det som återstår när alla avskrivningar och kostnader för större investeringar har räknats bort, delat med föreningens totalyta.</p>
+
+        <p><strong>Beräkning:</strong> (Årets resultat + avskrivningar + planerat underhåll) / totalyta (kvm)</p>
+
+        <h3>Riktvärden (HSB Bostadsrättskollen)</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th>Bedömning</th><th>kr/kvm</th></tr></thead>
+            <tbody>
+                <tr><td>Högt</td><td>&gt; 301</td></tr>
+                <tr><td>Måttligt till högt</td><td>201 – 300</td></tr>
+                <tr><td>Lågt till måttligt</td><td>121 – 200</td></tr>
+                <tr><td>Mycket lågt</td><td>&lt; 120</td></tr>
+            </tbody>
+        </table>
+        <p class="source-ref">Enligt HSB:s skala är 201–300 kr/kvm "Måttligt till högt" — det intervall de flesta föreningar bör sikta på. Källa: HSB Bostadsrättskollen, BFNAR 2023:1.</p>
+
+        <h3>Vad betyder sparande i praktiken?</h3>
+        <p>Ordet "sparande" är missvisande — det handlar inte om pengar som ligger på ett konto. Det är ett bokföringsmässigt mått som visar skillnaden mellan föreningens intäkter och dess driftskostnader under ett år.</p>
+
+        <div class="callout">
+            <strong>Hushållsanalogi:</strong> Tänk dig att ditt hushåll tjänar 50 000 kr/månad. Dina löpande kostnader (mat, hyra, el) är 40 000 kr. Kvar blir 10 000 kr — ditt "sparande".<br><br>
+            Men tänk om du samtidigt tar ett lån på 200 000 kr för att renovera köket? Sparandemåttet visar fortfarande 10 000 kr, eftersom det bara tittar på intäkter minus löpande kostnader. Det ignorerar helt att du lånade 200 000 kr.<br><br>
+            Precis så fungerar BRF-sparande: det kan se bra ut samtidigt som föreningen ökar sin skuldsättning kraftigt. <strong>Därför måste sparandet alltid läsas tillsammans med skuldsättningen — aldrig ensamt.</strong>
+        </div>
+
+        <h3>BRF Sjötungans sparande</h3>
+        <p>I flerårsöversikten i årsredovisningen (sidan 4 i bokslutet) hittar du sparande per kvm direkt som ett nyckeltal. Nedan visas de senaste årens värden:</p>
+
+        <table class="riktvarde-table">
+            <thead><tr><th></th><th>2024</th><th>2023</th><th>2022</th><th>2021</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Sparande kr/kvm</strong></td><td>245</td><td>220</td><td>215</td><td>231</td></tr>
+                <tr><td><strong>HSB:s bedömning</strong></td><td>Måttligt–högt</td><td>Måttligt–högt</td><td>Måttligt–högt</td><td>Måttligt–högt</td></tr>
+            </tbody>
+        </table>
+
+        <p class="source-ref">■ Var i årsredovisningen: Flerårsöversikten (sid 4 i bokslutet). Komponenterna: Årets resultat → Resultaträkningen (sid 6), Avskrivningar → Resultaträkningen (sid 6), Underhåll → Not 4 (sid 11).</p>
+
+        <p>Tittar man längre tillbaka — ända till 2003 — har Sjötungans sparande varierat mellan ca 145 och 290 kr/kvm. Nivån på 245 kr/kvm (2024) är alltså inte ovanlig historiskt sett, utan ligger i linje med föreningens långsiktiga genomsnitt.</p>
+
+        <!-- Chart 1: Historical sparande per kvm -->
+        <div id="sparandeHistoryChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Sparande per kvm för BRF Sjötungan, 2003–2024. Källa: årsredovisningar.</p>
+
+        <h3>Vad bygger sparandet?</h3>
+        <p>Sparande = intäkter minus kostnader, men utan avskrivningar och planerat underhåll (dessa läggs tillbaka eftersom avskrivningar inte är en faktisk utbetalning, och underhåll bevarar fastighetens värde). Diagrammet nedan visar hur Sjötungans sparande byggs upp för 2024:</p>
+
+        <!-- Chart 2: Waterfall sparande breakdown -->
+        <div id="sparandeWaterfallChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Grönt = intäkter/tillägg, rött = kostnader, blått = sparande. Avskrivningar och planerat underhåll ingår inte i kostnaden (de läggs tillbaka). Alla siffror i kr/kvm.</p>
+
+        <h3>Vad kan styrelsen göra?</h3>
+        <p>I praktiken har styrelsen tre verktyg för att påverka sparandet:</p>
+        <ol>
+            <li><strong>Höja avgiften</strong> — detta ökar intäkterna och förbättrar sparandet direkt. Det är det enklaste och snabbaste verktyget, men det påverkar medlemmarnas plånböcker och kan på kort sikt sänka lägenheternas marknadsvärde.</li>
+            <li><strong>Sänka driftkostnaderna</strong> — detta förbättrar sparandet utan att höja avgiften. Det kan handla om att omförhandla avtal, effektivisera energiförbrukning eller se över kostnader för exempelvis fastighetsskötsel och trädgård.</li>
+            <li><strong>Hantera räntekostnaderna</strong> — genom att förhandla fram bra lånevillkor och välja rätt bindningstider kan styrelsen sänka föreningens räntekostnader avsevärt.</li>
+        </ol>
+
+        <h3>Sjötungans räntekostnader — anmärkningsvärt låga</h3>
+        <p>Dividerar man föreningens räntekostnad (4,2 MSEK) med den genomsnittliga låneskulden under 2024 (~231 MSEK) får man en effektiv ränta på ca 1,8 %. Det är lägre än Riksbankens styrränta under större delen av året. Förklaringen finns i Not 14: flera lån är bundna till mycket förmånliga räntor, bland annat 45 MSEK till bara 0,64 %.</p>
+
+        <div class="callout">
+            <strong>Viktigt att notera:</strong> Flera av dessa förmånliga lån löper ut under 2025–2026 och kommer att omförhandlas till högre räntor. Det innebär att räntekostnaden sannolikt kommer att öka framöver — något vi återkommer till under Räntekänslighet.
+        </div>
+
+        <p>Avskrivningar styrs av fastighetens bokförda värde och är i praktiken inte påverkbara. Därmed blir det balansen mellan avgift, driftkostnad och räntehantering som avgör var sparandet landar.</p>
+
+        <h3>Vad sparandet inte berättar</h3>
+        <p>Sparande per kvm är ett användbart nyckeltal, men det har viktiga begränsningar:</p>
+        <ul>
+            <li><strong>Sparande har ett "lagom" — inte bara ett "mer är bättre".</strong> Under 120 kr/kvm klassificeras som "Mycket lågt" och signalerar risk. Men ett sparande som konsekvent ligger över 300 kr/kvm ("Högt") kan också väcka frågor: betalar medlemmarna onödigt höga avgifter? Skjuts planerat underhåll upp? Sparande bör stå i proportion till föreningens faktiska investeringsbehov.</li>
+            <li><strong>Det visar årets förändring — inte föreningens ackumulerade ställning.</strong> Sparande per kvm är ett flödesmått: det visar hur mycket som "sparades" just detta år. Det säger ingenting om hur mycket föreningen har ackumulerat över tid eller hur väl rustad föreningen faktiskt är för framtida investeringar.</li>
+            <li><strong>Det är ett förenklat bokföringsmått, inte kassaflöde.</strong> Sparandet bygger på bokföringsmässiga poster — årets resultat plus avskrivningar. En förening kan visa högt sparande samtidigt som den tar nya lån eller skjuter underhåll framåt. Det verkliga kassaflödet ger ofta en mer rättvisande bild.</li>
+            <li><strong>Det säger inget om skuldsättningen.</strong> En förening som tar stora lån för att finansiera investeringar kan fortfarande visa bra sparandetal, eftersom lån inte syns i resultaträkningen. Därför behöver sparandet alltid läsas tillsammans med skuldsättningen och kassaflödesanalysen.</li>
+        </ul>
+
+        <h3>Jämförelse med andra föreningar (2024)</h3>
+        <p>Hur ligger Sjötungan till jämfört med andra bostadsrättsföreningar i Stockholmsområdet? Nedan jämförs sparandet med regionala genomsnitt från HSB:s Bostadsrättsbarometer (publicerad 2025, baserad på 2024 års data) samt två närliggande föreningar.</p>
+
+        <!-- Chart 3: Comparison bar chart -->
+        <div id="sparandeComparisonChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Källa: HSB Bostadsrättsbarometer 2025, årsredovisningar.</p>
+
+        <h3>Sammanfattning: Sparande</h3>
+        <div class="callout-blue">
+            BRF Sjötungans sparande på 245 kr/kvm ligger i intervallet "Måttligt till högt" (201–300 kr/kvm) enligt HSB:s skala. Historiskt har föreningens sparande pendlat kring 200-talet sedan 2003. Men sparandetalet ensamt räcker inte för att bedöma föreningens ekonomi — det måste sättas i relation till skuldsättning, kassaflöde och det kommande stambytet.
+        </div>
+
+        <p class="source-ref">Interaktiv sparandeanalys: <a href="savings.html">savings.html</a></p>
+    </div>
+
+</section>
+
+</main>
+
+<script>
+function showSection(id) {
+    const pages = {
+        start: 'changing_over_time.html',
+        vision: 'changing_over_time.html#vision',
+        motioner: 'engagement.html',
+        forum: 'changing_over_time.html#forum'
+    };
+    if (pages[id]) window.location.href = pages[id];
+}
+
+const TOTAL_KVM = 51666;
+const SPARANDE_CF_CATS = new Set([3, 8, 9, 10, 11, 12, 13, 14]);
+const SPARANDE_UH_CATS = new Set([16, 31]);
+
+async function loadCSV(url) {
+    const resp = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
+    const text = await resp.text();
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+        const vals = line.split(',').map(v => v.trim());
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = vals[i]; });
+        return obj;
+    });
+}
+
+(async function() {
+    const [events, categories] = await Promise.all([
+        loadCSV('data/financial_events.csv'),
+        loadCSV('data/event_categories.csv')
+    ]);
+
+    const catMap = {};
+    categories.forEach(c => { catMap[c.id] = c; });
+
+    // ── Chart 1: Historical sparande per kvm ──
+    const years = [...new Set(events.map(e => e.year))].sort();
+    const sparandeByYear = [];
+    for (const year of years) {
+        const ye = events.filter(e => e.year === year);
+        let isTotal = 0, uhTotal = 0;
+        for (const e of ye) {
+            const cid = parseInt(e.category_id);
+            const amt = parseInt(e.amount);
+            if (SPARANDE_UH_CATS.has(cid)) uhTotal += amt;
+            if (!SPARANDE_CF_CATS.has(cid) && !(catMap[e.category_id] && catMap[e.category_id].parent)) {
+                isTotal += amt;
+            }
+        }
+        const sparande = isTotal + Math.abs(uhTotal);
+        const perKvm = Math.round(sparande / TOTAL_KVM);
+        sparandeByYear.push({ year: parseInt(year), perKvm });
+    }
+
+    const hsbBands = [
+        { y0: 0, y1: 120, color: 'rgba(239,68,68,0.08)', label: 'Mycket lågt' },
+        { y0: 120, y1: 200, color: 'rgba(251,191,36,0.08)', label: 'Lågt–måttligt' },
+        { y0: 200, y1: 300, color: 'rgba(34,197,94,0.08)', label: 'Måttligt–högt' },
+        { y0: 300, y1: 450, color: 'rgba(96,165,250,0.08)', label: 'Högt' }
+    ];
+
+    const shapes = hsbBands.map(b => ({
+        type: 'rect', xref: 'paper', x0: 0, x1: 1,
+        yref: 'y', y0: b.y0, y1: b.y1,
+        fillcolor: b.color, line: { width: 0 }, layer: 'below'
+    }));
+
+    const hsbLines = [120, 200, 300].map(v => ({
+        type: 'line', xref: 'paper', x0: 0, x1: 1,
+        yref: 'y', y0: v, y1: v,
+        line: { color: '#94a3b8', width: 1, dash: 'dot' }, layer: 'below'
+    }));
+
+    const annots = [
+        { x: 1, xref: 'paper', xanchor: 'right', y: 60, text: 'Mycket lågt', showarrow: false, font: { size: 10, color: '#dc2626' } },
+        { x: 1, xref: 'paper', xanchor: 'right', y: 160, text: 'Lågt–måttligt', showarrow: false, font: { size: 10, color: '#d97706' } },
+        { x: 1, xref: 'paper', xanchor: 'right', y: 250, text: 'Måttligt–högt', showarrow: false, font: { size: 10, color: '#16a34a' } },
+        { x: 1, xref: 'paper', xanchor: 'right', y: 350, text: 'Högt', showarrow: false, font: { size: 10, color: '#2563eb' } }
+    ];
+
+    const isMobile = window.innerWidth <= 768;
+    Plotly.newPlot('sparandeHistoryChart', [{
+        x: sparandeByYear.map(d => d.year),
+        y: sparandeByYear.map(d => d.perKvm),
+        type: 'bar',
+        marker: { color: sparandeByYear.map(d =>
+            d.perKvm < 120 ? '#ef4444' :
+            d.perKvm < 200 ? '#f59e0b' :
+            d.perKvm < 300 ? '#22c55e' : '#3b82f6'
+        )},
+        hovertemplate: '%{x}: %{y} kr/kvm<extra></extra>'
+    }], {
+        height: isMobile ? 300 : 400,
+        margin: isMobile ? { t: 10, r: 10, b: 50, l: 50 } : { t: 20, r: 20, b: 50, l: 60 },
+        xaxis: { title: 'År', tickfont: { size: isMobile ? 9 : 12 }, showgrid: false, dtick: 2 },
+        yaxis: { title: 'kr/kvm', tickfont: { size: isMobile ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', zeroline: true },
+        shapes: [...shapes, ...hsbLines],
+        annotations: annots,
+        showlegend: false, hovermode: 'x unified',
+        plot_bgcolor: 'white', paper_bgcolor: 'white'
+    }, { responsive: true, displayModeBar: false });
+
+    // ── Chart 2: Waterfall breakdown for 2024 (matching savings.html detail style) ──
+    const ye2024 = events.filter(e => e.year === '2024');
+
+    // Top-level IS events (excluding CF and subcategories)
+    const isTopEvents = ye2024.filter(e =>
+        !SPARANDE_CF_CATS.has(parseInt(e.category_id)) &&
+        !(catMap[e.category_id] && catMap[e.category_id].parent)
+    );
+    const underhallEvents = ye2024.filter(e => SPARANDE_UH_CATS.has(parseInt(e.category_id)));
+    const underhallRaw = underhallEvents.reduce((s, e) => s + parseInt(e.amount), 0);
+    const underhallAbs = Math.abs(underhallRaw);
+    const isTotal = isTopEvents.reduce((s, e) => s + parseInt(e.amount), 0);
+    const totalSparande = isTotal + underhallAbs;
+
+    // Sum underhåll per parent category
+    const uhByParent = {};
+    underhallEvents.forEach(e => {
+        const parent = catMap[e.category_id] && catMap[e.category_id].parent;
+        if (parent) uhByParent[parent] = (uhByParent[parent] || 0) + parseInt(e.amount);
+    });
+
+    // Build sub-category lookup: parent_id → [child events this year]
+    const subEventsByParent = {};
+    ye2024.forEach(e => {
+        const cat = catMap[e.category_id];
+        if (cat && cat.parent) {
+            if (!subEventsByParent[cat.parent]) subEventsByParent[cat.parent] = [];
+            subEventsByParent[cat.parent].push(e);
+        }
+    });
+
+    // Build detail items, expanding Nettoomsättning into subs, stripping embedded underhåll
+    const items = [];
+    isTopEvents
+        .sort((a, b) => parseInt(b.amount) - parseInt(a.amount))
+        .forEach(e => {
+            const cid = e.category_id;
+            if (SPARANDE_UH_CATS.has(parseInt(cid))) return;
+            let val = parseInt(e.amount);
+            let label = catMap[cid] ? catMap[cid].name : 'Okänd';
+            if (uhByParent[cid]) {
+                val -= uhByParent[cid];
+                label += ' (exkl. underhåll)';
+            }
+            const subs = cid === '0' ? (subEventsByParent[cid] || [])
+                .filter(s => !SPARANDE_UH_CATS.has(parseInt(s.category_id))) : [];
+            if (subs.length > 0) {
+                const subItems = subs.map(s => ({
+                    label: '  ' + (catMap[s.category_id] ? catMap[s.category_id].name : 'Okänd'),
+                    value: parseInt(s.amount)
+                })).sort((a, b) => b.value - a.value);
+                const subTotal = subItems.reduce((s, i) => s + i.value, 0);
+                const residual = val - subTotal;
+                subItems.forEach(si => items.push(si));
+                if (Math.abs(residual) > 1) {
+                    items.push({ label: '  Övrigt (' + (catMap[cid] ? catMap[cid].name.toLowerCase() : '') + ')', value: residual });
+                }
+            } else {
+                items.push({ label, value: val });
+            }
+        });
+
+    const dLabels  = items.map(i => i.label).concat(['Sparande']);
+    const dX       = items.map(i => i.value / TOTAL_KVM).concat([totalSparande / TOTAL_KVM]);
+    const dMeasure = items.map(() => 'relative').concat(['total']);
+
+    // Build annotations positioned at the edge of each bar
+    const fmt = v => { const a = Math.abs(v); return (v < 0 ? '−' : '') + (a >= 1e6 ? (a/1e6).toFixed(1) + ' MSEK' : Math.round(a/1e3) + ' TSEK'); };
+    let dRun = 0;
+    const dAnnots = [];
+    items.forEach(it => {
+        const s = dRun;
+        dRun += it.value;
+        const edge = Math.max(s, dRun) / TOTAL_KVM;
+        dAnnots.push({
+            x: edge, y: it.label, text: fmt(it.value),
+            xanchor: 'left', xshift: 8, showarrow: false,
+            font: { size: 10 }
+        });
+    });
+    dAnnots.push({
+        x: Math.max(0, totalSparande) / TOTAL_KVM, y: 'Sparande',
+        text: fmt(totalSparande), xanchor: 'left', xshift: 8,
+        showarrow: false, font: { size: 11, color: '#3b82f6' }
+    });
+
+    Plotly.newPlot('sparandeWaterfallChart', [{
+        type: 'waterfall',
+        orientation: 'h',
+        x: dX, y: dLabels, measure: dMeasure,
+        text: dX.map(v => Math.round(v) + ' kr/kvm'),
+        textposition: 'none',
+        connector: { line: { color: '#94a3b8', width: 1 } },
+        increasing: { marker: { color: '#22c55e' } },
+        decreasing: { marker: { color: '#ef4444' } },
+        totals: { marker: { color: '#3b82f6' } },
+        hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+    }], {
+        showlegend: false,
+        height: Math.max(200, (items.length + 1) * 40 + 40),
+        margin: { l: 280, r: 140, t: 10, b: 30 },
+        xaxis: { title: '', tickformat: ',.0f', separatethousands: true },
+        yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
+        plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)',
+        annotations: dAnnots
+    }, { responsive: true, displayModeBar: false });
+
+    // ── Chart 3: Comparison bar chart (vertical, PDF style) ──
+    const compData = [
+        { name: 'BRF Siken', value: 120 },
+        { name: 'Stockholm\nsnitt', value: 165 },
+        { name: 'HSB\nSödertörn', value: 175 },
+        { name: 'BRF Gäddan', value: 227 },
+        { name: 'BRF\nSjötungan', value: 245 },
+        { name: 'BRF\nBjörkbacken', value: 322 }
+    ];
+
+    const compColors = compData.map(d =>
+        d.name.includes('Sjötungan') ? '#4a9c5a' : '#e0a030'
+    );
+
+    // Colored horizontal zone bands matching the PDF
+    const compShapes = [
+        // Mycket lågt (<120) — pink/red tint
+        { type: 'rect', yref: 'y', y0: 0, y1: 120, xref: 'paper', x0: 0, x1: 1,
+          fillcolor: '#ffecec', line: { width: 0 }, layer: 'below' },
+        // Lågt till måttligt (120-200) — warm amber tint
+        { type: 'rect', yref: 'y', y0: 120, y1: 200, xref: 'paper', x0: 0, x1: 1,
+          fillcolor: '#fff0e0', line: { width: 0 }, layer: 'below' },
+        // Rekommenderat (200-300) — green tint
+        { type: 'rect', yref: 'y', y0: 200, y1: 300, xref: 'paper', x0: 0, x1: 1,
+          fillcolor: '#e8f5e8', line: { width: 0 }, layer: 'below' },
+        // Högt (>300) — white
+        { type: 'rect', yref: 'y', y0: 300, y1: 400, xref: 'paper', x0: 0, x1: 1,
+          fillcolor: '#ffffff', line: { width: 0 }, layer: 'below' },
+        // Threshold line at 120
+        { type: 'line', yref: 'y', y0: 120, y1: 120, xref: 'paper', x0: 0, x1: 1,
+          line: { color: '#c45050', width: 1.5, dash: 'dot' }, layer: 'below' },
+        // Threshold line at 200
+        { type: 'line', yref: 'y', y0: 200, y1: 200, xref: 'paper', x0: 0, x1: 1,
+          line: { color: '#4a9c5a', width: 1, dash: 'dot' }, layer: 'below' },
+        // Threshold line at 300
+        { type: 'line', yref: 'y', y0: 300, y1: 300, xref: 'paper', x0: 0, x1: 1,
+          line: { color: '#4a9c5a', width: 1, dash: 'dot' }, layer: 'below' }
+    ];
+
+    const compAnnots = [
+        { x: 1.01, xref: 'paper', xanchor: 'left', y: 60, yref: 'y',
+          text: 'Mycket lågt', showarrow: false, font: { size: 10, color: '#c45050' } },
+        { x: 1.01, xref: 'paper', xanchor: 'left', y: 160, yref: 'y',
+          text: 'Lågt till<br>måttligt', showarrow: false, font: { size: 10, color: '#b8860b' } },
+        { x: 1.01, xref: 'paper', xanchor: 'left', y: 250, yref: 'y',
+          text: 'Rekommenderat', showarrow: false, font: { size: 10, color: '#3a7d44' } },
+        { x: 1.01, xref: 'paper', xanchor: 'left', y: 340, yref: 'y',
+          text: 'Högt (onödigt<br>högt?)', showarrow: false, font: { size: 10, color: '#666' } }
+    ];
+
+    // Value labels on top of each bar
+    const valAnnots = compData.map((d, i) => ({
+        x: i, y: d.value, xref: 'x', yref: 'y',
+        text: '<b>' + d.value + '</b>', showarrow: false,
+        font: { size: 12, color: '#1b3a5c' },
+        yanchor: 'bottom', yshift: 4
+    }));
+
+    Plotly.newPlot('sparandeComparisonChart', [{
+        type: 'bar',
+        x: compData.map(d => d.name),
+        y: compData.map(d => d.value),
+        marker: { color: compColors, line: { width: 0 } },
+        width: 0.6,
+        hovertemplate: '<b>%{x}</b><br>%{y} kr/kvm<extra></extra>'
+    }], {
+        showlegend: false,
+        height: 380,
+        margin: { l: 40, r: 100, t: 30, b: 70 },
+        yaxis: { title: 'kr/kvm', range: [0, 400], showgrid: false, zeroline: false,
+                 tickvals: [0, 100, 200, 300, 400], tickfont: { color: '#666' } },
+        xaxis: { tickfont: { size: 11, color: '#1b3a5c' }, tickangle: 0 },
+        shapes: compShapes,
+        annotations: [...compAnnots, ...valAnnots],
+        plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+    }, { responsive: true, displayModeBar: false });
+})();
+</script>
+</body>
+</html>
