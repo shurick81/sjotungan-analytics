@@ -21,6 +21,8 @@ This folder groups reusable data-extraction assets in one place.
 - Script: `scripts/extract_pre2009_states_events.py`
 - Method doc: `methods/financial_states_events_legacy.md`
 - Reference: `methods/domain_conventions.md` (M-numbers, abbreviations)
+- Script: `scripts/compare_guide_html_pdf.py`
+- Method doc: `methods/guide_html_pdf_comparison.md`
 
 ## Macro data note (inflation)
 
@@ -142,6 +144,24 @@ Append legacy events (only after verification):
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_legacy_events_candidates.py --append
 ```
+
+## Guide HTML ↔ PDF comparison
+
+Compare `brf-economy-guide.html` against `brf-economy-guide.pdf` to verify
+text parity, paragraph ordering, and illustration/chart caption presence.
+
+```bash
+# Print diff report to stdout
+python extraction/scripts/compare_guide_html_pdf.py
+
+# Save report to file
+python extraction/scripts/compare_guide_html_pdf.py -o /tmp/guide_diff.txt
+
+# Verbose mode (show all paragraph alignments)
+python extraction/scripts/compare_guide_html_pdf.py -v
+```
+
+Exit code 0 = no issues, 1 = differences found. See `methods/guide_html_pdf_comparison.md` for details.
 
 Extract pre-2009 core states/events (2003, 2004, 2006, 2007, 2008):
 

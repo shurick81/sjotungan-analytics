@@ -6,6 +6,7 @@
     <title>Vision Myggan — Förstå din förenings ekonomi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <style>
         body { font-size: 1rem; }
         @media (max-width: 640px) {
@@ -252,6 +253,75 @@
             .two-col { grid-template-columns: 1fr; }
             .nyckeltal-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
         }
+
+        /* ── Fullscreen treemap overlay ─────────────── */
+        .expand-btn-row {
+            display: none;
+            justify-content: center;
+            margin-top: 14px;
+        }
+        @media (min-width: 768px) {
+            .expand-btn-row { display: flex; }
+        }
+        .expand-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 6px rgba(31,63,149,0.25);
+        }
+        .expand-btn:hover { background: #2c54bf; }
+        .expand-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .treemap-fullscreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: #f0f2f5;
+            padding: 20px;
+            flex-direction: column;
+        }
+        .treemap-fullscreen.active { display: flex; }
+        .treemap-fs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .treemap-fs-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .treemap-fs-header .fs-total {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #dc2626;
+            margin-left: 12px;
+        }
+        .treemap-fs-close {
+            background: none;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #374151;
+            font-weight: 600;
+        }
+        .treemap-fs-close:hover { background: #e5e7eb; }
+        #costs-treemap-fs-chart { flex: 1; min-height: 0; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -362,7 +432,7 @@
         <p class="source-ref">Enligt HSB:s skala är 201–300 kr/kvm "Måttligt till högt" — det intervall de flesta föreningar bör sikta på. Källa: HSB Bostadsrättskollen, BFNAR 2023:1.</p>
 
         <h3>Vad betyder sparande i praktiken?</h3>
-        <p>Ordet "sparande" är missvisande — det handlar inte om pengar som ligger på ett konto. Det är ett bokföringsmässigt mått som visar skillnaden mellan föreningens intäkter och dess driftskostnader under ett år.</p>
+        <p>Ordet "sparande" är missvisande — det handlar inte om pengar som ligger på ett konto. Det är ett bokföringsmässigt mått som visar skillnaden mellan föreningens intäkter och dess driftskostnader under ett år. Tänk på det så här:</p>
 
         <div class="callout">
             <strong>Hushållsanalogi:</strong> Tänk dig att ditt hushåll tjänar 50 000 kr/månad. Dina löpande kostnader (mat, hyra, el) är 40 000 kr. Kvar blir 10 000 kr — ditt "sparande".<br><br>
@@ -370,8 +440,10 @@
             Precis så fungerar BRF-sparande: det kan se bra ut samtidigt som föreningen ökar sin skuldsättning kraftigt. <strong>Därför måste sparandet alltid läsas tillsammans med skuldsättningen — aldrig ensamt.</strong>
         </div>
 
+        <p>Med detta i åtanke — vad säger Sjötungans siffror?</p>
+
         <h3>BRF Sjötungans sparande</h3>
-        <p>I flerårsöversikten i årsredovisningen (sidan 4 i bokslutet) hittar du sparande per kvm direkt som ett nyckeltal. Nedan visas de senaste årens värden:</p>
+        <p>I flerårsöversikten i årsredovisningen (sidan 4 i bokslutet) hittar du sparande per kvm direkt som ett nyckeltal. Nedan visas de senaste årens värden samt ett längre historiskt perspektiv:</p>
 
         <table class="riktvarde-table">
             <thead><tr><th></th><th>2024</th><th>2023</th><th>2022</th><th>2021</th></tr></thead>
@@ -396,10 +468,11 @@
             Visa inflationsjusterade belopp
         </label>
         <div id="sparandeHistoryChart" style="width:100%; margin: 20px 0;"></div>
-        <p class="source-ref">Sparande för BRF Sjötungan, 2003–2024. Källa: årsredovisningar.</p>
+        <p class="source-ref">Sparande per kvm för BRF Sjötungan, 2003–2024. Källa: årsredovisningar.</p>
 
         <h3>Vad bygger sparandet?</h3>
-        <p>Sparande = intäkter minus kostnader, men utan avskrivningar och planerat underhåll (dessa läggs tillbaka eftersom avskrivningar inte är en faktisk utbetalning, och underhåll bevarar fastighetens värde). Diagrammet nedan visar hur Sjötungans sparande byggs upp för 2024:</p>
+        <p>Sparande = intäkter minus kostnader, men utan avskrivningar och planerat underhåll (dessa läggs tillbaka eftersom avskrivningar inte är en faktisk utbetalning, och underhåll bevarar fastighetens värde). Diagrammet nedan visar hur Sjötungans sparande byggs upp — grönt är intäkter, rött är kostnader, och blått är det som återstår:</p>
+        <p>Här är beräkningen med Sjötungans siffror för 2024:</p>
 
         <!-- Chart 2: Waterfall sparande breakdown -->
         <div class="mobile-hint">Det här diagrammet visas bäst på en större skärm. Vänd telefonen eller öppna sidan på en dator.</div>
@@ -409,18 +482,18 @@
             <label><input type="radio" name="waterfallNorm" value="1"><span>Totalt</span></label>
         </div>
         <div id="sparandeWaterfallChart" style="width:100%; margin: 20px 0;"></div>
-        <p class="source-ref">Grönt = intäkter/tillägg, rött = kostnader, blått = sparande. Avskrivningar och planerat underhåll ingår inte i kostnaden (de läggs tillbaka).</p>
+        <p class="source-ref">Vad som bygger sparandet: grönt = intäkter, rött = kostnader, blått = sparande. Avskrivningar och planerat underhåll ingår inte i kostnaden (de läggs tillbaka). Alla siffror i kr/kvm.</p>
 
         <h3>Vad kan styrelsen göra?</h3>
         <p>I praktiken har styrelsen tre verktyg för att påverka sparandet:</p>
         <ol>
             <li><strong>Höja avgiften</strong> — detta ökar intäkterna och förbättrar sparandet direkt. Det är det enklaste och snabbaste verktyget, men det påverkar medlemmarnas plånböcker och kan på kort sikt sänka lägenheternas marknadsvärde.</li>
-            <li><strong>Sänka driftkostnaderna</strong> — detta förbättrar sparandet utan att höja avgiften. Det kan handla om att omförhandla avtal, effektivisera energiförbrukning eller se över kostnader för exempelvis fastighetsskötsel och trädgård.</li>
+            <li><strong>Sänka driftkostnaderna</strong> — detta förbättrar sparandet utan att höja avgiften. Det kan handla om att omförhandla avtal, effektivisera energiförbrukning eller se över kostnader för exempelvis fastighetsskötsel och trädgård. Det är ofta svårare och tar längre tid, men gynnar medlemmarna direkt.</li>
             <li><strong>Hantera räntekostnaderna</strong> — genom att förhandla fram bra lånevillkor och välja rätt bindningstider kan styrelsen sänka föreningens räntekostnader avsevärt.</li>
         </ol>
 
         <h3>Sjötungans räntekostnader — anmärkningsvärt låga</h3>
-        <p>Dividerar man föreningens räntekostnad (4,2 MSEK) med den genomsnittliga låneskulden under 2024 (~231 MSEK) får man en effektiv ränta på ca 1,8 %. Det är lägre än Riksbankens styrränta under större delen av året. Förklaringen finns i Not 14: flera lån är bundna till mycket förmånliga räntor, bland annat 45 MSEK till bara 0,64 %.</p>
+        <p>Dividerar man föreningens räntekostnad (4,2 MSEK) med den genomsnittliga låneskulden under 2024 (~231 MSEK) får man en effektiv ränta på ca 1,8%. Det är lägre än Riksbankens styrränta under större delen av året. Förklaringen finns i Not 14: flera lån är bundna till mycket förmånliga räntor, bland annat 45 MSEK till bara 0,64%.</p>
 
         <div class="callout">
             <strong>Viktigt att notera:</strong> Flera av dessa förmånliga lån löper ut under 2025–2026 och kommer att omförhandlas till högre räntor. Det innebär att räntekostnaden sannolikt kommer att öka framöver — något vi återkommer till under Räntekänslighet.
@@ -429,13 +502,46 @@
         <p>Avskrivningar styrs av fastighetens bokförda värde och är i praktiken inte påverkbara. Därmed blir det balansen mellan avgift, driftkostnad och räntehantering som avgör var sparandet landar.</p>
 
         <h3>Vad sparandet inte berättar</h3>
-        <p>Sparande per kvm är ett användbart nyckeltal, men det har viktiga begränsningar:</p>
+        <p>Sparande per kvm är ett användbart nyckeltal, men det har viktiga begränsningar som man bör vara medveten om:</p>
         <ul>
-            <li><strong>Sparande har ett "lagom" — inte bara ett "mer är bättre".</strong> Under 120 kr/kvm klassificeras som "Mycket lågt" och signalerar risk. Men ett sparande som konsekvent ligger över 300 kr/kvm ("Högt") kan också väcka frågor: betalar medlemmarna onödigt höga avgifter? Skjuts planerat underhåll upp? Sparande bör stå i proportion till föreningens faktiska investeringsbehov.</li>
-            <li><strong>Det visar årets förändring — inte föreningens ackumulerade ställning.</strong> Sparande per kvm är ett flödesmått: det visar hur mycket som "sparades" just detta år. Det säger ingenting om hur mycket föreningen har ackumulerat över tid eller hur väl rustad föreningen faktiskt är för framtida investeringar.</li>
-            <li><strong>Det är ett förenklat bokföringsmått, inte kassaflöde.</strong> Sparandet bygger på bokföringsmässiga poster — årets resultat plus avskrivningar. En förening kan visa högt sparande samtidigt som den tar nya lån eller skjuter underhåll framåt. Det verkliga kassaflödet ger ofta en mer rättvisande bild.</li>
-            <li><strong>Det säger inget om skuldsättningen.</strong> En förening som tar stora lån för att finansiera investeringar kan fortfarande visa bra sparandetal, eftersom lån inte syns i resultaträkningen. Därför behöver sparandet alltid läsas tillsammans med skuldsättningen och kassaflödesanalysen.</li>
+            <li><strong>Sparande har ett "lagom" — inte bara ett "mer är bättre".</strong> HSB:s skala klassificerar 201–300 kr/kvm som "Måttligt till högt" — det intervall som de flesta föreningar bör sikta på. Under 120 kr/kvm klassificeras som "Mycket lågt" och signalerar risk för eftersatt underhåll eller framtida avgiftshöjningar. Men ett sparande som konsekvent ligger över 300 kr/kvm ("Högt") kan också väcka frågor: betalar medlemmarna onödigt höga avgifter? Skjuts planerat underhåll upp i stället för att genomföras? Sparande bör stå i proportion till föreningens faktiska investeringsbehov.</li>
+            <li><strong>Det visar årets förändring — inte föreningens ackumulerade ställning.</strong> Sparande per kvm är ett flödesmått: det visar hur mycket som "sparades" just detta år. Det säger ingenting om hur mycket föreningen har ackumulerat över tid, hur stor underhållsfonden är, eller hur väl rustad föreningen faktiskt är för framtida investeringar. En förening kan ha högt sparande ett enskilt år men ändå ha en svag finansiell ställning totalt sett.</li>
+            <li><strong>Det är ett förenklat bokföringsmått, inte kassaflöde.</strong> Sparandet bygger på bokföringsmässiga poster — årets resultat plus avskrivningar. Avskrivningar är en kalkylerad kostnad som inte motsvarar en faktisk utbetalning. Det innebär att en förening kan visa högt sparande samtidigt som den tar nya lån eller skjuter underhåll framåt. Det verkliga kassaflödet — som visar faktiska in- och utbetalningar — ger ofta en mer rättvisande bild.</li>
+            <li><strong>Det säger inget om skuldsättningen.</strong> Sparandet visar inte hur mycket föreningen har lånat. En förening som tar stora lån för att finansiera investeringar kan fortfarande visa bra sparandetal, eftersom lån inte syns i resultaträkningen. Därför behöver sparandet alltid läsas tillsammans med skuldsättningen och kassaflödesanalysen.</li>
         </ul>
+
+        <h3>Den fullständiga bilden: vart tar pengarna vägen?</h3>
+        <p>Sparandet visar bara en del av pengaflödet. För att förstå hela bilden behöver man titta på kassaflödet — alla pengar som kommer in och alla pengar som går ut under året. Diagrammet nedan visar detta för 2024:</p>
+
+        <!-- Chart 4: Kassaflöde waterfall 2024 -->
+        <div class="mobile-hint">Det här diagrammet visas bäst på en större skärm. Vänd telefonen eller öppna sidan på en dator.</div>
+        <div class="norm-toggle" id="cashflowNormToggle">
+            <label><input type="radio" name="cashflowNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="cashflowNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="cashflowNorm" value="1"><span>Totalt</span></label>
+        </div>
+        <div id="cashflowWaterfallChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Kassaflöde för BRF Sjötungan 2024. Grönt = pengar in, rött = pengar ut, blått = nettokassaförändring. Notera att "Kassaflöde från finansieringsverksamheten" (124 kr/kvm) avser nya lån från banken — pengar som kommer in men som ökar skuldsättningen. "Investeringar" (–249 kr/kvm) syns inte alls i sparandemåttet. Källa: kassaflödesanalysen.</p>
+
+        <p>Nedanstående diagram visar hur föreningens totala kostnader fördelas mellan olika kategorier. De två största posterna är driftkostnader (665 kr/kvm) och investeringar (249 kr/kvm):</p>
+
+        <!-- Chart 5: Kostnadsfördelning 2024 -->
+        <div class="norm-toggle" id="costNormToggle">
+            <label><input type="radio" name="costNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="costNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="costNorm" value="1"><span>Totalt</span></label>
+        </div>
+        <div id="costDistributionChart" style="width:100%; height:400px; margin: 20px 0;"></div>
+        <div class="expand-btn-row">
+            <button class="expand-btn" onclick="openCostsFullscreen()" title="Visa fullskärm med detaljer">
+                <svg viewBox="0 0 20 20"><path d="M3 3h5V1H1v7h2V3zm9-2v2h5v5h2V1h-7zm7 12h-2v5h-5v2h7v-7zM3 12H1v7h7v-2H3v-5z"/></svg>
+                Visa i fullskärm
+            </button>
+        </div>
+        <p class="source-ref">Kostnadsfördelning för BRF Sjötungan 2024 (kr/kvm). Grå = driftkostnader, lila = investeringar, röd = räntekostnader. Uppvärmning (145) och reparationer (94) är de största enskilda driftkostnaderna. Källa: årsredovisningen.</p>
+
+        <p class="source-ref">Fullständig kassaflödesanalys och kostnadsfördelning: <a href="annual_details.html">annual_details.html</a></p>
+        <p class="source-ref">Interaktiv sparandeanalys för BRF Sjötungan: <a href="savings.html">savings.html</a></p>
 
         <h3>Jämförelse med andra föreningar (2024)</h3>
         <p>Hur ligger Sjötungan till jämfört med andra bostadsrättsföreningar i Stockholmsområdet? Nedan jämförs sparandet med regionala genomsnitt från HSB:s Bostadsrättsbarometer (publicerad 2025, baserad på 2024 års data) samt två närliggande föreningar.</p>
@@ -446,15 +552,513 @@
 
         <h3>Sammanfattning: Sparande</h3>
         <div class="callout-blue">
-            BRF Sjötungans sparande på 245 kr/kvm ligger i intervallet "Måttligt till högt" (201–300 kr/kvm) enligt HSB:s skala. Historiskt har föreningens sparande pendlat kring 200-talet sedan 2003. Men sparandetalet ensamt räcker inte för att bedöma föreningens ekonomi — det måste sättas i relation till skuldsättning, kassaflöde och det kommande stambytet.
+            BRF Sjötungans sparande på 245 kr/kvm ligger i intervallet "Måttligt till högt" (201–300 kr/kvm) enligt HSB:s skala. Historiskt har föreningens sparande pendlat kring 200-talet sedan 2003. Men sparandetalet ensamt räcker inte för att bedöma föreningens ekonomi — det måste sättas i relation till skuldsättning, kassaflöde och det kommande stambytet. Dessa faktorer tar vi upp i kommande avsnitt.
         </div>
 
         <p class="source-ref">Interaktiv sparandeanalys: <a href="savings.html">savings.html</a></p>
+
+        <h4>Din bedömning av Sparande:</h4>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="assessment-btn" data-color="#ef4444" style="flex:1; padding:10px; border:2px solid #ef4444; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#ef4444;" onclick="selectAssessment(this)">Oroväckande</button>
+            <button class="assessment-btn" data-color="#f59e0b" style="flex:1; padding:10px; border:2px solid #f59e0b; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#f59e0b;" onclick="selectAssessment(this)">Kan bli bättre</button>
+            <button class="assessment-btn" data-color="#10b981" style="flex:1; padding:10px; border:2px solid #10b981; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#10b981;" onclick="selectAssessment(this)">Godkänt</button>
+        </div>
+    </div>
+
+    <!-- 2. Investeringsbehov -->
+    <div class="guide-section">
+        <h2>2. Investeringsbehov</h2>
+        <p>Visar de genomsnittliga framtida investeringarna som föreningen behöver göra under de kommande 50 åren — exempelvis byte av tak, fönster, stammar och fasad. Baseras på föreningens underhållsplan. Alla föreningar bör ha en investeringsplan som omfattar de största investeringsbehoven.</p>
+
+        <p><strong>Beräkning:</strong> Summa planerade investeringar (50 år) / 50 / totalyta (kvm)</p>
+
+        <h3>Riktvärden (HSB Bostadsrättskollen)</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th>Bedömning</th><th>kr/kvm</th></tr></thead>
+            <tbody>
+                <tr><td>Lågt</td><td>&lt; 121</td></tr>
+                <tr><td>Måttligt</td><td>121 – 300</td></tr>
+                <tr><td>Högt</td><td>301 – 500</td></tr>
+                <tr><td>Mycket högt</td><td>&gt; 500</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout">
+            HSB anser att det är rimligt att 50-årsplanen omfattar de 20 största investeringsbehoven. Källa: <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/investeringsbehov" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">HSB Bostadsrättskollen</a>.
+        </div>
+
+        <h3>BRF Sjötungans investeringsbehov</h3>
+        <p>BRF Sjötungan har en underhållsplan som löper till 2074. Föreningen har också en lång historik av genomförda projekt — nya fasader och balkonger (2008), garagerenovering (2016–2019), markliggande rör (2018–2021), hissrenoveringar (2023) och nya innergårdar (2021–2023).</p>
+        <p>Det största kommande projektet är stambytet (2025–2035): byte av avloppsstammar inklusive nya våtrum och vattenledningar i hela föreningen. Det är den enskilt största investeringen sedan föreningen bildades.</p>
+
+        <div class="callout">
+            <strong>Data saknas i årsredovisningen</strong><br>
+            Trots att Sjötungan har en underhållsplan redovisas inget investeringsbehov i kr/kvm i årsredovisningen. Detta nyckeltal är ännu bara obligatoriskt för nyproducerade bostadsrätter. Det innebär att medlemmarna inte enkelt kan se hur stort det totala investeringsbehovet är, eller hur väl sparandet täcker det.
+        </div>
+
+        <p>En rimlig fråga att ställa på stämman: <em>"Kan styrelsen redovisa investeringsbehovet per kvm enligt HSB:s modell, så att vi kan jämföra det med vårt sparande?"</em></p>
+
+        <h4>Din bedömning av Investeringsbehov:</h4>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="assessment-btn" data-color="#ef4444" style="flex:1; padding:10px; border:2px solid #ef4444; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#ef4444;" onclick="selectAssessment(this)">Oroväckande</button>
+            <button class="assessment-btn" data-color="#f59e0b" style="flex:1; padding:10px; border:2px solid #f59e0b; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#f59e0b;" onclick="selectAssessment(this)">Kan bli bättre</button>
+            <button class="assessment-btn" data-color="#10b981" style="flex:1; padding:10px; border:2px solid #10b981; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#10b981;" onclick="selectAssessment(this)">Godkänt</button>
+        </div>
+    </div>
+
+    <!-- 3. Skuldsättning -->
+    <div class="guide-section">
+        <h2>3. Skuldsättning</h2>
+        <p>Visar hur belånad föreningen är. Skulderna (lån som föreningen betalar ränta på) delas med totalytan. Ju lägre siffra, desto bättre. Nya föreningar har normalt högre skuldsättning, liksom föreningar som nyligen genomfört stora underhåll.</p>
+
+        <p><strong>Beräkning:</strong> Totala räntebärande skulder / totalyta (kvm)</p>
+
+        <h3>Riktvärden (HSB Bostadsrättskollen)</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th>Bedömning</th><th>kr/kvm</th></tr></thead>
+            <tbody>
+                <tr><td>Låg</td><td>&lt; 3 000</td></tr>
+                <tr><td>Normal</td><td>3 001 – 8 000</td></tr>
+                <tr><td>Hög</td><td>8 001 – 15 000</td></tr>
+                <tr><td>Mycket hög</td><td>&gt; 15 001</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout">
+            En skuldsättning kan vara tillfälligt hög efter t.ex. ett stambyte. Det är då viktigt att föreningen har en plan för att amortera ner skulden. Källa: <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/skuldsattning" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">HSB Bostadsrättskollen</a>.
+        </div>
+
+        <h3>BRF Sjötungans skuldsättning</h3>
+        <table class="riktvarde-table" style="margin-bottom:16px">
+            <thead><tr><th></th><th>2024</th><th>2023</th><th>2022</th><th>2021</th></tr></thead>
+            <tbody>
+                <tr><td>Skuldsättning kr/kvm</td><td>4 532</td><td>4 408</td><td>4 151</td><td>3 801</td></tr>
+                <tr><td>HSB:s bedömning</td><td>Normal</td><td>Normal</td><td>Normal</td><td>Normal</td></tr>
+            </tbody>
+        </table>
+        <p>■ Var i årsredovisningen: Flerårsöversikten (sid 4). Detaljer om varje lån: Not 14 (sid 14). Kassaflöde från lån: Kassaflödesanalysen (sid 9).</p>
+
+        <p>Skuldsättningen har nästan fördubblats sedan 2017, då den låg på 2 305 kr/kvm ("Låg" enligt HSB:s skala). Vid utgången av 2024, på 4 532 kr/kvm, ligger den i "Normal"-intervallet men trenden är tydligt uppåtgående. Diagrammet nedan visar det längre perspektivet:</p>
+
+        <div class="norm-toggle" id="skuldNormToggle">
+            <label><input type="radio" name="skuldNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="skuldNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="skuldNorm" value="1"><span>Totalt</span></label>
+        </div>
+        <label class="inflation-toggle">
+            <input type="checkbox" id="skuldInflationToggle">
+            Visa inflationsjusterade belopp
+        </label>
+        <div id="skuldHistoryChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Skuldsättning per kvm (nominellt) för BRF Sjötungan, 2002–2024. Röd = totala skulder, blå = långfristiga, orange = kortfristiga, grön = likvida medel. Källa: årsredovisningar.</p>
+
+        <h3>Vad betyder det för Sjötungan?</h3>
+        <p>Skuldsättningen ökade kraftigt runt 2008 (nya fasader och balkonger) och sjönk sedan tillbaka till en bottennivå på 2 305 kr/kvm år 2017 ("Låg" enligt HSB). Därefter har den stigit kraftigt igen — drivet av nya investeringar i markliggande rör, hissar, innergårdar och förberedelser för stambytet.</p>
+        <p>Det första diagrammet visar en dramatisk förändring av lånestrukturen: under 2023 steg andelen kortfristiga lån (orange) till 58% av totala skulder — nära varningsgränsen på 60% som används inom finansiell analys (Short Term Debt / Total Debt). Under 2024 har situationen förbättrats till 26%, men det är fortfarande historiskt högt:</p>
+
+        <div id="refinancingRiskChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Andel kortfristiga skulder av totala skulder (%) för BRF Sjötungan, 2002–2024. Lån som förfaller eller villkorsändras inom ett år. Röd streckad linje = varningsgräns 60%. Källa: årsredovisningar, GMT Research.</p>
+
+        <p>I praktiken innebär detta att 61 MSEK (26% av alla lån) måste omförhandlas inom ett år — bland annat 45 MSEK till 0,64% som löpte ut i april 2025. Dessa lån kommer att förnyas till betydligt högre räntor.</p>
+
+        <div class="callout">
+            <strong>Borde inte skuldsättningen vara lägre inför stambytet?</strong><br>
+            Föreningen står inför sitt största projekt någonsin — ett stambyte som enligt styrelsens prognos kräver ca 290 MSEK i nya lån (~5 600 kr/kvm). Det innebär att skuldsättningen kan nå ~10 000 kr/kvm.
+            <br><br>
+            Inför ett så stort åtagande kan man fråga sig om det inte vore önskvärt att starta från en lägre skuldsättning än "Normal" — helst "Låg" (under 3 000 kr/kvm). Ju lägre utgångsläget, desto mer marginal har föreningen att hantera oförutsedda kostnadsökningar, räntehöjningar och andra risker under projektets gång.
+        </div>
+
+        <h3>Vad har lånen använts till?</h3>
+        <p>Under de senaste sju åren har föreningen redovisat ca 175 MSEK i investeringar i kassaflödesanalysen. Dessa har finansierats med nya lån, vilket förklarar den stigande skuldsättningen. Projekten inkluderar bland annat markliggande rör, hissrenoveringar, nya innergårdar och förberedelser för stambytet.</p>
+
+        <div class="norm-toggle" id="investNormToggle">
+            <label><input type="radio" name="investNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="investNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="investNorm" value="1"><span>Totalt</span></label>
+        </div>
+        <div id="investmentHistoryChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Investeringar per år för BRF Sjötungan, 2004–2024. Topparna 2007–2008 motsvarar fasad- och balkongrenoveringen, 2014 och 2019–2021 inkluderar markarbeten, hissar och innergårdar. Källa: kassaflödesanalyser.</p>
+
+        <div class="callout-blue">
+            <strong>Vad årsredovisningen inte visar om investeringarna</strong><br>
+            Årsredovisningen visar att pengar har investerats, men inte hur effektivt de använts. Medlemmarna kan inte se:
+            <ul style="margin-top:6px; margin-bottom:0;">
+                <li><strong>Total kostnad per projekt</strong> — årsredovisningen klumpar ihop alla investeringar i en enda rad i kassaflödesanalysen. Hur mycket kostade innergårdarna? Hur mycket gick till markarbeten? Det framgår inte.</li>
+                <li><strong>Alternativa anbud</strong> — har styrelsen begärt in offerter från flera entreprenörer för varje projekt? Hur stor var prisskillnaden mellan det valda och det billigaste anbudet?</li>
+                <li><strong>Hur entreprenörer väljs</strong> — vilka kriterier styr valet? Är det enbart pris, eller vägs andra faktorer in? Finns det dokumenterade upphandlingsprocesser som medlemmarna kan ta del av?</li>
+            </ul>
+            <p style="margin-top:8px; margin-bottom:0;">Utan dessa uppgifter är det omöjligt att bedöma om föreningens 175 MSEK i investeringar har gett medlemmarna bästa möjliga värde för pengarna. Och med ett stambyte på 290 MSEK i antågande blir frågan om upphandlingseffektivitet ännu viktigare.</p>
+        </div>
+
+        <p>Styrelsens viktigaste verktyg för att hålla skuldsättningen i schack är amortering (att successivt betala av lånen), smart upphandling med konkurrensutsatta anbud, och god räntehantering — det sistnämnda har föreningen hittills lyckats väl med, som vi noterade under Sparande.</p>
+
+        <h3>Jämförelse med andra föreningar (2024)</h3>
+        <div id="skuldComparisonChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Skuldsättning per kvm — jämförelse 2024. Källa: årsredovisningar, HSB Barometer 2025.</p>
+
+        <p>Alla fyra lokala föreningarna ligger inom "Normal"-intervallet. Sjötungan har något högre skuldsättning än Siken och Björkbacken, men klart lägre än Stockholmssnittet på 5 773 kr/kvm (HSB Barometer 2025). Det viktigaste är dock inte nivån i sig, utan hur den utvecklas i takt med stambytet.</p>
+
+        <h3>Sammanfattning: Skuldsättning</h3>
+        <div class="callout-blue">
+            BRF Sjötungans skuldsättning på 4 532 kr/kvm är "Normal" enligt HSB:s skala och under Stockholmssnittet (5 773 kr/kvm). Men skulden har nästan fördubblats sedan 2017 och trenden är uppåtgående. Föreningen har visat god räntehantering (effektiv ränta ~1,8%), men andelen kortfristiga lån steg till 58% under 2023 (nära varningsgränsen 60%) innan den förbättrades till 26% under 2024. Den avgörande frågan framåt är hur mycket stambytet faktiskt kommer att kosta — och hur det finansieras.
+        </div>
+
+        <p class="source-ref">Interaktiv skuldanalys: <a href="changing_over_time.html">changing_over_time.html</a></p>
+
+        <h4>Din bedömning av Skuldsättning:</h4>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="assessment-btn" data-color="#ef4444" style="flex:1; padding:10px; border:2px solid #ef4444; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#ef4444;" onclick="selectAssessment(this)">Oroväckande</button>
+            <button class="assessment-btn" data-color="#f59e0b" style="flex:1; padding:10px; border:2px solid #f59e0b; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#f59e0b;" onclick="selectAssessment(this)">Kan bli bättre</button>
+            <button class="assessment-btn" data-color="#10b981" style="flex:1; padding:10px; border:2px solid #10b981; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#10b981;" onclick="selectAssessment(this)">Godkänt</button>
+        </div>
+    </div>
+
+    <!-- 4. Energikostnad -->
+    <div class="guide-section">
+        <h2>4. Energikostnad</h2>
+        <p>Visar föreningens totala kostnad för värme, el och vatten per kvadratmeter. En indikator på hur energieffektiv fastigheten är och hur väl föreningen hanterar sina energiavtal. Ju lägre siffra desto bättre.</p>
+
+        <p><strong>Beräkning:</strong> (Kostnad värme + el + vatten) / totalyta (kvm)</p>
+
+        <h3>Riktvärden (HSB Bostadsrättskollen)</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th>Bedömning</th><th>kr/kvm</th></tr></thead>
+            <tbody>
+                <tr><td>Låg</td><td>&lt; 150</td></tr>
+                <tr><td>Normal</td><td>150 – 250</td></tr>
+                <tr><td>Hög</td><td>250 – 350</td></tr>
+                <tr><td>Mycket hög</td><td>&gt; 350</td></tr>
+            </tbody>
+        </table>
+        <p class="source-ref">Varierar beroende på fastighetens ålder, uppvärmningsform, geografiskt läge och aktuella energipriser. Ca 200 kr/kvm anses normalt. Källa: <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/energikostnad" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">HSB Bostadsrättskollen</a>.</p>
+
+        <h3>BRF Sjötungans energikostnad</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th></th><th>2024</th><th>2023</th><th>2022</th><th>2021</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Energikostnad kr/kvm</strong></td><td>263</td><td>251</td><td>247</td><td>223</td></tr>
+                <tr><td><strong>HSB:s bedömning</strong></td><td>Hög</td><td>Hög</td><td>Normal</td><td>Normal</td></tr>
+            </tbody>
+        </table>
+
+        <p class="source-ref">■ Var i årsredovisningen: Flerårsöversikten (sid 4). Detaljer: Not 4 (sid 11) — posterna El, Uppvärmning och Vatten.</p>
+
+        <p>Energikostnaden har ökat stadigt — från 204 till 263 kr/kvm på fyra år, en ökning på drygt 29%. Den ligger nu i det övre intervallet av "Hög" enligt HSB:s skala. Den historiska utvecklingen visar dock att kostnaden hållit sig relativt stabil kring 120–140 kr/kvm under lång tid, med den kraftigaste ökningen efter 2020:</p>
+
+        <!-- Chart: Energikostnad historik -->
+        <div class="norm-toggle" id="energiNormToggle">
+            <label><input type="radio" name="energiNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="energiNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="energiNorm" value="1"><span>Totalt</span></label>
+        </div>
+        <label class="inflation-toggle">
+            <input type="checkbox" id="energiInflationToggle">
+            Visa inflationsjusterade belopp
+        </label>
+        <div id="energiHistoryChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Energikostnad per kvm för BRF Sjötungan, 2003–2024. Källa: årsredovisningar.</p>
+
+        <h3>Vad betyder det för Sjötungan?</h3>
+        <p>Energikostnaderna drivs i huvudsak av externa faktorer som föreningen har begränsad kontroll över: fjärrvärmetaxor, elpris och kommunala VA-avgifter. HSB:s bostadsrättsbarometer visar att VA-taxorna i Stockholmsregionen steg med 20% under 2024 och hela 53% på fem år.</p>
+        <p>Sjötungans tre största energiposter 2024 var uppvärmning (7,5 MSEK), vatten (4,0 MSEK) och el (2,1 MSEK). Att vattenkostnaden ökade från 2,9 till 4,0 MSEK på ett år (+37%) förklarar en stor del av den totala ökningen.</p>
+        <p>Styrelsen kan i viss mån påverka energikostnaderna genom energieffektivisering — t.ex. injustering av värmesystem, byte till LED-belysning (genomfört 2021) och optimering av ventilation (nytt styrsystem 2020–2021). Men de största kostnadsökningarna beror på höjda taxor som ligger utanför föreningens kontroll.</p>
+
+        <h3>Jämförelse med andra föreningar (2024)</h3>
+        <div id="energiComparisonChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Energikostnad per kvm — jämförelse 2024. Källa: årsredovisningar.</p>
+
+        <p>Alla fyra föreningarna ligger i intervallet "Normal" till "Hög". Sjötungan och Björkbacken har precis passerat gränsen till "Hög" (250 kr/kvm), medan Siken och Gäddan ligger strax under. Skillnaderna är relativt små och beror troligen på fastigheternas ålder, uppvärmningsform och lokala VA-taxor.</p>
+
+        <h3>Sammanfattning: Energikostnad</h3>
+        <p>BRF Sjötungans energikostnad på 263 kr/kvm ligger i det lägre skiktet av "Hög" enligt HSB:s skala. Kostnaden har ökat kraftigt de senaste åren, drivet av höjda VA-taxor och energipriser. Föreningen har genomfört viss energieffektivisering (LED, ventilation) men de största kostnadsdrivarna ligger utanför styrelsens kontroll. Det kommande stambytet med IMD (individuell mätning och debitering av varmvatten) kan på sikt bidra till mer medveten vattenförbrukning.</p>
+
+        <h4>Din bedömning av Energikostnad:</h4>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="assessment-btn" data-color="#ef4444" style="flex:1; padding:10px; border:2px solid #ef4444; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#ef4444;" onclick="selectAssessment(this)">Oroväckande</button>
+            <button class="assessment-btn" data-color="#f59e0b" style="flex:1; padding:10px; border:2px solid #f59e0b; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#f59e0b;" onclick="selectAssessment(this)">Kan bli bättre</button>
+            <button class="assessment-btn" data-color="#10b981" style="flex:1; padding:10px; border:2px solid #10b981; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#10b981;" onclick="selectAssessment(this)">Godkänt</button>
+        </div>
+    </div>
+
+    <!-- 5. Räntekänslighet -->
+    <div class="guide-section">
+        <h2>5. Räntekänslighet</h2>
+        <p>Visar hur mycket årsavgifterna behöver höjas om räntan på föreningens lån stiger med 1 procentenhet. Oavsett om föreningen har bundna eller rörliga räntor — bindningstiden löper ut och räntan kan då förändras. Ju lägre siffra, desto bättre.</p>
+
+        <p><strong>Beräkning:</strong> (1% × totala räntebärande skulder) / totala årsavgifter</p>
+
+        <h3>Riktvärden (HSB Bostadsrättskollen)</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th>Bedömning</th><th>%</th></tr></thead>
+            <tbody>
+                <tr><td>Låg</td><td>&lt; 5%</td></tr>
+                <tr><td>Normal</td><td>5 – 9%</td></tr>
+                <tr><td>Hög</td><td>9 – 15%</td></tr>
+                <tr><td>Väldigt hög</td><td>&gt; 15%</td></tr>
+            </tbody>
+        </table>
+        <p class="source-ref">Räntekänsligheten hänger direkt ihop med skuldsättningen — ju högre lån, desto känsligare. Sedan 2023 obligatoriskt i årsredovisningen. Källa: <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/rantekanslighet" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">HSB Bostadsrättskollen</a>, BFNAR 2023:1.</p>
+
+        <h3>BRF Sjötungans räntekänslighet</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th></th><th>2024</th><th>2023</th><th>2022</th><th>2021</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Räntekänslighet %</strong></td><td>5</td><td>5</td><td>6</td><td>5</td></tr>
+                <tr><td><strong>HSB:s bedömning</strong></td><td>Normal</td><td>Normal</td><td>Normal</td><td>Normal</td></tr>
+            </tbody>
+        </table>
+
+        <p class="source-ref">■ Var i årsredovisningen: Flerårsöversikten (sid 4). Beräknas från: Totala lån → Not 14 (sid 14), Årsavgifter → Not 2 (sid 11).</p>
+
+        <p>Räntekänsligheten på 5% innebär i praktiken: om räntan på alla föreningens lån stiger med 1 procentenhet, skulle avgiften behöva höjas med 5% för att täcka den ökade räntekostnaden. Historiskt har räntekänsligheten ökat i takt med att skuldsättningen vuxit — från ca 3% under tidigt 2000-tal till dagens 5% (2024):</p>
+
+        <!-- Chart: Räntekänslighet historik -->
+        <div id="rantekanslighetHistoryChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Räntekänslighet för BRF Sjötungan, 2003–2024. Visar hur mycket avgiften behöver höjas (%) vid 1 procentenhets ränteökning. Källa: årsredovisningar.</p>
+
+        <h3>Vad betyder det för Sjötungan?</h3>
+        <p>Sjötungans räntekänslighet på 5% ligger precis på gränsen mellan "Låg" och "Normal" enligt HSB:s skala — ett bra läge. Men det finns två aspekter som medlemmar bör ha koll på:</p>
+        <p><strong>Den låga effektiva räntan (2024) är tillfällig.</strong> Som vi noterade under Sparande betalar föreningen en effektiv ränta på bara ~1,8%, tack vare förmånliga bundna lån. Men flera av dessa löper ut under 2025–2026 (bl.a. 45 MSEK till 0,64% i april 2025). När de omförhandlas till marknadsränta kommer räntekostnaden att stiga — även om själva räntekänslighets-nyckeltalet inte förändras (det mäter bara exponeringen, inte den faktiska räntan).</p>
+        <p><strong>Stambytet kommer att öka räntekänsligheten.</strong> När föreningen tar nya lån för stambytet ökar de räntebärande skulderna, medan årsavgifterna inte nödvändigtvis ökar i samma takt. Det innebär att räntekänsligheten kan stiga till kanske 7–9%, beroende på hur mycket som lånas och hur avgifterna justeras.</p>
+
+        <h3>Jämförelse med andra föreningar (2024)</h3>
+        <div id="rantekanslighetComparisonChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref">Räntekänslighet — jämförelse 2024. Källa: årsredovisningar.</p>
+
+        <p>Alla fyra lokala föreningarna har låg räntekänslighet — Gäddan och Siken på 4%, Sjötungan och Björkbacken på 5%. Stockholmssnittet var 8% under 2021 (HSB Bostadsrättsbarometer 2022; nyare barometrar redovisar inte detta nyckeltal separat). Tyresö-föreningarna ligger klart bättre till än genomsnittet. Den avgörande frågan framåt är hur mycket varje förening behöver låna till kommande stambyte.</p>
+
+        <h3>Sammanfattning: Räntekänslighet</h3>
+        <p>BRF Sjötungans räntekänslighet på 5% är på gränsen "Låg"/"Normal" — ett stabilt utgångsläge. Men nyckeltalet kommer sannolikt att stiga i takt med att föreningen tar nya lån för stambytet. Dessutom kommer den faktiska räntekostnaden att öka när förmånliga lån omförhandlas till högre räntor under 2025–2026. Räntekänsligheten bör följas noga de kommande åren.</p>
+
+        <h4>Din bedömning av Räntekänslighet:</h4>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="assessment-btn" data-color="#ef4444" style="flex:1; padding:10px; border:2px solid #ef4444; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#ef4444;" onclick="selectAssessment(this)">Oroväckande</button>
+            <button class="assessment-btn" data-color="#f59e0b" style="flex:1; padding:10px; border:2px solid #f59e0b; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#f59e0b;" onclick="selectAssessment(this)">Kan bli bättre</button>
+            <button class="assessment-btn" data-color="#10b981" style="flex:1; padding:10px; border:2px solid #10b981; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#10b981;" onclick="selectAssessment(this)">Godkänt</button>
+        </div>
+    </div>
+
+    <!-- 6. Tomträtt -->
+    <div class="guide-section">
+        <h2>6. Tomträtt</h2>
+        <p>Anger om föreningen äger marken fastigheten står på, eller om den arrenderas via en så kallad tomträtt. Om föreningen har tomträtt kan avgälden (hyran för marken) omförhandlas, vilket kan leda till ökade kostnader.</p>
+
+        <p><strong>Uppgift:</strong> Äger föreningen tomten? Om nej — när löper avtalet ut?</p>
+
+        <h3>Riktvärden (HSB Bostadsrättskollen)</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th>Typ</th><th>Risk</th></tr></thead>
+            <tbody>
+                <tr><td>Äger tomten</td><td>Ingen risk för tomträttsavgäld</td></tr>
+                <tr><td>Tomträtt</td><td>Avgälden kan förändras vid omförhandling</td></tr>
+            </tbody>
+        </table>
+        <p class="source-ref">BRF Sjötungan äger sin mark och har därmed ingen tomträttsrisk. Källa: <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/tomtratt" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">HSB Bostadsrättskollen</a>.</p>
+
+        <p>BRF Sjötungan äger sin mark. Detta innebär att föreningen inte har någon tomträttsavgäld och inte heller riskerar kostnadsökningar vid omförhandling av tomträttsavtal. Inget att oroa sig för här.</p>
+
+        <h4>Din bedömning av Tomträtt:</h4>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="assessment-btn" data-color="#ef4444" style="flex:1; padding:10px; border:2px solid #ef4444; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#ef4444;" onclick="selectAssessment(this)">Oroväckande</button>
+            <button class="assessment-btn" data-color="#f59e0b" style="flex:1; padding:10px; border:2px solid #f59e0b; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#f59e0b;" onclick="selectAssessment(this)">Kan bli bättre</button>
+            <button class="assessment-btn" data-color="#10b981" style="flex:1; padding:10px; border:2px solid #10b981; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#10b981;" onclick="selectAssessment(this)">Godkänt</button>
+        </div>
+    </div>
+
+    <!-- Section 7: Årsavgift -->
+    <div class="guide-section">
+        <h2>7. Årsavgift</h2>
+        <p>Visar vad medlemmarna betalar per kvadratmeter bostadsrättsyta och år. En lägre siffra är ofta bra — men inte alltid. En för låg avgift kan innebära att föreningen sparar för lite till framtida underhåll, vilket kan leda till kraftiga höjningar längre fram.</p>
+
+        <p><strong>Beräkning:</strong> Totala årsavgifter / total bostadsrättsyta (kvm)</p>
+
+        <h3>Riktvärden (HSB Bostadsrättskollen)</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th>Intervall</th><th>Bedömning</th></tr></thead>
+            <tbody>
+                <tr><td>500 – 800 kr/kvm</td><td>Vanligt intervall</td></tr>
+                <tr><td>800 – 1 000 kr/kvm</td><td>Högre än vanligt</td></tr>
+                <tr><td>&gt; 1 000 kr/kvm</td><td>Se upp</td></tr>
+            </tbody>
+        </table>
+        <p>En hög avgift i kombination med högt sparande kan vara ett tecken på god förvaltning — inte dålig ekonomi. Källa: <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/arsavgift" target="_blank" rel="noopener" style="color: var(--vm-blue); text-decoration: underline;">HSB Bostadsrättskollen</a>.</p>
+
+        <h3>BRF Sjötungans årsavgift</h3>
+        <table class="riktvarde-table">
+            <thead><tr><th></th><th>2024</th><th>2023</th><th>2022</th><th>2021</th></tr></thead>
+            <tbody>
+                <tr><td>Årsavgift kr/kvm</td><td>897</td><td>834</td><td>765</td><td>729</td></tr>
+            </tbody>
+        </table>
+        <p class="source-ref">■ Var i årsredovisningen: Flerårsöversikten (sid 4). Totala årsavgifter: Not 2 (sid 11). Avgiftsbeslut: Förvaltningsberättelsen (sid 3).</p>
+
+        <p>Årsavgiften har ökat kraftigt de senaste åren — från 729 till 897 kr/kvm, en ökning på 23% på fyra år. Historiskt låg avgiften relativt stabil kring 630–660 kr/kvm under hela 2000-talet fram till 2019, varefter ökningstakten accelererade markant:</p>
+
+        <div class="norm-toggle" id="arsavgiftNormToggle">
+            <label><input type="radio" name="arsavgiftNorm" value="kvm" checked><span>Per m² (51 666)</span></label>
+            <label><input type="radio" name="arsavgiftNorm" value="apt"><span>Per lägenhet (613)</span></label>
+            <label><input type="radio" name="arsavgiftNorm" value="1"><span>Totalt</span></label>
+        </div>
+        <label class="inflation-toggle">
+            <input type="checkbox" id="arsavgiftInflationCb">
+            Visa inflationsjusterade belopp
+        </label>
+        <div id="arsavgiftHistoryChart" style="width:100%; margin: 20px 0;"></div>
+        <p class="source-ref" style="text-align:center; font-size:12px; color:#888; margin-top:4px;">Årsavgift per kvm bostadsrättsyta (nominellt) för BRF Sjötungan, 2003–2024. Källa: årsredovisningar.</p>
+
+        <p>Samma data justerat för inflation (2024 års penningvärde). I reala termer är avgiften 2024 (875 kr/kvm) lägre än 2004 (958 kr/kvm). Avgiften sjönk realt under 2010-talet och har först nyligen börjat återhämta sig. Källa: årsredovisningar, SCB KPI.</p>
+
+        <h3>Vad betyder det för Sjötungan?</h3>
+        <p>Sjötungans avgift på 897 kr/kvm ligger i intervallet "Högre än vanligt" enligt HSB:s skala (800–1 000). Den har ökat snabbt, men det gäller hela Stockholmsregionen — HSB:s barometer visar att den genomsnittliga avgiften höjdes med 9% under 2024, den största ökningen sedan mätningarna startade.</p>
+        <p>Det är viktigt att förstå att avgiften inte kan bedömas isolerat. En hög avgift som finansierar ett högt sparande och god underhållsplanering är bättre än en låg avgift som leder till eftersatt underhåll och framtida chockhöjningar. Sjötungans sparande på 245 kr/kvm tyder på att avgiften inte bara går till drift utan också till framtidssäkring.</p>
+        <p>Med den beslutade avgiftshöjningen på 10% från januari 2025, plus ytterligare 3% per år kopplat till stambytet, kommer avgiften att fortsätta stiga de kommande åren.</p>
+
+        <h3>Jämförelse med andra föreningar (2024)</h3>
+        <div id="arsavgiftComparisonChart" style="width:100%; height:340px;"></div>
+        <p class="source-ref" style="text-align:center; font-size:12px; color:#888; margin-top:4px;">Årsavgift per kvm — jämförelse 2024. Källa: årsredovisningar, HSB Barometer 2025.</p>
+
+        <p>Sjötungan ligger över Stockholmssnittet (833 kr/kvm enligt HSB Barometer 2025) men under Björkbacken. Siken har den lägsta avgiften — men också det lägsta sparandet (120 kr/kvm), vilket illustrerar att låg avgift inte alltid är positivt.</p>
+
+        <div class="callout" style="border-left: 4px solid var(--vm-blue); background: #f0f4ff; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin:0 0 8px 0;"><strong>Sammanfattning: Årsavgift</strong></p>
+            <p style="margin:0;">BRF Sjötungans avgift på 897 kr/kvm är "Högre än vanligt" men inte alarmerande. Den snabba ökningen de senaste åren speglar en rikstrend driven av höjda räntor, energipriser och VA-taxor. Avgiften kommer att fortsätta stiga med det kommande stambytet. Det avgörande är inte avgiftens nivå i sig, utan vad den finansierar — och huruvida den räcker till för att upprätthålla ett tillräckligt sparande.</p>
+        </div>
+
+        <h4>Din bedömning av Årsavgift:</h4>
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <button class="assessment-btn" data-color="#ef4444" style="flex:1; padding:10px; border:2px solid #ef4444; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#ef4444;" onclick="selectAssessment(this)">Oroväckande</button>
+            <button class="assessment-btn" data-color="#f59e0b" style="flex:1; padding:10px; border:2px solid #f59e0b; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#f59e0b;" onclick="selectAssessment(this)">Kan bli bättre</button>
+            <button class="assessment-btn" data-color="#10b981" style="flex:1; padding:10px; border:2px solid #10b981; border-radius:8px; background:white; cursor:pointer; font-weight:600; color:#10b981;" onclick="selectAssessment(this)">Godkänt</button>
+        </div>
+    </div>
+
+    <!-- Prognosis: Hur förändras nyckeltalen efter stambytet? -->
+    <div class="guide-section">
+        <h2>Hur förändras nyckeltalen efter stambytet?</h2>
+        <p>Hittills har vi tittat på var BRF Sjötungan stod vid utgången av 2024. Men föreningen står inför sitt största projekt sedan den bildades — ett stambyte som beräknas pågå i sex år och finansieras med uppskattningsvis 290 MSEK i nya lån. Hur förändrar det bilden?</p>
+
+        <div class="callout" style="border-left: 4px solid var(--vm-blue); background: #f0f4ff; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin:0 0 8px 0;"><strong>Innan ett stort projekt bör utgångsläget vara starkt</strong></p>
+            <p style="margin:0;">När en förening ska ta på sig en skuld av den här storleksordningen är det inte tillräckligt att nyckeltalen ser "normala" ut. Idealt bör föreningen ha låg skuldsättning, högt sparande och låga driftkostnader innan projektet startar — för att ha marginal när den nya skuldbördan slår igenom. Att banken beviljar lånet innebär inte nödvändigtvis att det är optimalt för medlemmarna — banken har pantbrev i fastigheten och bär minimal risk.</p>
+        </div>
+
+        <h3>Uppskattad påverkan på nyckeltalen</h3>
+        <div class="callout" style="border-left: 4px solid #f59e0b; background: #fffbeb; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin:0 0 8px 0;"><strong>Viktigt: dessa siffror är uppskattningar, inte officiella</strong></p>
+            <p style="margin:0;">Styrelsen har inte delat några detaljerade finansiella underlag för stambytet med medlemmarna i digital form. De siffror som presenteras nedan är baserade på fragmentariska uppgifter från den extra stämman i maj 2025 — i huvudsak minnen och foton av presentationsbilder. Inga officiella kalkyler, budgetdokument eller scenarioanalyser har gjorts tillgängliga för medlemmarna att granska i lugn och ro.</p>
+            <p style="margin:8px 0 0 0;">Detta gör det svårt för enskilda medlemmar att bilda sig en välgrundad uppfattning om hur stambytet påverkar föreningens ekonomi och deras egen privatekonomi. Beslut av den här storleksordningen — det största i föreningens historia — förtjänar full ekonomisk transparens.</p>
+        </div>
+
+        <div id="prognosSkuldChart" style="width:100%; height:340px;"></div>
+        <p class="source-ref" style="text-align:center; font-size:12px; color:#888; margin-top:4px;">Skuldsättning kr/kvm — prognos. Källa: uppskattning baserad på stämmoinfo.</p>
+
+        <div id="prognosRkChart" style="width:100%; height:340px; margin-top:24px;"></div>
+        <p class="source-ref" style="text-align:center; font-size:12px; color:#888; margin-top:4px;">Räntekänslighet % — prognos. Källa: uppskattning baserad på stämmoinfo.</p>
+
+        <div id="prognosAvgiftChart" style="width:100%; height:340px; margin-top:24px;"></div>
+        <p class="source-ref" style="text-align:center; font-size:12px; color:#888; margin-top:4px;">Årsavgift kr/kvm — prognos. Källa: uppskattning baserad på stämmoinfo.</p>
+
+        <p><strong>Beräkningsantaganden:</strong> Nya lån 290 MSEK fördelade jämnt över 6 år, 3% ränta, avgiftshöjning 10% 2025 + 3%/år därefter (stambytesrelaterat). Totalyta 51 666 kvm. Befintliga lån antas oförändrade.</p>
+
+        <p>Den kanske viktigaste iakttagelsen är att räntekostnaden — föreningens enskilt största kostnad efter driften — kan nästan fyrdubblas. Varje procentenhets ränteökning utöver 3% innebär ytterligare ~5,2 MSEK per år i kostnader, vilket motsvarar ungefär 12% avgiftshöjning.</p>
+
+        <h3>Frågor som medlemmar kan ställa</h3>
+        <ul>
+            <li>Kan styrelsen dela fullständiga finansiella underlag för stambytet digitalt med alla medlemmar?</li>
+            <li>Hur stor blir den totala kostnaden? Har upphandling skett i konkurrens med flera anbud?</li>
+            <li>Hur planerar styrelsen att amortera de nya lånen — och under hur lång tid?</li>
+            <li>Vilken ränta räknar styrelsen med, och vad händer med avgiften om räntan stiger till 4% eller 5%?</li>
+            <li>Hur bedömer styrelsen att stambytet påverkar lägenheternas marknadsvärde?</li>
+            <li>Kan medlemmarna få löpande ekonomisk rapportering under projektets gång?</li>
+        </ul>
+
+        <div class="callout" style="border-left: 4px solid var(--vm-blue); background: #f0f4ff; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin:0 0 8px 0;"><strong>Transparens är en förutsättning för goda beslut</strong></p>
+            <p style="margin:0;">Stambytet är nödvändigt — stammarna är föråldrade och måste bytas. Men det är också det enskilt största ekonomiska beslutet i föreningens historia. Det kommer att påverka varje medlems månadskostnad och varje lägenhets marknadsvärde under lång tid framåt.</p>
+            <p style="margin:8px 0 0 0;">För att medlemmarna ska kunna fatta välinformerade beslut och följa projektets ekonomiska utveckling behövs full insyn: detaljerade kalkyler, upphandlingsunderlag, scenarioanalyser vid olika räntenivåer, och löpande rapportering. Utan denna transparens saknar medlemmarna möjlighet att bedöma om föreningens ekonomi hanteras på bästa sätt — och det är ytterst medlemmarna som bär den ekonomiska risken.</p>
+        </div>
+    </div>
+
+    <!-- Källor -->
+    <div class="guide-section">
+        <h2>Källor</h2>
+
+        <h3>BRF Sjötungans årsredovisningar (2003–2024)</h3>
+        <p>Primärkälla för samtliga nyckeltal, lånedetaljer, kassaflödesdata och historiska diagram.</p>
+        <ul style="font-size:13px; line-height:1.8;">
+            <li>2024 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/stamma2025.pdf" target="_blank" rel="noopener">stamma2025.pdf</a></li>
+            <li>2023 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2024/stamma-2024.pdf" target="_blank" rel="noopener">stamma-2024.pdf</a></li>
+            <li>2022 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2023/stamma-2023.pdf" target="_blank" rel="noopener">stamma-2023.pdf</a></li>
+            <li>2021 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2022/stamma_kallelse_2022.pdf" target="_blank" rel="noopener">stamma_kallelse_2022.pdf</a></li>
+            <li>2020 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2021/stamma_kallelse-2021.pdf" target="_blank" rel="noopener">stamma_kallelse-2021.pdf</a></li>
+            <li>2019 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2020/BRF_Sjotungan_arsredovisning_2019.pdf" target="_blank" rel="noopener">arsredovisning_2019.pdf</a></li>
+            <li>2018 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2019/kallelse%20stamma%202019.pdf" target="_blank" rel="noopener">kallelse stamma 2019.pdf</a></li>
+            <li>2017 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2018/kallelse%20stamma2018.pdf" target="_blank" rel="noopener">kallelse stamma 2018.pdf</a></li>
+            <li>2016 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2017/arsredovisning%202016.pdf" target="_blank" rel="noopener">arsredovisning 2016.pdf</a></li>
+            <li>2015 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2016/arsredovisning2015.pdf" target="_blank" rel="noopener">arsredovisning2015.pdf</a></li>
+            <li>2014 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2015/arsredovisning2014.pdf" target="_blank" rel="noopener">arsredovisning2014.pdf</a></li>
+            <li>2013 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2014/arsredovisning%202013.pdf" target="_blank" rel="noopener">arsredovisning 2013.pdf</a></li>
+            <li>2012 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2013.pdf" target="_blank" rel="noopener">arsredovisning2013.pdf</a></li>
+            <li>2011 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2012.pdf" target="_blank" rel="noopener">arsredovisning2012.pdf</a></li>
+            <li>2010 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2010.pdf" target="_blank" rel="noopener">arsredovisning2010.pdf</a></li>
+            <li>2009 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning%202009.pdf" target="_blank" rel="noopener">arsredovisning 2009.pdf</a></li>
+            <li>2008 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning%202008.pdf" target="_blank" rel="noopener">Arsredovisning 2008.pdf</a></li>
+            <li>2007 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning%202007.pdf" target="_blank" rel="noopener">Arsredovisning 2007.pdf</a></li>
+            <li>2006 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning_2006.pdf" target="_blank" rel="noopener">Arsredovisning_2006.pdf</a></li>
+            <li>2005 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/bokslut2005.pdf" target="_blank" rel="noopener">bokslut2005.pdf</a></li>
+            <li>2004 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning_2004.pdf" target="_blank" rel="noopener">Arsredovisning_2004.pdf</a></li>
+            <li>2003 – <a href="https://sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning_03_B.pdf" target="_blank" rel="noopener">arsredovisning_03_B.pdf</a></li>
+        </ul>
+
+        <h3>HSB Bostadsrättskollen</h3>
+        <p>Definitioner och riktvärden för de sju nyckeltalen. <a href="https://www.hsb.se/bostadsrattskollen/nyckeltal/" target="_blank" rel="noopener">hsb.se/bostadsrattskollen/nyckeltal/</a></p>
+
+        <h3>Stockholms bostadsrättsbarometer 2025 (HSB Stockholm)</h3>
+        <p>Genomsnittliga nyckeltal för 762 bostadsrättsföreningar i Stockholmsregionen, baserat på räkenskapsåret 2024. Används för jämförelsetal: skuldsättning 5 773 kr/kvm, sparande 165 kr/kvm, årsavgift 833 kr/kvm, snittränta 3,1%. Räntekänslighet redovisas ej separat i denna rapport. <a href="https://www.hsb.se/nyheter-och-tips/nyheter/2025/stockholms-bostadsrattsbarometer-2025/" target="_blank" rel="noopener">hsb.se</a></p>
+
+        <h3>HSB Södertörns bostadsrättsbarometer 2025</h3>
+        <p>Regionala jämförelsetal för Södertörn (Huddinge, Botkyrka, Tullinge, Nynäshamn). Sparande 175 kr/kvm. <a href="https://www.hsb.se/nyheter-och-tips/nyheter/2025/bostadsrattsbarometern-2025/" target="_blank" rel="noopener">hsb.se</a></p>
+
+        <h3>HSB Stockholms bostadsrättsbarometer 2022</h3>
+        <p>Genomsnittlig räntekänslighet Stockholm ~8% (baserat på 2021 års data). <a href="https://www.hsb.se/stockholm/om-hsb/hsb-i-samhallet/hsb-stockholms-bostadsrattsbarometer-2022/" target="_blank" rel="noopener">hsb.se</a></p>
+
+        <h3>BFNAR 2023:1 (Bokföringsnämnden)</h3>
+        <p>Kompletterande upplysningar m.m. i bostadsrättsföreningars årsredovisning. Definierar hur nyckeltalen ska beräknas enligt lag. <a href="https://www.bfn.se/wp-content/uploads/vl23-1-brf.pdf" target="_blank" rel="noopener">bfn.se</a></p>
+
+        <h3>SCB KRITA</h3>
+        <p>Riksgenomsnitt skuldsättning 2023: 6 135 kr/kvm totalyta. Statistik över kreditinstitutens krediter till BRF:er. <a href="https://www.scb.se" target="_blank" rel="noopener">scb.se</a></p>
+
+        <h3>GMT Research — Short Term Debt / Total Debt</h3>
+        <p>Definition av andel kortfristiga skulder som finansiellt riskmått. Varningsgräns 60%. <a href="https://gmtresearch.com/en/accounting-ratio/short-term-debttotal-debt/" target="_blank" rel="noopener">gmtresearch.com</a></p>
+
+        <h3>Jämförelseföreningar</h3>
+        <ul>
+            <li>BRF Gäddan — <a href="https://www.hsb.se/contentassets/86f49356af2f42af8d7c574c0198ef68/arsredovisning-2024.pdf" target="_blank" rel="noopener">årsredovisning 2024</a></li>
+            <li>BRF Siken — <a href="https://www.hsb.se/contentassets/01cbe2f140c64d928887343d2128ba70/publik-arsredovisning.pdf" target="_blank" rel="noopener">årsredovisning 2024</a></li>
+            <li>BRF Björkbacken — <a href="https://brfbjorkbacken.se/download.php?id=314015&auth=bc77653666" target="_blank" rel="noopener">årsredovisning 2024</a></li>
+        </ul>
+    </div>
+
+    <!-- Denna guide uppdateras -->
+    <div class="guide-section">
+        <h2>Denna guide uppdateras</h2>
+        <p>Denna guide baseras på BRF Sjötungans årsredovisning för 2024. Data för 2025 — det första året med stambytets fulla effekt — är ännu inte tillgängligt. När årsredovisningen för 2025 publiceras kommer guiden att uppdateras med nya siffror och justerade prognoser.</p>
+
+        <p>Den senaste versionen av denna guide finns alltid tillgänglig online:</p>
+
+        <div style="display:flex; flex-direction:column; gap:16px; margin:20px 0;">
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                <div>
+                    <strong>Guide i PDF-format</strong><br>
+                    <a href="https://visionmyggan.se/sjotungan-analytics/brf-economy-guide.pdf" target="_blank" rel="noopener" style="color: var(--vm-blue); font-size:13px;">visionmyggan.se/sjotungan-analytics/brf-economy-guide.pdf</a>
+                </div>
+            </div>
+        </div>
+
+        <p>Har du frågor, synpunkter eller vill bidra med data? Kontakta Vision Myggan via <a href="https://visionmyggan.se" target="_blank" rel="noopener" style="color: var(--vm-blue);">visionmyggan.se</a>.</p>
     </div>
 
 </section>
-
-</main>
 
 <script>
 function showSection(id) {
@@ -845,7 +1449,979 @@ function renderSparandeHistoryChart() {
         annotations: [...compAnnots, ...valAnnots],
         plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
     }, { responsive: true, displayModeBar: false });
+
+    // ── Chart 4: Kassaflöde waterfall 2024 ──
+    // All top-level events represent the full cash flow (operations + investments + financing)
+    const cfEvents = ye2024.filter(e =>
+        !(catMap[e.category_id] && catMap[e.category_id].parent)
+    );
+    const cfSorted = cfEvents
+        .map(e => ({ label: catMap[e.category_id] ? catMap[e.category_id].name : 'Okänd', value: parseInt(e.amount) }))
+        .sort((a, b) => {
+            if (a.value > 0 && b.value <= 0) return -1;
+            if (a.value <= 0 && b.value > 0) return 1;
+            if (a.value > 0) return b.value - a.value;
+            return Math.abs(b.value) - Math.abs(a.value);
+        });
+    const cfNet = cfSorted.reduce((s, i) => s + i.value, 0);
+
+    let cashflowNormDivisor = TOTAL_KVM;
+
+    function renderCashflowWaterfall() {
+        const div = cashflowNormDivisor;
+        const unitLabel = div === TOTAL_KVM ? 'kr/kvm' : div === TOTAL_APARTMENTS ? 'kr/lgh' : 'kr';
+        const fmt = v => {
+            const a = Math.abs(v);
+            const sign = v < 0 ? '−' : '';
+            if (div === 1) {
+                return sign + (a >= 1e6 ? (a/1e6).toFixed(1) + ' MSEK' : Math.round(a/1e3) + ' TSEK');
+            }
+            return sign + Math.round(a).toLocaleString('sv-SE') + ' ' + unitLabel;
+        };
+
+        const labels = cfSorted.map(i => i.label).concat(['Nettokassaförändring']);
+        const xVals = cfSorted.map(i => i.value / div).concat([cfNet / div]);
+        const measures = cfSorted.map(() => 'relative').concat(['total']);
+
+        let run = 0;
+        const cfAnnots = [];
+        cfSorted.forEach(it => {
+            const s = run;
+            run += it.value;
+            cfAnnots.push({
+                x: it.value >= 0 ? Math.max(s, run) / div : Math.min(s, run) / div,
+                y: it.label, text: fmt(it.value / div),
+                xanchor: it.value >= 0 ? 'left' : 'right',
+                xshift: it.value >= 0 ? 8 : -8,
+                showarrow: false, font: { size: 10 }
+            });
+        });
+        cfAnnots.push({
+            x: Math.max(0, cfNet) / div, y: 'Nettokassaförändring',
+            text: fmt(cfNet / div), xanchor: 'left', xshift: 8,
+            showarrow: false, font: { size: 11, color: '#3b82f6' }
+        });
+
+        Plotly.newPlot('cashflowWaterfallChart', [{
+            type: 'waterfall',
+            orientation: 'h',
+            x: xVals, y: labels, measure: measures,
+            text: xVals.map(v => Math.round(v) + ' ' + unitLabel),
+            textposition: 'none',
+            connector: { line: { color: '#94a3b8', width: 1 } },
+            increasing: { marker: { color: '#22c55e' } },
+            decreasing: { marker: { color: '#ef4444' } },
+            totals: { marker: { color: '#3b82f6' } },
+            hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>'
+        }], {
+            showlegend: false,
+            height: Math.max(250, (cfSorted.length + 1) * 36 + 50),
+            margin: { l: 280, r: 120, t: 10, b: 30 },
+            xaxis: { title: unitLabel, tickformat: ',.0f', separatethousands: true },
+            yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
+            plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)',
+            annotations: cfAnnots
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    renderCashflowWaterfall();
+
+    document.querySelectorAll('#cashflowNormToggle input[name="cashflowNorm"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const v = event.target.value;
+            if (v === 'kvm') cashflowNormDivisor = TOTAL_KVM;
+            else if (v === 'apt') cashflowNormDivisor = TOTAL_APARTMENTS;
+            else cashflowNormDivisor = 1;
+            renderCashflowWaterfall();
+        });
+    });
+
+    // ── Chart 5: Kostnadsfördelning 2024 (treemap via ECharts) ──
+    const COST_COLORS = {
+        '1':  '#dc2626', // Driftkostnader
+        '5':  '#f97316', // Övriga externa kostnader
+        '6':  '#d97706', // Personalkostnader
+        '7':  '#b91c1c', // Räntekostnader
+        '8':  '#9333ea', // Investeringar
+    };
+
+    const childrenOf = {};
+    categories.forEach(c => {
+        if (c.parent) {
+            if (!childrenOf[c.parent]) childrenOf[c.parent] = [];
+            childrenOf[c.parent].push(c.id);
+        }
+    });
+
+    const yearAmounts = {};
+    ye2024.forEach(e => { yearAmounts[e.category_id] = parseInt(e.amount); });
+
+    function nodeValue(n) { return n.value !== undefined ? n.value : (n.children || []).reduce((s, c) => s + nodeValue(c), 0); }
+
+    function buildCostNode(catId) {
+        const cat = catMap[catId];
+        if (!cat) return null;
+        const amount = yearAmounts[catId];
+        const kids = (childrenOf[catId] || [])
+            .map(cid => buildCostNode(cid))
+            .filter(n => n !== null);
+        if (kids.length > 0) {
+            if (amount !== undefined && amount < 0) {
+                const childrenTotal = kids.reduce((s, c) => s + nodeValue(c), 0);
+                const residual = Math.abs(amount) - childrenTotal;
+                if (residual > 0) kids.push({ name: 'Övrigt ' + cat.name.toLowerCase(), value: residual });
+            }
+            kids.sort((a, b) => nodeValue(b) - nodeValue(a));
+            const color = COST_COLORS[catId] || '#94a3b8';
+            return { name: cat.name, itemStyle: { color }, children: kids };
+        } else if (amount !== undefined && amount < 0) {
+            const color = COST_COLORS[catId] || '#94a3b8';
+            return { name: cat.name, value: Math.abs(amount), itemStyle: { color } };
+        }
+        return null;
+    }
+
+    const costItems = [];
+    let totalCost = 0;
+    categories.filter(c => !c.parent).forEach(c => {
+        const amount = yearAmounts[c.id];
+        if (amount === undefined || amount >= 0) return;
+        const node = buildCostNode(c.id);
+        if (!node) return;
+        costItems.push(node);
+        totalCost += Math.abs(amount);
+    });
+
+    let costNormDivisor = TOTAL_KVM;
+    const costChart = costItems.length > 0 ? echarts.init(document.getElementById('costDistributionChart')) : null;
+    if (costChart) window.addEventListener('resize', () => costChart.resize());
+
+    function getCostFmtShort(v) {
+        const d = costNormDivisor;
+        if (d === 1) { const a = Math.abs(v); return a >= 1e6 ? (v/1e6).toFixed(1) + ' MSEK' : Math.round(v/1e3) + ' TSEK'; }
+        const label = d === TOTAL_KVM ? 'kr/kvm' : 'kr/lgh';
+        return Math.round(v / d).toLocaleString('sv-SE') + ' ' + label;
+    }
+    function getCostFmtLong(v) {
+        const d = costNormDivisor;
+        const label = d === TOTAL_KVM ? 'kr/kvm' : d === TOTAL_APARTMENTS ? 'kr/lgh' : 'kr';
+        return Math.round(v / d).toLocaleString('sv-SE') + ' ' + label + ' (' + Math.round(v).toLocaleString('sv-SE') + ' kr)';
+    }
+
+    function renderCostDistribution() {
+        if (!costChart || costItems.length === 0) return;
+
+        window._costTreemapData = { costItems, totalCost, fmtShort: getCostFmtShort, fmtLong: getCostFmtLong };
+
+        costChart.setOption({
+            tooltip: {
+                formatter: info => {
+                    const path = info.treePathInfo.map(n => n.name).filter(Boolean).join(' › ');
+                    return '<b>' + path + '</b><br/>' + getCostFmtLong(info.value);
+                }
+            },
+            series: [{
+                type: 'treemap',
+                roam: false,
+                nodeClick: false,
+                leafDepth: 1,
+                width: '100%',
+                height: '100%',
+                breadcrumb: { show: false },
+                label: {
+                    show: true,
+                    formatter: p => '{n|' + p.name + '}\n{v|' + getCostFmtShort(p.value) + '}',
+                    rich: {
+                        n: { fontSize: 12, color: '#fff', lineHeight: 16, textShadowColor: 'rgba(0,0,0,0.55)', textShadowBlur: 3, textShadowOffsetX: 0, textShadowOffsetY: 1 },
+                        v: { fontSize: 11, color: 'rgba(255,255,255,0.9)', lineHeight: 14, textShadowColor: 'rgba(0,0,0,0.55)', textShadowBlur: 3, textShadowOffsetX: 0, textShadowOffsetY: 1 }
+                    }
+                },
+                upperLabel: {
+                    show: true, height: 28, fontSize: 13, fontWeight: 'bold', color: '#fff',
+                    backgroundColor: 'rgba(0,0,0,0.22)', padding: [2, 6], borderRadius: 3,
+                    textShadowColor: 'rgba(0,0,0,0.55)', textShadowBlur: 3, formatter: '{b}'
+                },
+                levels: [
+                    { itemStyle: { borderColor: '#e5e7eb', borderWidth: 4, gapWidth: 4 }, upperLabel: { show: true, height: 30 } },
+                    { colorSaturation: [0.45, 0.85], itemStyle: { borderColor: 'rgba(255,255,255,0.25)', borderWidth: 1, gapWidth: 1 } }
+                ],
+                data: costItems
+            }]
+        }, true);
+    }
+
+    renderCostDistribution();
+
+    document.querySelectorAll('#costNormToggle input[name="costNorm"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const v = event.target.value;
+            if (v === 'kvm') costNormDivisor = TOTAL_KVM;
+            else if (v === 'apt') costNormDivisor = TOTAL_APARTMENTS;
+            else costNormDivisor = 1;
+            renderCostDistribution();
+        });
+    });
+
+    // ── Section 3: Skuldsättning charts ──
+    // Load debt data from financial_states.csv
+    const states = await loadCSV('data/financial_states.csv');
+    const debtByYear = {};
+    states.forEach(s => {
+        const y = s.year;
+        const cid = parseInt(s.category_id);
+        const amt = parseInt(s.amount);
+        if (!debtByYear[y]) debtByYear[y] = { shortTerm: 0, longTerm: 0, cash: 0 };
+        if (cid === 0) debtByYear[y].shortTerm = amt;
+        else if (cid === 1) debtByYear[y].longTerm = amt;
+        else if (cid >= 2 && cid <= 5) debtByYear[y].cash = (debtByYear[y].cash || 0) + amt;
+    });
+    const debtYears = Object.keys(debtByYear).sort();
+    let skuldAdjustInflation = false;
+    let skuldNormDivisor = TOTAL_KVM;
+
+    function getSkuldDisplayValue(val, year) {
+        if (skuldAdjustInflation) {
+            const idx = sparandePriceIndexByYear[String(year)];
+            if (idx && idx > 0) return (val * (100 / idx)) / skuldNormDivisor;
+        }
+        return val / skuldNormDivisor;
+    }
+
+    function renderSkuldHistoryChart() {
+        const totalPerKvm = debtYears.map(y => Math.round(getSkuldDisplayValue(debtByYear[y].shortTerm + debtByYear[y].longTerm, y)));
+        const longPerKvm = debtYears.map(y => Math.round(getSkuldDisplayValue(debtByYear[y].longTerm, y)));
+        const shortPerKvm = debtYears.map(y => Math.round(getSkuldDisplayValue(debtByYear[y].shortTerm, y)));
+        const cashPerKvm = debtYears.map(y => Math.round(getSkuldDisplayValue(debtByYear[y].cash, y)));
+        const inflLabel = skuldAdjustInflation ? ` (${sparandeMacroBaseYear} års värde)` : '';
+        const unitLabel = skuldNormDivisor === TOTAL_KVM ? 'kr/kvm' : skuldNormDivisor === TOTAL_APARTMENTS ? 'kr/lgh' : 'kr';
+        const isMobile = window.innerWidth <= 768;
+
+        Plotly.newPlot('skuldHistoryChart', [
+            { x: debtYears, y: totalPerKvm, name: 'Totala skulder', type: 'scatter', mode: 'lines+markers',
+              line: { color: '#dc2626', width: 2.5 }, marker: { size: 5 },
+              hovertemplate: '%{x}: %{y:,.0f} ' + unitLabel + '<extra>Totalt</extra>' },
+            { x: debtYears, y: longPerKvm, name: 'Långfristiga', type: 'scatter', mode: 'lines+markers',
+              line: { color: '#2563eb', width: 1.5 }, marker: { size: 4 },
+              hovertemplate: '%{x}: %{y:,.0f} ' + unitLabel + '<extra>Långfristiga</extra>' },
+            { x: debtYears, y: shortPerKvm, name: 'Kortfristiga', type: 'scatter', mode: 'lines+markers',
+              line: { color: '#f59e0b', width: 1.5 }, marker: { size: 4 },
+              hovertemplate: '%{x}: %{y:,.0f} ' + unitLabel + '<extra>Kortfristiga</extra>' },
+            { x: debtYears, y: cashPerKvm, name: 'Likvida medel', type: 'scatter', mode: 'lines+markers',
+              line: { color: '#22c55e', width: 1.5, dash: 'dot' }, marker: { size: 4 },
+              hovertemplate: '%{x}: %{y:,.0f} ' + unitLabel + '<extra>Likvida</extra>' }
+        ], {
+            height: isMobile ? 300 : 400,
+            margin: isMobile ? { t: 10, r: 60, b: 50, l: 50 } : { t: 20, r: 80, b: 50, l: 60 },
+            xaxis: { title: 'År', tickfont: { size: isMobile ? 9 : 12 }, showgrid: false, dtick: 2 },
+            yaxis: { title: unitLabel + inflLabel, tickfont: { size: isMobile ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', zeroline: true },
+            legend: { orientation: 'h', y: -0.2, x: 0.5, xanchor: 'center', font: { size: 11 } },
+            hovermode: 'x unified',
+            plot_bgcolor: 'white', paper_bgcolor: 'white'
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    renderSkuldHistoryChart();
+
+    document.querySelectorAll('#skuldNormToggle input[name="skuldNorm"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const v = event.target.value;
+            if (v === 'kvm') skuldNormDivisor = TOTAL_KVM;
+            else if (v === 'apt') skuldNormDivisor = TOTAL_APARTMENTS;
+            else skuldNormDivisor = 1;
+            renderSkuldHistoryChart();
+        });
+    });
+
+    const skuldInflToggle = document.getElementById('skuldInflationToggle');
+    if (skuldInflToggle) {
+        skuldInflToggle.addEventListener('change', (event) => {
+            skuldAdjustInflation = event.target.checked;
+            renderSkuldHistoryChart();
+        });
+    }
+
+    // ── Refinancing risk chart ──
+    (function() {
+        const refiYears = debtYears.filter(y => debtByYear[y].shortTerm + debtByYear[y].longTerm > 0);
+        const refiPct = refiYears.map(y => {
+            const total = debtByYear[y].shortTerm + debtByYear[y].longTerm;
+            return total > 0 ? Math.round(debtByYear[y].shortTerm / total * 100) : 0;
+        });
+        const isMobile = window.innerWidth <= 768;
+
+        Plotly.newPlot('refinancingRiskChart', [{
+            x: refiYears, y: refiPct, type: 'bar',
+            marker: { color: refiPct.map(v => v >= 60 ? '#dc2626' : v >= 40 ? '#f59e0b' : '#2563eb') },
+            hovertemplate: '%{x}: %{y}%<extra></extra>'
+        }], {
+            height: isMobile ? 280 : 350,
+            margin: isMobile ? { t: 10, r: 10, b: 50, l: 50 } : { t: 20, r: 20, b: 50, l: 50 },
+            xaxis: { title: 'År', showgrid: false, dtick: 2, tickfont: { size: isMobile ? 9 : 12 } },
+            yaxis: { title: '% av totala skulder', range: [0, 100], showgrid: true, gridcolor: '#e9ecef' },
+            shapes: [{
+                type: 'line', xref: 'paper', x0: 0, x1: 1,
+                yref: 'y', y0: 60, y1: 60,
+                line: { color: '#dc2626', width: 2, dash: 'dash' }, layer: 'above'
+            }],
+            annotations: [{
+                x: 1, xref: 'paper', xanchor: 'right', y: 62, yref: 'y',
+                text: 'Varningsgräns 60%', showarrow: false,
+                font: { size: 10, color: '#dc2626' }
+            }],
+            showlegend: false, hovermode: 'x unified',
+            plot_bgcolor: 'white', paper_bgcolor: 'white'
+        }, { responsive: true, displayModeBar: false });
+    })();
+
+    // ── Investment history chart ──
+    const investYears = years.filter(y => parseInt(y) >= 2004);
+    const investData = investYears.map(y => {
+        const invEvents = events.filter(e => e.year === y && parseInt(e.category_id) === 8);
+        return invEvents.reduce((s, e) => s + Math.abs(parseInt(e.amount)), 0);
+    });
+    let investNormDivisor = TOTAL_KVM;
+
+    function renderInvestmentChart() {
+        const div = investNormDivisor;
+        const unitLabel = div === TOTAL_KVM ? 'kr/kvm' : div === TOTAL_APARTMENTS ? 'kr/lgh' : 'MSEK';
+        const isMobile = window.innerWidth <= 768;
+
+        const yVals = div === 1
+            ? investData.map(v => Math.round(v / 1e6 * 10) / 10)
+            : investData.map(v => Math.round(v / div));
+
+        const hoverUnit = div === 1 ? 'MSEK' : unitLabel;
+
+        Plotly.newPlot('investmentHistoryChart', [{
+            x: investYears, y: yVals,
+            type: 'bar',
+            marker: { color: '#6366f1' },
+            hovertemplate: '%{x}: %{y:,.0f} ' + hoverUnit + '<extra></extra>'
+        }], {
+            height: isMobile ? 280 : 350,
+            margin: isMobile ? { t: 10, r: 10, b: 50, l: 50 } : { t: 20, r: 20, b: 50, l: 50 },
+            xaxis: { title: 'År', showgrid: false, dtick: 2, tickfont: { size: isMobile ? 9 : 12 } },
+            yaxis: { title: unitLabel, showgrid: true, gridcolor: '#e9ecef', zeroline: true },
+            showlegend: false, hovermode: 'x unified',
+            plot_bgcolor: 'white', paper_bgcolor: 'white'
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    renderInvestmentChart();
+
+    document.querySelectorAll('#investNormToggle input[name="investNorm"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const v = event.target.value;
+            if (v === 'kvm') investNormDivisor = TOTAL_KVM;
+            else if (v === 'apt') investNormDivisor = TOTAL_APARTMENTS;
+            else investNormDivisor = 1;
+            renderInvestmentChart();
+        });
+    });
+
+    // ── Skuldsättning comparison chart ──
+    (function() {
+        const skuldCompData = [
+            { name: 'BRF\nGäddan', value: 2780 },
+            { name: 'BRF Siken', value: 3070 },
+            { name: 'BRF\nBjörkbacken', value: 4283 },
+            { name: 'BRF\nSjötungan', value: 4532 },
+            { name: 'Stockholm\nsnitt', value: 5773 }
+        ];
+        const skuldCompColors = skuldCompData.map(d =>
+            d.name.includes('Sjötungan') ? '#2563eb' : '#e0a030'
+        );
+        const skuldCompShapes = [
+            { type: 'rect', yref: 'y', y0: 0, y1: 3000, xref: 'paper', x0: 0, x1: 1,
+              fillcolor: 'rgba(34,197,94,0.08)', line: { width: 0 }, layer: 'below' },
+            { type: 'rect', yref: 'y', y0: 3000, y1: 8000, xref: 'paper', x0: 0, x1: 1,
+              fillcolor: 'rgba(251,191,36,0.06)', line: { width: 0 }, layer: 'below' },
+            { type: 'rect', yref: 'y', y0: 8000, y1: 16000, xref: 'paper', x0: 0, x1: 1,
+              fillcolor: 'rgba(239,68,68,0.06)', line: { width: 0 }, layer: 'below' },
+            { type: 'line', yref: 'y', y0: 3000, y1: 3000, xref: 'paper', x0: 0, x1: 1,
+              line: { color: '#16a34a', width: 1, dash: 'dot' }, layer: 'below' },
+            { type: 'line', yref: 'y', y0: 8000, y1: 8000, xref: 'paper', x0: 0, x1: 1,
+              line: { color: '#dc2626', width: 1, dash: 'dot' }, layer: 'below' },
+            { type: 'line', yref: 'y', y0: 15000, y1: 15000, xref: 'paper', x0: 0, x1: 1,
+              line: { color: '#dc2626', width: 1, dash: 'dot' }, layer: 'below' }
+        ];
+        const skuldCompAnnots = [
+            { y: 1500, text: 'Låg', color: '#16a34a' },
+            { y: 5500, text: 'Normal', color: '#d97706' },
+            { y: 11500, text: 'Hög', color: '#dc2626' },
+            { y: 15500, text: 'Mycket hög', color: '#7f1d1d' }
+        ].map(a => ({
+            x: 1.01, xref: 'paper', xanchor: 'left', y: a.y,
+            text: a.text, showarrow: false, font: { size: 10, color: a.color }
+        }));
+        const valAnnots = skuldCompData.map((d, i) => ({
+            x: i, y: d.value, xref: 'x', yref: 'y',
+            text: '<b>' + d.value.toLocaleString('sv-SE') + '</b>', showarrow: false,
+            font: { size: 12, color: '#1b3a5c' }, yanchor: 'bottom', yshift: 4
+        }));
+
+        Plotly.newPlot('skuldComparisonChart', [{
+            type: 'bar',
+            x: skuldCompData.map(d => d.name),
+            y: skuldCompData.map(d => d.value),
+            marker: { color: skuldCompColors, line: { width: 0 } },
+            width: 0.6,
+            hovertemplate: '<b>%{x}</b><br>%{y:,.0f} kr/kvm<extra></extra>'
+        }], {
+            showlegend: false,
+            height: 380,
+            margin: { l: 50, r: 100, t: 30, b: 70 },
+            yaxis: { title: 'kr/kvm', range: [0, 16000], showgrid: false, zeroline: false,
+                     tickvals: [0, 3000, 5000, 8000, 10000, 15000], tickfont: { color: '#666' } },
+            xaxis: { tickfont: { size: 11, color: '#1b3a5c' }, tickangle: 0 },
+            shapes: skuldCompShapes,
+            annotations: [...skuldCompAnnots, ...valAnnots],
+            plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+        }, { responsive: true, displayModeBar: false });
+    })();
+
+    // ── Section 4: Energikostnad charts ──
+    const ENERGY_CAT_IDS = [22, 23, 24]; // El, Uppvärmning, Vatten
+    const energiByYear = {};
+    events.forEach(e => {
+        const cid = parseInt(e.category_id);
+        if (!ENERGY_CAT_IDS.includes(cid)) return;
+        const y = e.year;
+        if (!energiByYear[y]) energiByYear[y] = 0;
+        energiByYear[y] += Math.abs(parseInt(e.amount));
+    });
+    const energiYears = Object.keys(energiByYear).sort();
+
+    let energiNormDivisor = TOTAL_KVM;
+    let energiAdjustInflation = false;
+
+    function getEnergiDisplayValue(val, year) {
+        if (energiAdjustInflation) {
+            const idx = sparandePriceIndexByYear[String(year)];
+            if (idx && idx > 0) return (val * (100 / idx)) / energiNormDivisor;
+        }
+        return val / energiNormDivisor;
+    }
+
+    function renderEnergiHistoryChart() {
+        const yVals = energiYears.map(y => Math.round(getEnergiDisplayValue(energiByYear[y], y)));
+        const inflLabel = energiAdjustInflation ? ` (${sparandeMacroBaseYear} års värde)` : '';
+        const unitLabel = energiNormDivisor === TOTAL_KVM ? 'kr/kvm' : energiNormDivisor === TOTAL_APARTMENTS ? 'kr/lgh' : 'kr';
+        const isMobile = window.innerWidth <= 768;
+
+        const bandScale = TOTAL_KVM / energiNormDivisor;
+        const hsbBands = [
+            { y0: 0, y1: 150, color: 'rgba(34,197,94,0.06)', label: 'Låg' },
+            { y0: 150, y1: 250, color: 'rgba(251,191,36,0.06)', label: 'Normal' },
+            { y0: 250, y1: 350, color: 'rgba(239,68,68,0.06)', label: 'Hög' }
+        ];
+        const shapes = hsbBands.map(b => ({
+            type: 'rect', xref: 'paper', x0: 0, x1: 1,
+            yref: 'y', y0: b.y0 * bandScale, y1: b.y1 * bandScale,
+            fillcolor: b.color, line: { width: 0 }, layer: 'below'
+        }));
+        const hsbLines = [150, 250, 350].map(v => ({
+            type: 'line', xref: 'paper', x0: 0, x1: 1,
+            yref: 'y', y0: v * bandScale, y1: v * bandScale,
+            line: { color: '#94a3b8', width: 1, dash: 'dot' }, layer: 'below'
+        }));
+        const annots = [
+            { y: 75, text: 'Låg', color: '#16a34a' },
+            { y: 200, text: 'Normal', color: '#d97706' },
+            { y: 300, text: 'Hög', color: '#dc2626' }
+        ].map(a => ({
+            x: 1.01, xref: 'paper', xanchor: 'left', y: a.y * bandScale,
+            text: a.text, showarrow: false, font: { size: 10, color: a.color }
+        }));
+
+        Plotly.newPlot('energiHistoryChart', [{
+            x: energiYears, y: yVals,
+            type: 'scatter', mode: 'lines+markers',
+            line: { color: '#f59e0b', width: 2.5 },
+            marker: { size: 5 },
+            hovertemplate: '%{x}: %{y:,.0f} ' + unitLabel + '<extra></extra>'
+        }], {
+            height: isMobile ? 300 : 400,
+            margin: isMobile ? { t: 10, r: 60, b: 50, l: 50 } : { t: 20, r: 80, b: 50, l: 60 },
+            xaxis: { title: 'År', tickfont: { size: isMobile ? 9 : 12 }, showgrid: false, dtick: 2 },
+            yaxis: { title: unitLabel + inflLabel, tickfont: { size: isMobile ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', zeroline: true },
+            shapes: [...shapes, ...hsbLines],
+            annotations: annots,
+            showlegend: false,
+            hovermode: 'x unified',
+            plot_bgcolor: 'white', paper_bgcolor: 'white'
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    renderEnergiHistoryChart();
+
+    document.querySelectorAll('#energiNormToggle input[name="energiNorm"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const v = event.target.value;
+            if (v === 'kvm') energiNormDivisor = TOTAL_KVM;
+            else if (v === 'apt') energiNormDivisor = TOTAL_APARTMENTS;
+            else energiNormDivisor = 1;
+            renderEnergiHistoryChart();
+        });
+    });
+
+    const energiInflToggle = document.getElementById('energiInflationToggle');
+    if (energiInflToggle) {
+        energiInflToggle.addEventListener('change', (event) => {
+            energiAdjustInflation = event.target.checked;
+            renderEnergiHistoryChart();
+        });
+    }
+
+    // ── Energikostnad comparison chart ──
+    (function() {
+        const energiCompData = [
+            { name: 'BRF Siken', value: 229 },
+            { name: 'BRF\nGäddan', value: 235 },
+            { name: 'BRF\nSjötungan', value: 263 },
+            { name: 'BRF\nBjörkbacken', value: 269 }
+        ];
+        const energiCompColors = energiCompData.map(d =>
+            d.name.includes('Sjötungan') ? '#f59e0b' : '#e0a030'
+        );
+        const energiCompShapes = [
+            { type: 'rect', yref: 'y', y0: 0, y1: 150, xref: 'paper', x0: 0, x1: 1,
+              fillcolor: 'rgba(34,197,94,0.08)', line: { width: 0 }, layer: 'below' },
+            { type: 'rect', yref: 'y', y0: 150, y1: 250, xref: 'paper', x0: 0, x1: 1,
+              fillcolor: 'rgba(251,191,36,0.06)', line: { width: 0 }, layer: 'below' },
+            { type: 'rect', yref: 'y', y0: 250, y1: 350, xref: 'paper', x0: 0, x1: 1,
+              fillcolor: 'rgba(239,68,68,0.06)', line: { width: 0 }, layer: 'below' },
+            { type: 'rect', yref: 'y', y0: 350, y1: 450, xref: 'paper', x0: 0, x1: 1,
+              fillcolor: 'rgba(127,29,29,0.04)', line: { width: 0 }, layer: 'below' },
+            { type: 'line', yref: 'y', y0: 150, y1: 150, xref: 'paper', x0: 0, x1: 1,
+              line: { color: '#16a34a', width: 1, dash: 'dot' }, layer: 'below' },
+            { type: 'line', yref: 'y', y0: 250, y1: 250, xref: 'paper', x0: 0, x1: 1,
+              line: { color: '#dc2626', width: 1, dash: 'dot' }, layer: 'below' },
+            { type: 'line', yref: 'y', y0: 350, y1: 350, xref: 'paper', x0: 0, x1: 1,
+              line: { color: '#dc2626', width: 1, dash: 'dot' }, layer: 'below' }
+        ];
+        const energiCompAnnots = [
+            { y: 75, text: 'Låg', color: '#16a34a' },
+            { y: 200, text: 'Normal', color: '#d97706' },
+            { y: 300, text: 'Hög', color: '#dc2626' },
+            { y: 390, text: 'Mycket hög', color: '#7f1d1d' }
+        ].map(a => ({
+            x: 1.01, xref: 'paper', xanchor: 'left', y: a.y,
+            text: a.text, showarrow: false, font: { size: 10, color: a.color }
+        }));
+        const valAnnots = energiCompData.map((d, i) => ({
+            x: i, y: d.value, xref: 'x', yref: 'y',
+            text: '<b>' + d.value + '</b>', showarrow: false,
+            font: { size: 12, color: '#1b3a5c' }, yanchor: 'bottom', yshift: 4
+        }));
+
+        Plotly.newPlot('energiComparisonChart', [{
+            type: 'bar',
+            x: energiCompData.map(d => d.name),
+            y: energiCompData.map(d => d.value),
+            marker: { color: energiCompColors, line: { width: 0 } },
+            width: 0.6,
+            hovertemplate: '<b>%{x}</b><br>%{y:,.0f} kr/kvm<extra></extra>'
+        }], {
+            showlegend: false,
+            height: 380,
+            margin: { l: 40, r: 100, t: 30, b: 70 },
+            yaxis: { title: 'kr/kvm', range: [0, 450], showgrid: false, zeroline: false,
+                     tickvals: [0, 100, 150, 200, 250, 300, 350, 400], tickfont: { color: '#666' } },
+            xaxis: { tickfont: { size: 11, color: '#1b3a5c' }, tickangle: 0 },
+            shapes: energiCompShapes,
+            annotations: [...energiCompAnnots, ...valAnnots],
+            plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+        }, { responsive: true, displayModeBar: false });
+    })();
+
+    // ── Section 5: Räntekänslighet charts ──
+    // Build årsavgifter by year from events (cat 17, fallback cat 0 Nettoomsättning)
+    const avgifterByYear = {};
+    events.forEach(e => {
+        const cid = parseInt(catMap[e.category_id]?.id ?? e.category_id);
+        if (cid === 17) avgifterByYear[e.year] = (avgifterByYear[e.year] || 0) + parseInt(e.amount);
+    });
+    // Fallback: if no cat 17 for a year, use cat 0 (Nettoomsättning)
+    const nettoomsattningByYear = {};
+    events.forEach(e => {
+        const cid = parseInt(catMap[e.category_id]?.id ?? e.category_id);
+        if (cid === 0) nettoomsattningByYear[e.year] = (nettoomsattningByYear[e.year] || 0) + parseInt(e.amount);
+    });
+
+    // Räntekänslighet = (1% × total debt) / årsavgifter × 100
+    const rkYears = [];
+    const rkValues = [];
+    debtYears.forEach(y => {
+        const totalDebt = debtByYear[y].shortTerm + debtByYear[y].longTerm;
+        const avgifter = avgifterByYear[y] || nettoomsattningByYear[y];
+        if (totalDebt > 0 && avgifter && avgifter > 0) {
+            const rk = (0.01 * totalDebt) / avgifter * 100;
+            rkYears.push(y);
+            rkValues.push(Math.round(rk * 10) / 10);
+        }
+    });
+
+    // HSB bands for räntekänslighet
+    const rkBands = [
+        { y0: 0, y1: 5, color: 'rgba(16,185,129,0.10)', label: 'Låg' },
+        { y0: 5, y1: 9, color: 'rgba(245,158,11,0.10)', label: 'Normal' },
+        { y0: 9, y1: 15, color: 'rgba(239,68,68,0.10)', label: 'Hög' },
+    ];
+    const rkShapes = rkBands.map(b => ({
+        type: 'rect', xref: 'paper', x0: 0, x1: 1,
+        yref: 'y', y0: b.y0, y1: b.y1,
+        fillcolor: b.color, line: { width: 0 }, layer: 'below'
+    }));
+    const rkAnnots = rkBands.map(b => ({
+        x: 1, xref: 'paper', xanchor: 'right',
+        y: (b.y0 + b.y1) / 2, yref: 'y', yanchor: 'middle',
+        text: b.label, showarrow: false,
+        font: { size: 11, color: '#888' }
+    }));
+
+    const isMobileRk = window.innerWidth < 600;
+    Plotly.newPlot('rantekanslighetHistoryChart', [{
+        x: rkYears, y: rkValues,
+        type: 'scatter', mode: 'lines+markers',
+        line: { color: '#3b82f6', width: 2 },
+        marker: { size: 6 },
+        hovertemplate: '%{x}: %{y:.1f}%<extra></extra>'
+    }], {
+        margin: { t: 20, b: 50, l: 50, r: 20 },
+        xaxis: { title: 'År', tickfont: { size: isMobileRk ? 9 : 12 }, showgrid: false, dtick: 2 },
+        yaxis: { title: '%', tickfont: { size: isMobileRk ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', rangemode: 'tozero' },
+        shapes: rkShapes,
+        annotations: rkAnnots,
+        showlegend: false, hovermode: 'x unified',
+        plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+    }, { responsive: true, displayModeBar: false });
+
+    // Comparison chart (hardcoded peer data)
+    (function() {
+        const compNames = ['Gäddan 6', 'Siken', 'Björkbacken', 'Sjötungan', 'Sthlm snitt 2021'];
+        const compValues = [4, 4, 5, 5, 8];
+        const compColors = compValues.map(v => v < 5 ? '#10b981' : v <= 9 ? '#f59e0b' : '#ef4444');
+
+        const rkCompBands = [
+            { y0: 0, y1: 5, color: 'rgba(16,185,129,0.10)', label: 'Låg' },
+            { y0: 5, y1: 9, color: 'rgba(245,158,11,0.10)', label: 'Normal' },
+            { y0: 9, y1: 15, color: 'rgba(239,68,68,0.10)', label: 'Hög' },
+        ];
+        const rkCompShapes = rkCompBands.map(b => ({
+            type: 'rect', xref: 'paper', x0: 0, x1: 1,
+            yref: 'y', y0: b.y0, y1: b.y1,
+            fillcolor: b.color, line: { width: 0 }, layer: 'below'
+        }));
+        const rkCompAnnots = rkCompBands.map(b => ({
+            x: 1, xref: 'paper', xanchor: 'right',
+            y: (b.y0 + b.y1) / 2, yref: 'y', yanchor: 'middle',
+            text: b.label, showarrow: false,
+            font: { size: 11, color: '#888' }
+        }));
+        const valAnnots = compNames.map((n, i) => ({
+            x: n, y: compValues[i], yanchor: 'bottom', yshift: 5,
+            text: compValues[i] + '%', showarrow: false,
+            font: { size: 13, weight: 'bold' }
+        }));
+
+        Plotly.newPlot('rantekanslighetComparisonChart', [{
+            x: compNames, y: compValues,
+            type: 'bar',
+            marker: { color: compColors, line: { width: 0 } },
+            hovertemplate: '%{x}: %{y}%<extra></extra>',
+            width: 0.5
+        }], {
+            margin: { t: 20, b: 60, l: 50, r: 20 },
+            xaxis: { tickfont: { size: 12 }, showgrid: false },
+            yaxis: { title: '%', showgrid: true, gridcolor: '#e9ecef', range: [0, 15] },
+            shapes: rkCompShapes,
+            annotations: [...rkCompAnnots, ...valAnnots],
+            plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+        }, { responsive: true, displayModeBar: false });
+    })();
+
+    // ── Section 7: Årsavgift charts ──
+    let arsavgiftNormDivisor = TOTAL_KVM;
+    let arsavgiftAdjustInflation = false;
+
+    // Build årsavgift per kvm data
+    const arsavgiftYears = [];
+    const arsavgiftRaw = [];
+    const sortedAvgYears = Object.keys(avgifterByYear).map(Number).sort((a, b) => a - b);
+    sortedAvgYears.forEach(y => {
+        arsavgiftYears.push(y);
+        arsavgiftRaw.push(avgifterByYear[y]);
+    });
+
+    function getArsavgiftDisplayValue(rawTotal, year) {
+        let v = rawTotal;
+        if (arsavgiftAdjustInflation) {
+            const idx = sparandePriceIndexByYear[String(year)];
+            if (idx && idx > 0) v = v * (100 / idx);
+        }
+        return v / arsavgiftNormDivisor;
+    }
+
+    function renderArsavgiftHistoryChart() {
+        const bandScale = TOTAL_KVM / arsavgiftNormDivisor;
+        const avgBands = [
+            { y0: 0, y1: 500 * bandScale, color: 'rgba(16,185,129,0.08)', label: 'Under vanligt' },
+            { y0: 500 * bandScale, y1: 800 * bandScale, color: 'rgba(16,185,129,0.10)', label: 'Vanligt' },
+            { y0: 800 * bandScale, y1: 1000 * bandScale, color: 'rgba(245,158,11,0.10)', label: 'Högre' },
+            { y0: 1000 * bandScale, y1: 1400 * bandScale, color: 'rgba(239,68,68,0.10)', label: 'Se upp' },
+        ];
+        const shapes = avgBands.map(b => ({
+            type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: b.y0, y1: b.y1,
+            fillcolor: b.color, line: { width: 0 }, layer: 'below'
+        }));
+        const annots = avgBands.filter(b => b.label !== 'Under vanligt').map(b => ({
+            x: 1, xref: 'paper', xanchor: 'right',
+            y: (b.y0 + b.y1) / 2, yref: 'y', yanchor: 'middle',
+            text: b.label, showarrow: false, font: { size: 11, color: '#888' }
+        }));
+
+        const dispY = arsavgiftYears.map((y, i) => getArsavgiftDisplayValue(arsavgiftRaw[i], y));
+        const unitLabel = arsavgiftNormDivisor === TOTAL_KVM ? 'kr/kvm'
+            : arsavgiftNormDivisor === TOTAL_APARTMENTS ? 'kr/lgh' : 'kr';
+        const isMob = window.innerWidth < 600;
+
+        Plotly.newPlot('arsavgiftHistoryChart', [{
+            x: arsavgiftYears, y: dispY,
+            type: 'scatter', mode: 'lines+markers',
+            line: { color: '#3b82f6', width: 2 }, marker: { size: 6 },
+            hovertemplate: arsavgiftYears.map((yr, i) => {
+                const perKvm = arsavgiftRaw[i] / TOTAL_KVM;
+                return `${yr}: %{y:,.0f} ${unitLabel}`
+                    + (arsavgiftNormDivisor !== TOTAL_KVM ? ` (${Math.round(perKvm)} kr/kvm)` : '')
+                    + '<extra></extra>';
+            })
+        }], {
+            margin: { t: 20, b: 50, l: 60, r: 20 },
+            xaxis: { title: 'År', tickfont: { size: isMob ? 9 : 12 }, showgrid: false, dtick: 2 },
+            yaxis: { title: unitLabel, tickfont: { size: isMob ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', rangemode: 'tozero' },
+            shapes: shapes,
+            annotations: annots,
+            showlegend: false, hovermode: 'x unified',
+            plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    renderArsavgiftHistoryChart();
+
+    document.querySelectorAll('#arsavgiftNormToggle input[name="arsavgiftNorm"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const v = radio.value;
+            if (v === 'kvm') arsavgiftNormDivisor = TOTAL_KVM;
+            else if (v === 'apt') arsavgiftNormDivisor = TOTAL_APARTMENTS;
+            else arsavgiftNormDivisor = 1;
+            renderArsavgiftHistoryChart();
+        });
+    });
+
+    document.getElementById('arsavgiftInflationCb').addEventListener('change', function() {
+        arsavgiftAdjustInflation = this.checked;
+        renderArsavgiftHistoryChart();
+    });
+
+    // Comparison chart (hardcoded peer data for 2024)
+    (function() {
+        const compNames = ['BRF Siken', 'BRF Gäddan', 'Stockholm\nsnitt', 'BRF\nSjötungan', 'BRF\nBjörkbacken'];
+        const compValues = [734, 815, 833, 897, 962];
+        const compColors = compValues.map(v => v < 500 ? '#10b981' : v <= 800 ? '#10b981' : v <= 1000 ? '#f59e0b' : '#ef4444');
+
+        const avgCompBands = [
+            { y0: 0, y1: 500, color: 'rgba(200,200,200,0.06)', label: '' },
+            { y0: 500, y1: 800, color: 'rgba(16,185,129,0.10)', label: 'Vanligt (500–800)' },
+            { y0: 800, y1: 1000, color: 'rgba(245,158,11,0.10)', label: 'Högre än vanligt' },
+            { y0: 1000, y1: 1200, color: 'rgba(239,68,68,0.10)', label: 'Se upp' },
+        ];
+        const avgCompShapes = avgCompBands.map(b => ({
+            type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: b.y0, y1: b.y1,
+            fillcolor: b.color, line: { width: 0 }, layer: 'below'
+        }));
+        const avgCompAnnots = avgCompBands.filter(b => b.label).map(b => ({
+            x: 1, xref: 'paper', xanchor: 'right',
+            y: (b.y0 + b.y1) / 2, yref: 'y', yanchor: 'middle',
+            text: b.label, showarrow: false, font: { size: 11, color: '#888' }
+        }));
+        const valAnnots = compNames.map((n, i) => ({
+            x: n, y: compValues[i], yanchor: 'bottom', yshift: 5,
+            text: compValues[i] + '', showarrow: false, font: { size: 13, weight: 'bold' }
+        }));
+
+        Plotly.newPlot('arsavgiftComparisonChart', [{
+            x: compNames, y: compValues,
+            type: 'bar',
+            marker: { color: compColors, line: { width: 0 } },
+            hovertemplate: '%{x}: %{y} kr/kvm<extra></extra>',
+            width: 0.5
+        }], {
+            margin: { t: 20, b: 60, l: 50, r: 20 },
+            xaxis: { tickfont: { size: 12 }, showgrid: false },
+            yaxis: { title: 'kr/kvm', showgrid: true, gridcolor: '#e9ecef', range: [0, 1200] },
+            shapes: avgCompShapes,
+            annotations: [...avgCompAnnots, ...valAnnots],
+            plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+        }, { responsive: true, displayModeBar: false });
+    })();
+
+    // ── Prognosis charts (stambytet) ──
+    (function() {
+        // Hardcoded forecast data from PDF / stämmoinfo
+        const progYears =     [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
+        const skuldActual =   [4151, 4408, 4532, null, null, null, null, null, null];
+        const skuldForecast = [null, null, 4532, 5467, 6402, 7337, 8272, 9207, 10142];
+        const rkActual =      [6,    5,    5,    null, null, null, null, null, null];
+        const rkForecast =    [null, null, 5,    6,    7,    8,    9,    9,    10];
+        const avgActual =     [765,  834,  897,  null, null, null, null, null, null];
+        const avgForecast =   [null, null, 897,  1017, 1048, 1079, 1111, 1145, 1179];
+
+        function renderPrognosChart(divId, actualData, forecastData, bands, yTitle, valueSuffix, yRange) {
+            const progShapes = bands.map(b => ({
+                type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: b.y0, y1: b.y1,
+                fillcolor: b.color, line: { width: 0 }, layer: 'below'
+            }));
+            const progAnnots = bands.map(b => ({
+                x: 1, xref: 'paper', xanchor: 'right',
+                y: (b.y0 + b.y1) / 2, yref: 'y', yanchor: 'middle',
+                text: b.label, showarrow: false, font: { size: 11, color: '#888' }
+            }));
+
+            const traces = [{
+                x: progYears, y: actualData,
+                type: 'scatter', mode: 'lines+markers', name: 'Faktiskt',
+                line: { color: '#3b82f6', width: 2 }, marker: { size: 6 },
+                hovertemplate: '%{x}: %{y}' + valueSuffix + '<extra>Faktiskt</extra>',
+                connectgaps: false
+            }, {
+                x: progYears, y: forecastData,
+                type: 'scatter', mode: 'lines+markers', name: 'Prognos (uppskattning)',
+                line: { color: '#ef4444', width: 2, dash: 'dash' }, marker: { size: 6, symbol: 'diamond' },
+                hovertemplate: '%{x}: %{y}' + valueSuffix + '<extra>Prognos</extra>',
+                connectgaps: false
+            }];
+
+            const isMob = window.innerWidth < 600;
+            Plotly.newPlot(divId, traces, {
+                margin: { t: 20, b: 50, l: 60, r: 20 },
+                xaxis: { title: 'År', tickfont: { size: isMob ? 9 : 12 }, showgrid: false, dtick: 1 },
+                yaxis: { title: yTitle, tickfont: { size: isMob ? 10 : 12 }, showgrid: true, gridcolor: '#e9ecef', range: yRange },
+                shapes: progShapes, annotations: progAnnots,
+                legend: { x: 0, y: 1.12, orientation: 'h', font: { size: 12 } },
+                hovermode: 'x unified',
+                plot_bgcolor: 'rgba(0,0,0,0)', paper_bgcolor: 'rgba(0,0,0,0)'
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        // Skuldsättning prognos
+        renderPrognosChart('prognosSkuldChart', skuldActual, skuldForecast, [
+            { y0: 0, y1: 3000, color: 'rgba(16,185,129,0.10)', label: 'Låg' },
+            { y0: 3000, y1: 6000, color: 'rgba(245,158,11,0.08)', label: 'Normal' },
+            { y0: 6000, y1: 10000, color: 'rgba(239,68,68,0.08)', label: 'Hög' },
+            { y0: 10000, y1: 16000, color: 'rgba(239,68,68,0.15)', label: 'Mkt hög' },
+        ], 'kr/kvm', ' kr/kvm', [0, 16000]);
+
+        // Räntekänslighet prognos
+        renderPrognosChart('prognosRkChart', rkActual, rkForecast, [
+            { y0: 0, y1: 5, color: 'rgba(16,185,129,0.10)', label: 'Låg' },
+            { y0: 5, y1: 9, color: 'rgba(245,158,11,0.10)', label: 'Normal' },
+            { y0: 9, y1: 12, color: 'rgba(239,68,68,0.10)', label: 'Hög' },
+            { y0: 12, y1: 16, color: 'rgba(239,68,68,0.18)', label: 'Väldigt hög' },
+        ], '%', '%', [0, 16]);
+
+        // Årsavgift prognos
+        renderPrognosChart('prognosAvgiftChart', avgActual, avgForecast, [
+            { y0: 0, y1: 500, color: 'rgba(200,200,200,0.06)', label: '' },
+            { y0: 500, y1: 800, color: 'rgba(16,185,129,0.10)', label: 'Vanligt' },
+            { y0: 800, y1: 1000, color: 'rgba(245,158,11,0.10)', label: 'Högre' },
+            { y0: 1000, y1: 1400, color: 'rgba(239,68,68,0.10)', label: 'Se upp' },
+        ], 'kr/kvm', ' kr/kvm', [0, 1400]);
+    })();
 })();
+
+/* ── Fullscreen treemap ───────────────────── */
+let costsFsChart = null;
+function openCostsFullscreen() {
+    const d = window._costTreemapData;
+    if (!d || !d.costItems || d.costItems.length === 0) return;
+    const overlay = document.getElementById('costs-treemap-fullscreen');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('costs-fs-total').textContent = d.fmtShort(d.totalCost);
+
+    if (!costsFsChart) {
+        costsFsChart = echarts.init(document.getElementById('costs-treemap-fs-chart'));
+        window.addEventListener('resize', () => costsFsChart && costsFsChart.resize());
+    }
+
+    costsFsChart.setOption({
+        tooltip: {
+            formatter: info => {
+                const path = info.treePathInfo.map(n => n.name).filter(Boolean).join(' › ');
+                return '<b>' + path + '</b><br/>' + d.fmtLong(info.value);
+            }
+        },
+        series: [{
+            type: 'treemap',
+            roam: false,
+            nodeClick: false,
+            leafDepth: 3,
+            width: '100%',
+            height: '100%',
+            breadcrumb: { show: false },
+            label: {
+                show: true,
+                formatter: p => '{n|' + p.name + '}\n{v|' + d.fmtShort(p.value) + '}',
+                rich: {
+                    n: { fontSize: 13, color: '#fff', lineHeight: 18, textShadowColor: 'rgba(0,0,0,0.55)', textShadowBlur: 3, textShadowOffsetX: 0, textShadowOffsetY: 1 },
+                    v: { fontSize: 12, color: 'rgba(255,255,255,0.9)', lineHeight: 16, textShadowColor: 'rgba(0,0,0,0.55)', textShadowBlur: 3, textShadowOffsetX: 0, textShadowOffsetY: 1 }
+                }
+            },
+            upperLabel: {
+                show: true, height: 30, fontSize: 14, fontWeight: 'bold', color: '#fff',
+                backgroundColor: 'rgba(0,0,0,0.22)', padding: [2, 6], borderRadius: 3,
+                textShadowColor: 'rgba(0,0,0,0.55)', textShadowBlur: 3, formatter: '{b}'
+            },
+            levels: [
+                { itemStyle: { borderColor: '#e5e7eb', borderWidth: 4, gapWidth: 4 }, upperLabel: { show: true, height: 32 } },
+                { colorSaturation: [0.45, 0.85], itemStyle: { borderColor: 'rgba(255,255,255,0.3)', borderWidth: 2, gapWidth: 2 } },
+                { colorSaturation: [0.35, 0.75], itemStyle: { borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, gapWidth: 1 } }
+            ],
+            data: d.costItems
+        }]
+    }, true);
+    setTimeout(() => costsFsChart.resize(), 50);
+}
+
+function closeCostsFullscreen() {
+    document.getElementById('costs-treemap-fullscreen').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function selectAssessment(btn) {
+    const siblings = btn.parentElement.querySelectorAll('.assessment-btn');
+    siblings.forEach(b => { const c = b.dataset.color; b.style.background = 'white'; b.style.color = c; });
+    btn.style.background = btn.dataset.color;
+    btn.style.color = 'white';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeCostsFullscreen();
+});
 </script>
+
+<!-- Fullscreen treemap overlay -->
+<div id="costs-treemap-fullscreen" class="treemap-fullscreen">
+    <div class="treemap-fs-header">
+        <div style="display:flex;align-items:baseline;">
+            <h2>Kostnadsfördelning 2024</h2>
+            <span class="fs-total" id="costs-fs-total"></span>
+        </div>
+        <button class="treemap-fs-close" onclick="closeCostsFullscreen()">Stäng &times;</button>
+    </div>
+    <div id="costs-treemap-fs-chart" style="width:100%;height:100%;"></div>
+</div>
 </body>
 </html>
