@@ -1391,7 +1391,7 @@ function renderSparandeHistoryChart() {
     ];
 
     const compColors = compData.map(d =>
-        d.name.includes('Sjötungan') ? '#4a9c5a' : '#e0a030'
+        d.name.includes('Sjötungan') ? '#1A9E9E' : '#e0a030'
     );
 
     // Colored horizontal zone bands matching the PDF
@@ -1836,7 +1836,7 @@ function renderSparandeHistoryChart() {
             { name: 'Stockholm\nsnitt', value: 5773 }
         ];
         const skuldCompColors = skuldCompData.map(d =>
-            d.name.includes('Sjötungan') ? '#2563eb' : '#e0a030'
+            d.name.includes('Sjötungan') ? '#1A9E9E' : '#e0a030'
         );
         const skuldCompShapes = [
             { type: 'rect', yref: 'y', y0: 0, y1: 3000, xref: 'paper', x0: 0, x1: 1,
@@ -1989,7 +1989,7 @@ function renderSparandeHistoryChart() {
             { name: 'BRF\nBjörkbacken', value: 269 }
         ];
         const energiCompColors = energiCompData.map(d =>
-            d.name.includes('Sjötungan') ? '#f59e0b' : '#e0a030'
+            d.name.includes('Sjötungan') ? '#1A9E9E' : '#e0a030'
         );
         const energiCompShapes = [
             { type: 'rect', yref: 'y', y0: 0, y1: 150, xref: 'paper', x0: 0, x1: 1,
@@ -2108,7 +2108,7 @@ function renderSparandeHistoryChart() {
     (function() {
         const compNames = ['Gäddan 6', 'Siken', 'Björkbacken', 'Sjötungan', 'Sthlm snitt 2021'];
         const compValues = [4, 4, 5, 5, 8];
-        const compColors = compValues.map(v => v < 5 ? '#10b981' : v <= 9 ? '#f59e0b' : '#ef4444');
+        const compColors = compNames.map((n, i) => n.includes('Sjötungan') ? '#1A9E9E' : (compValues[i] < 5 ? '#10b981' : compValues[i] <= 9 ? '#f59e0b' : '#ef4444'));
 
         const rkCompBands = [
             { y0: 0, y1: 5, color: 'rgba(16,185,129,0.10)', label: 'Låg' },
@@ -2230,7 +2230,7 @@ function renderSparandeHistoryChart() {
     (function() {
         const compNames = ['BRF Siken', 'BRF Gäddan', 'Stockholm\nsnitt', 'BRF\nSjötungan', 'BRF\nBjörkbacken'];
         const compValues = [734, 815, 833, 897, 962];
-        const compColors = compValues.map(v => v < 500 ? '#10b981' : v <= 800 ? '#10b981' : v <= 1000 ? '#f59e0b' : '#ef4444');
+        const compColors = compNames.map((n, i) => n.includes('Sjötungan') ? '#1A9E9E' : (compValues[i] < 500 ? '#10b981' : compValues[i] <= 800 ? '#10b981' : compValues[i] <= 1000 ? '#f59e0b' : '#ef4444'));
 
         const avgCompBands = [
             { y0: 0, y1: 500, color: 'rgba(200,200,200,0.06)', label: '' },
