@@ -648,6 +648,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         let currentSparandeData = [];
         let selectedFlowCats = new Set([0, 1, 8, 17]);
         let showCashflowBar = true;
+        let showSelectedTotal = false;
         let currentFlowsData = null;
         let adjustForInflation = false;
         let macroPriceIndexByYear = {};
@@ -1610,6 +1611,29 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 paper_bgcolor: 'white'
             };
 
+            // Sum of selected categories
+            if (showSelectedTotal && selectedFlowCats.size > 0) {
+                const totalValues = flowsData.map(d => {
+                    let sum = 0;
+                    let hasAny = false;
+                    for (const catId of selectedFlowCats) {
+                        const c = d.cats && d.cats[catId];
+                        if (c) { sum += Math.abs(getRealValue(c.amount, d.year)); hasAny = true; }
+                    }
+                    return hasAny ? sum : null;
+                });
+                traces.push({
+                    x: years,
+                    y: totalValues,
+                    name: 'Summa valda',
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#111', width: 3, dash: 'dot' },
+                    marker: { size: 8, color: '#111', symbol: 'star' },
+                    hovertemplate: `%{x}: %{y:,.0f} SEK${normSuffix}<extra>Summa valda</extra>`
+                });
+            }
+
             const config = { responsive: true, displayModeBar: false };
 
             Plotly.newPlot('flowsChart', traces, layout, config);
@@ -1627,6 +1651,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 const cat = allEventCategories.find(c => c.id === catId);
                 if (cat) headerHtml += `<th class="number">${cat.name}</th>`;
             }
+            if (showSelectedTotal) headerHtml += '<th class="number">Summa valda</th>';
             if (showCashflowBar) headerHtml += '<th class="number">Totalt kassaflöde</th>';
             thead.innerHTML = headerHtml;
 
@@ -1653,6 +1678,14 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     } else {
                         cells += '<td class="number">N/A</td>';
                     }
+                }
+                if (showSelectedTotal) {
+                    let sum = 0; let hasAny = false;
+                    for (const catId of sortedCats) {
+                        const c = item.cats && item.cats[catId];
+                        if (c) { sum += Math.abs(getRealValue(c.amount, item.year)); hasAny = true; }
+                    }
+                    cells += `<td class="number"><strong>${hasAny ? formatCurrency(sum) : 'N/A'}</strong></td>`;
                 }
                 if (showCashflowBar) {
                     const adjustedCashflow = item.cashflow != null
@@ -1706,6 +1739,11 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 }
             }
 
+            // Add "Summa valda" chip
+            const stColor = '#111';
+            const stActive = showSelectedTotal;
+            html += `<span class="filter-chip ${stActive ? 'active' : ''}" data-selected-total="1" style="${stActive ? `background:${stColor}; border-color:${stColor};` : `border-color:${stColor};`}"><span class="color-dot" style="background:${stActive ? 'white' : stColor}"></span>Summa valda</span>`;
+
             // Add "Totalt kassaflöde" as the last chip
             const cfColor = '#607d8b';
             const cfActive = showCashflowBar;
@@ -1715,7 +1753,9 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
             container.querySelectorAll('.filter-chip').forEach(chip => {
                 chip.addEventListener('click', () => {
-                    if (chip.dataset.cashflow) {
+                    if (chip.dataset.selectedTotal) {
+                        showSelectedTotal = !showSelectedTotal;
+                    } else if (chip.dataset.cashflow) {
                         showCashflowBar = !showCashflowBar;
                     } else {
                         const catId = parseInt(chip.dataset.catId);
