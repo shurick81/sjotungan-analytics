@@ -18,6 +18,10 @@
       "Ewa Forsberg",
       "Håkan Kylsäter"
     ],
+    "suppleanter": [
+      "Bertil Neij",
+      "Ingela Livchitz"
+    ],
     "boxes": {
       "year": [
         70.86,
@@ -48,6 +52,12 @@
         649.9437,
         259.8624,
         702.1437
+      ],
+      "suppleanter": [
+        184.2,
+        460.2237,
+        257.238,
+        484.8237
       ]
     }
   },

@@ -20,6 +20,11 @@
       "Ewa Forsberg",
       "Sanna Havlind"
     ],
+    "suppleanter": [
+      "Maria Neiglick",
+      "Ingela Livchitz",
+      "Marie-Louise Sandqvist"
+    ],
     "boxes": {
       "year": [
         70.8,
@@ -50,6 +55,12 @@
         525.33968,
         253.68936,
         573.19568
+      ],
+      "suppleanter": [
+        184.2,
+        371.25968,
+        290.17908,
+        406.39568
       ]
     }
   },

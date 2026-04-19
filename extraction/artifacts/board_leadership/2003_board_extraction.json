@@ -19,6 +19,11 @@
       "Åke Berg",
       "Ewa Forsberg"
     ],
+    "suppleanter": [
+      "Maria Neiglick",
+      "Gun Hallgren",
+      "Kjell Signell"
+    ],
     "boxes": {
       "year": [
         70.5,
@@ -49,6 +54,12 @@
         599.56625,
         253.5471,
         635.19125
+      ],
+      "suppleanter": [
+        183.75,
+        394.06625,
+        250.63365,
+        429.69125
       ]
     }
   },

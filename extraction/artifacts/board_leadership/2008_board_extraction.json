@@ -18,6 +18,10 @@
       "Lolita Lall",
       "Lena Wiklund"
     ],
+    "suppleanter": [
+      "Markku Sandelin",
+      "Lena Holmberg"
+    ],
     "boxes": {
       "year": [
         63.36,
@@ -48,6 +52,12 @@
         607.4399999999999,
         244.07999999999998,
         669.6
+      ],
+      "suppleanter": [
+        177.12,
+        399.59999999999997,
+        242.88,
+        422.64
       ]
     }
   },

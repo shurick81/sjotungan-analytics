@@ -496,6 +496,14 @@
                     <input type="checkbox" value="valberedning" style="accent-color: var(--vm-blue);">
                     Valberedare
                 </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="revisorer" style="accent-color: var(--vm-blue);">
+                    Revisorer
+                </label>
+                <label class="text-sm" style="color: var(--vm-text);">
+                    <input type="checkbox" value="suppleanter" style="accent-color: var(--vm-blue);">
+                    Suppleanter
+                </label>
             </div>
             <div class="overflow-x-auto rounded-lg">
                 <table class="motions-table" id="board-participants-table">
@@ -858,12 +866,16 @@
         const BOARD_VICE_CHAIR_CATEGORY_ID = '2';
         const BOARD_MEMBERS_CATEGORY_ID = '3';
         const BOARD_VALBEREDNING_CATEGORY_ID = '4';
+        const BOARD_REVISORER_CATEGORY_ID = '5';
+        const BOARD_SUPPLEANTER_CATEGORY_ID = '8';
         const BOARD_TABLE_COLUMNS = [
             { key: 'year', label: 'Ar', className: 'col-year' },
             { key: 'chair', label: 'Ordförande', className: '' },
             { key: 'viceChair', label: 'Vice ordförande', className: '' },
             { key: 'members', label: 'Ledamöter', className: '' },
-            { key: 'valberedning', label: 'Valberedare', className: '' }
+            { key: 'valberedning', label: 'Valberedare', className: '' },
+            { key: 'revisorer', label: 'Revisorer', className: '' },
+            { key: 'suppleanter', label: 'Suppleanter', className: '' }
         ];
         const TABLE_COLUMNS = [
             { key: 'year', label: 'Ar', className: 'col-year' },
@@ -1861,10 +1873,14 @@
                         viceChair: null,
                         members: null,
                         valberedning: null,
+                        revisorer: null,
+                        suppleanter: null,
                         chairRef: null,
                         viceChairRef: null,
                         membersRef: null,
-                        valberedningRef: null
+                        valberedningRef: null,
+                        revisorerRef: null,
+                        suppleanterRef: null
                     });
                 }
 
@@ -1891,11 +1907,17 @@
                 } else if (row.categoryId === BOARD_VALBEREDNING_CATEGORY_ID) {
                     item.valberedning = value || null;
                     item.valberedningRef = ref;
+                } else if (row.categoryId === BOARD_REVISORER_CATEGORY_ID) {
+                    item.revisorer = value || null;
+                    item.revisorerRef = ref;
+                } else if (row.categoryId === BOARD_SUPPLEANTER_CATEGORY_ID) {
+                    item.suppleanter = value || null;
+                    item.suppleanterRef = ref;
                 }
             }
 
             return [...perYear.values()]
-                .filter(item => item.chair || item.viceChair || item.members || item.valberedning)
+                .filter(item => item.chair || item.viceChair || item.members || item.valberedning || item.revisorer || item.suppleanter)
                 .sort((a, b) => b.year - a.year);
         }
 
@@ -1972,6 +1994,10 @@
                         renderBoardCell(td, row.members, 'Ledamöter', row.membersRef, row.year);
                     } else if (col.key === 'valberedning') {
                         renderBoardCell(td, row.valberedning, 'Valberedare', row.valberedningRef, row.year);
+                    } else if (col.key === 'revisorer') {
+                        renderBoardCell(td, row.revisorer, 'Revisorer', row.revisorerRef, row.year);
+                    } else if (col.key === 'suppleanter') {
+                        renderBoardCell(td, row.suppleanter, 'Suppleanter', row.suppleanterRef, row.year);
                     }
 
                     tr.appendChild(td);
@@ -2182,7 +2208,9 @@
                         return r.categoryId === BOARD_CHAIR_CATEGORY_ID
                             || r.categoryId === BOARD_VICE_CHAIR_CATEGORY_ID
                             || r.categoryId === BOARD_MEMBERS_CATEGORY_ID
-                            || r.categoryId === BOARD_VALBEREDNING_CATEGORY_ID;
+                            || r.categoryId === BOARD_VALBEREDNING_CATEGORY_ID
+                            || r.categoryId === BOARD_REVISORER_CATEGORY_ID
+                            || r.categoryId === BOARD_SUPPLEANTER_CATEGORY_ID;
                     })
                 );
                 boardParticipantRows = boardRows;

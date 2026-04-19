@@ -96,7 +96,7 @@ The script writes directly to `data/general_states.csv` as:
 
 For older scanned protocols without a text layer, `extract_stamma_attendance.py` now uses OCR fallback (`pdftoppm` + `tesseract`) before writing results.
 
-## Board leadership extraction (pre-2013 backfill)
+## Board leadership extraction (annual reports)
 
 Dry-run board leadership extraction (writes artifacts under `extraction/artifacts/board_leadership/`):
 
@@ -104,11 +104,19 @@ Dry-run board leadership extraction (writes artifacts under `extraction/artifact
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py
 ```
 
-Append board leadership rows to `data/general_states.csv` (categories 0, 1, 2, 3):
+Run only selected years (useful when validating `Suppleanter` in 2015):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py --years 2015
+```
+
+Append board leadership rows to `data/general_states.csv` (categories 0, 1, 2, 3, 4, 8):
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py --append
 ```
+
+The script now also extracts `Suppleanter` and writes them to category `8`.
 
 ## Legacy financial extraction (states/events)
 

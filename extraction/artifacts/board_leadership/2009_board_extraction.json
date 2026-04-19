@@ -18,6 +18,10 @@
       "Lolita Lall",
       "Karna Henseby"
     ],
+    "suppleanter": [
+      "Lena Wiklund",
+      "Rolf Lovén"
+    ],
     "boxes": {
       "year": [
         98.16,
@@ -48,6 +52,12 @@
         468.71999999999997,
         505.2,
         480.96
+      ],
+      "suppleanter": [
+        96.96,
+        265.2,
+        162.48,
+        286.32
       ]
     }
   },

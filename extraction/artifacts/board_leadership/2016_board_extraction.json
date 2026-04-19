@@ -1,0 +1,62 @@
+{
+  "year": 2016,
+  "pdf": "arsredovisning_2016.pdf",
+  "page": 4,
+  "parsed": {
+    "chair": "Bengt Rapp",
+    "vice": "",
+    "members": [
+      "Björn Bergström",
+      "Stefan Bengtsson",
+      "Hans-Göran Vistrand",
+      "Hans Rosander",
+      "Lena Wiklund",
+      "Leila Isaksson",
+      "Jan-Stefan Dahlgren"
+    ],
+    "valberedning": [
+      "Gunilla Lovén",
+      "Aune Nordlund",
+      "Lillemor Jnsson"
+    ],
+    "suppleanter": [
+      "Jaime Martinez",
+      "Bo Gustafsson",
+      "Lukas Sveman"
+    ],
+    "boxes": {
+      "year": [
+        104.39999999999999,
+        123.83999999999999,
+        145.92,
+        134.64
+      ],
+      "chair": [
+        105.11999999999999,
+        149.51999999999998,
+        161.28,
+        160.07999999999998
+      ],
+      "vice": null,
+      "members": [
+        105.11999999999999,
+        174.95999999999998,
+        205.92,
+        261.36
+      ],
+      "valberedning": [
+        216.72,
+        475.68,
+        449.52,
+        488.15999999999997
+      ],
+      "suppleanter": [
+        105.6,
+        289.68,
+        178.79999999999998,
+        324.24
+      ]
+    }
+  },
+  "line_count": 46
+}

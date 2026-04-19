@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Extract board leadership rows into data/general_states.csv.
 
-This script focuses on missing historical years (pre-2013) and writes
-per-year extraction artifacts to extraction/artifacts/board_leadership/.
+This script extracts annual-report board roles and writes per-year artifacts to
+extraction/artifacts/board_leadership/.
 
 Upserted categories:
 - 0: Rakenskapsar period (YYYY-01-01 – YYYY-12-31)
@@ -10,6 +10,7 @@ Upserted categories:
 - 2: Vice ordförande
 - 3: Ledamoter (semicolon-separated)
 - 4: Valberedning (semicolon-separated)
+- 8: Suppleanter (semicolon-separated)
 """
 
 from __future__ import annotations
@@ -51,6 +52,12 @@ YEAR_SOURCES: Sequence[YearSource] = [
     YearSource(2010, "arsredovisning2010.pdf"),
     YearSource(2011, "arsredovisning2012.pdf"),
     YearSource(2012, "arsredovisning_2013.pdf"),
+    YearSource(2013, "arsredovisning_2013.pdf"),
+    YearSource(2014, "arsredovisning2014.pdf"),
+    YearSource(2015, "arsredovisning2015.pdf"),
+    YearSource(2016, "arsredovisning_2016.pdf"),
+    YearSource(2017, "kallelse_stamma2018.pdf"),
+    YearSource(2018, "kallelse_stamma_2019.pdf"),
 ]
 
 
@@ -63,6 +70,8 @@ def normalize_text(text: str) -> str:
 
 def clean_name(text: str) -> str:
     text = text.strip(" .,:;|-\t")
+    # OCR often injects digits into names (for example "Gé6ran").
+    text = re.sub(r"\d+", "", text)
     text = re.sub(r"\s+", " ", text)
     # Drop common leading role words that OCR can blend into name fields.
     text = re.sub(r"^(ordinarie|suppleant|styrelseledamot|ledamot)\s+", "", text, flags=re.IGNORECASE)
@@ -71,8 +80,13 @@ def clean_name(text: str) -> str:
 
 
 def is_probable_name(line: str) -> bool:
-    n = normalize_text(line)
-    if not n or any(ch.isdigit() for ch in line):
+    digit_count = sum(1 for ch in line if ch.isdigit())
+    if digit_count > 2:
+        return False
+
+    line_clean = re.sub(r"\d+", "", line)
+    n = normalize_text(line_clean)
+    if not n:
         return False
 
     blocked_tokens = [
@@ -96,7 +110,7 @@ def is_probable_name(line: str) -> bool:
     if any(token in n for token in blocked_tokens):
         return False
 
-    parts = [p for p in re.split(r"\s+", line.strip()) if p]
+    parts = [p for p in re.split(r"\s+", line_clean.strip()) if p]
     if len(parts) < 2 or len(parts) > 6:
         return False
 
@@ -370,7 +384,9 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
     vice = ""
     members: List[str] = []
     valberedning: List[str] = []
+    suppleanter: List[str] = []
     ordinarie_names: List[str] = []
+    legacy_inference = any("styrelsen har sedan ordinarie" in normalize_text(line) for line in lines)
 
     # Pass 1: parse inline role rows such as "Bengt Rapp Ordförande".
     for line in lines:
@@ -380,7 +396,7 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
         if vice_match:
             raw_name = line[: vice_match.start(2)]
             name = clean_name(raw_name)
-            if name:
+            if name and is_probable_name(name):
                 vice = name
             continue
 
@@ -388,7 +404,7 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
         if chair_match and "vice" not in normalized:
             raw_name = line[: chair_match.start(2)]
             name = clean_name(raw_name)
-            if name:
+            if name and is_probable_name(name):
                 chair = name
             continue
 
@@ -441,9 +457,9 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
                 ordinarie_names.append(candidate)
 
     # If chair/vice are still missing, infer from ordinarie ordering in legacy docs.
-    if ordinarie_names and not chair:
+    if legacy_inference and ordinarie_names and not chair:
         chair = ordinarie_names[0]
-    if len(ordinarie_names) > 1 and not vice:
+    if legacy_inference and len(ordinarie_names) > 1 and not vice:
         vice = ordinarie_names[1]
 
     if ordinarie_names:
@@ -523,11 +539,58 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
         seen_valberedning.add(key)
         deduped_valberedning.append(name)
 
+    # Parse suppleanter section.
+    in_suppleanter = False
+    for line in lines:
+        normalized = normalize_text(line)
+
+        if "suppleanter" in normalized and not in_suppleanter:
+            in_suppleanter = True
+            trailing = re.split(r"(?i)\bsuppleanter\b", line, maxsplit=1)
+            tail = trailing[1] if len(trailing) > 1 else ""
+            candidate = re.split(r"(?i)\bsuppleant(er)?\b", tail, maxsplit=1)[0]
+            candidate = clean_name(candidate)
+            if candidate and is_probable_name(candidate):
+                suppleanter.append(candidate)
+            continue
+
+        if not in_suppleanter:
+            continue
+
+        if any(
+            stop in normalized
+            for stop in [
+                "i tur att avga",
+                "tur att avga",
+                "revisor",
+                "valbered",
+                "representanter i hsb",
+                "foreningens stadgar",
+                "studie",
+            ]
+        ):
+            break
+
+        candidate = re.split(r"(?i)\bsuppleant(er)?\b", line, maxsplit=1)[0]
+        candidate = clean_name(candidate)
+        if candidate and is_probable_name(candidate):
+            suppleanter.append(candidate)
+
+    deduped_suppleanter: List[str] = []
+    seen_suppleanter = set()
+    for name in suppleanter:
+        key = normalize_text(name)
+        if key in seen_suppleanter:
+            continue
+        seen_suppleanter.add(key)
+        deduped_suppleanter.append(name)
+
     return {
         "chair": chair,
         "vice": vice,
         "members": deduped_members,
         "valberedning": deduped_valberedning,
+        "suppleanter": deduped_suppleanter,
     }
 
 
@@ -623,6 +686,7 @@ def extract_year(source: YearSource) -> Dict[str, object]:
     vice = str(parsed.get("vice", "") or "")
     members = parsed.get("members", []) if isinstance(parsed.get("members", []), list) else []
     valberedning = parsed.get("valberedning", []) if isinstance(parsed.get("valberedning", []), list) else []
+    suppleanter = parsed.get("suppleanter", []) if isinstance(parsed.get("suppleanter", []), list) else []
 
     chair_box = find_phrase_bbox(words, chair) if chair else None
     vice_box = find_phrase_bbox(words, vice) if vice else None
@@ -632,6 +696,9 @@ def extract_year(source: YearSource) -> Dict[str, object]:
     valberedning_boxes = [find_phrase_bbox(words, name) for name in valberedning]
     valberedning_boxes = [b for b in valberedning_boxes if b is not None]
     valberedning_box = bbox_union(valberedning_boxes)
+    suppleant_boxes = [find_phrase_bbox(words, name) for name in suppleanter]
+    suppleant_boxes = [b for b in suppleant_boxes if b is not None]
+    suppleanter_box = bbox_union(suppleant_boxes)
     year_box = find_phrase_bbox(words, "Styrelse") or find_phrase_bbox(words, "Ordinarie")
 
     parsed["boxes"] = {
@@ -640,6 +707,7 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "vice": vice_box,
         "members": members_box,
         "valberedning": valberedning_box,
+        "suppleanter": suppleanter_box,
     }
     save_artifacts(source.year, source.pdf, page, lines, parsed)
 
@@ -651,6 +719,7 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "vice": vice,
         "members": members,
         "valberedning": valberedning,
+        "suppleanter": suppleanter,
         "boxes": parsed.get("boxes", {}),
     }
 
@@ -658,10 +727,24 @@ def extract_year(source: YearSource) -> Dict[str, object]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Extract board leadership rows")
     parser.add_argument("--append", action="store_true", help="Upsert extracted rows into data/general_states.csv")
+    parser.add_argument(
+        "--years",
+        nargs="+",
+        type=int,
+        help="Optional year filter, for example: --years 2015 2016",
+    )
     args = parser.parse_args()
 
+    selected_sources = list(YEAR_SOURCES)
+    if args.years:
+        requested_years = set(args.years)
+        selected_sources = [source for source in YEAR_SOURCES if source.year in requested_years]
+        missing = sorted(requested_years - {source.year for source in selected_sources})
+        if missing:
+            raise SystemExit(f"Unsupported year(s): {', '.join(str(y) for y in missing)}")
+
     results: List[Dict[str, object]] = []
-    for source in YEAR_SOURCES:
+    for source in selected_sources:
         print(f"[progress] extracting year {source.year} from {source.pdf}...", flush=True)
         result = extract_year(source)
         results.append(result)
@@ -688,6 +771,7 @@ def main() -> int:
             vice = str(item["vice"] or "")
             members = item["members"] if isinstance(item["members"], list) else []
             valberedning = item["valberedning"] if isinstance(item.get("valberedning"), list) else []
+            suppleanter = item["suppleanter"] if isinstance(item.get("suppleanter"), list) else []
             boxes = item["boxes"] if isinstance(item.get("boxes"), dict) else {}
 
             year_box = boxes.get("year")
@@ -695,6 +779,7 @@ def main() -> int:
             vice_box = boxes.get("vice")
             members_box = boxes.get("members")
             valberedning_box = boxes.get("valberedning")
+            suppleanter_box = boxes.get("suppleanter")
 
             upsert_row(rows, year, 0, f"{year}-01-01 – {year}-12-31", pdf, page, year_box)
             upsert_row(rows, year, 1, chair, pdf, page, chair_box)
@@ -702,6 +787,8 @@ def main() -> int:
             upsert_row(rows, year, 3, ";".join(members), pdf, page, members_box)
             if valberedning:
                 upsert_row(rows, year, 4, ";".join(valberedning), pdf, page, valberedning_box)
+            if suppleanter:
+                upsert_row(rows, year, 8, ";".join(suppleanter), pdf, page, suppleanter_box)
 
         write_rows(OUTPUT_CSV, rows)
         print(f"Upserted board rows into {OUTPUT_CSV}")
