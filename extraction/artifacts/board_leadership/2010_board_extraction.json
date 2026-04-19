@@ -17,6 +17,11 @@
       "Christina Fredriksson",
       "Sven Back"
     ],
+    "suppleanter": [
+      "Lena Wiklund",
+      "Rolf Lovén",
+      "Tollefors-Bristam, Markku Sandelin"
+    ],
     "boxes": {
       "year": [
         88.56,
@@ -47,6 +52,12 @@
         480.47999999999996,
         514.0799999999999,
         494.88
+      ],
+      "suppleanter": [
+        90.0,
+        282.96,
+        259.92,
+        355.68
       ]
     }
   },

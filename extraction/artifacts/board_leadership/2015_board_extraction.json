@@ -1,0 +1,61 @@
+{
+  "year": 2015,
+  "pdf": "arsredovisning2015.pdf",
+  "page": 5,
+  "parsed": {
+    "chair": "Bengt Rapp",
+    "vice": "",
+    "members": [
+      "Mats Falt",
+      "Bjorn Bergstrém",
+      "Stefan Bengtsson",
+      "Anita Buske",
+      "Lena Wiklund",
+      "Mats Jaderland",
+      "Jan-Stefan Dahlgren"
+    ],
+    "valberedning": [
+      "Gunilla Lovén",
+      "Aune Nordlund",
+      "Lillemor Jénsson"
+    ],
+    "suppleanter": [
+      "Peter Fleury",
+      "Hans-Géran Vistrand"
+    ],
+    "boxes": {
+      "year": [
+        105.6,
+        111.11999999999999,
+        147.35999999999999,
+        121.44
+      ],
+      "chair": [
+        106.08,
+        136.79999999999998,
+        162.72,
+        147.12
+      ],
+      "vice": null,
+      "members": [
+        105.11999999999999,
+        149.28,
+        204.95999999999998,
+        248.64
+      ],
+      "valberedning": [
+        215.76,
+        453.35999999999996,
+        539.28,
+        463.44
+      ],
+      "suppleanter": [
+        105.83999999999999,
+        276.48,
+        164.16,
+        287.03999999999996
+      ]
+    }
+  },
+  "line_count": 46
+}

@@ -1,0 +1,58 @@
+{
+  "year": 2018,
+  "pdf": "kallelse_stamma_2019.pdf",
+  "page": 4,
+  "parsed": {
+    "chair": "Björn Bergström",
+    "vice": "Bo Gustafsson",
+    "members": [
+      "Stefan Bengtsson",
+      "Lena Wiklund",
+      "Hans-Göran Vistrand",
+      "Leila Isaksson",
+      "Jaime Martinez",
+      "Jan-Stefan Dahlgren"
+    ],
+    "valberedning": [
+      "Gunilla Lovén",
+      "samt Aune Nordlund och Victor"
+    ],
+    "suppleanter": [
+      "Lukas Sveman"
+    ],
+    "boxes": {
+      "year": [
+        84.0,
+        130.07999999999998,
+        121.44,
+        140.16
+      ],
+      "chair": null,
+      "vice": [
+        84.0,
+        182.16,
+        157.92,
+        191.28
+      ],
+      "members": [
+        83.03999999999999,
+        195.12,
+        190.07999999999998,
+        273.36
+      ],
+      "valberedning": [
+        197.28,
+        485.76,
+        495.12,
+        497.28
+      ],
+      "suppleanter": [
+        83.28,
+        301.44,
+        157.92,
+        310.8
+      ]
+    }
+  },
+  "line_count": 45
+}

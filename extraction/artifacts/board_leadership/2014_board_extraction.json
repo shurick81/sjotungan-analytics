@@ -1,0 +1,61 @@
+{
+  "year": 2014,
+  "pdf": "arsredovisning2014.pdf",
+  "page": 4,
+  "parsed": {
+    "chair": "Bengt Rapp",
+    "vice": "",
+    "members": [
+      "Mats Falt",
+      "Andreas Tollefors Bristam",
+      "Stefan Bengtsson",
+      "Anita Buske",
+      "Markku Sandelin",
+      "Lena Wiklund",
+      "Cecilia Alm"
+    ],
+    "valberedning": [
+      "Gunilla Lovén",
+      "Aune Nordlund",
+      "Hilde Bjöns"
+    ],
+    "suppleanter": [
+      "Peter Fleury",
+      "Peter Benisch"
+    ],
+    "boxes": {
+      "year": [
+        101.28,
+        111.6,
+        143.28,
+        122.16
+      ],
+      "chair": [
+        101.75999999999999,
+        137.28,
+        158.88,
+        147.84
+      ],
+      "vice": null,
+      "members": [
+        101.03999999999999,
+        149.76,
+        226.79999999999998,
+        247.2
+      ],
+      "valberedning": [
+        214.56,
+        451.91999999999996,
+        512.4,
+        463.2
+      ],
+      "suppleanter": [
+        102.96,
+        276.96,
+        169.92,
+        297.84
+      ]
+    }
+  },
+  "line_count": 45
+}

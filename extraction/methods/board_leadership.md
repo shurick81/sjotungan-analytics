@@ -1,6 +1,6 @@
 # Board Leadership Extraction Method
 
-This method backfills historical board leadership rows into `data/general_states.csv` for pre-2013 years and stores extraction artifacts under `extraction/artifacts/board_leadership/`.
+This method extracts annual-report board leadership rows into `data/general_states.csv` and stores extraction artifacts under `extraction/artifacts/board_leadership/`.
 
 ## Scope
 
@@ -9,7 +9,9 @@ This method backfills historical board leadership rows into `data/general_states
   - `1`: Ordförande
   - `2`: Vice ordförande
   - `3`: Ledamoter (semicolon-separated)
-- Target years: `2003` to `2012`
+   - `4`: Valberedning (semicolon-separated)
+   - `8`: Suppleanter (semicolon-separated)
+- Target years: `2003` to `2018`
 
 ## Pipeline
 
@@ -20,6 +22,8 @@ This method backfills historical board leadership rows into `data/general_states
    - Ordförande
    - Vice ordförande
    - Ledamoter
+   - Suppleanter
+   - Valberedning
 5. Persist artifacts for each year:
    - `YYYY_board_lines.txt` (evidence lines)
    - `YYYY_board_extraction.json` (parsed result)
@@ -33,6 +37,12 @@ Dry run:
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py
+```
+
+Single year validation (example):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py --years 2015
 ```
 
 Append to `data/general_states.csv`:

@@ -23,6 +23,21 @@
       "Åke Berg",
       "Ewa Forsberg"
     ],
+    "suppleanter": [
+      "Robert Frick",
+      "Bengt Rapp",
+      "Benny Strand",
+      "Rolf Stohr",
+      "Pether Johnsson",
+      "Stefan Bengtsson",
+      "Gun Hallgren",
+      "Ann-Christine Wisén",
+      "Mats Pjons",
+      "Maria Neiglick",
+      "Ingela Livchitz",
+      "Margueite Bjärevall",
+      "Alfonso Morales"
+    ],
     "boxes": {
       "year": [
         33.1464,
@@ -53,6 +68,12 @@
         639.0625,
         222.1943,
         682.4305
+      ],
+      "suppleanter": [
+        146.5464,
+        273.4226,
+        305.4651,
+        572.0419
       ]
     }
   },

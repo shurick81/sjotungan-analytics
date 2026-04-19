@@ -16,6 +16,11 @@
       "Christina Fredriksson",
       "Sven Back"
     ],
+    "suppleanter": [
+      "Lena Wiklund",
+      "Rolf Lovén",
+      "Anita Buske. Lena Wiklund, Rolf Lovén"
+    ],
     "boxes": {
       "year": [
         95.52,
@@ -46,6 +51,12 @@
         447.35999999999996,
         521.76,
         456.96
+      ],
+      "suppleanter": [
+        94.32,
+        257.03999999999996,
+        284.15999999999997,
+        329.76
       ]
     }
   },
