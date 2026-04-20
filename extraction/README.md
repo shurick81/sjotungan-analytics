@@ -20,6 +20,10 @@ This folder groups reusable data-extraction assets in one place.
 - Script: `scripts/extract_legacy_events_candidates.py`
 - Script: `scripts/extract_pre2009_states_events.py`
 - Method doc: `methods/financial_states_events_legacy.md`
+- Script: `scripts/check_soliditet_readiness.py`
+- Script: `scripts/calculate_soliditet.py`
+- Script: `scripts/extract_soliditet_states_candidates.py`
+- Method doc: `methods/soliditet.md`
 - Reference: `methods/domain_conventions.md` (M-numbers, abbreviations)
 - Script: `scripts/compare_guide_html_pdf.py`
 - Method doc: `methods/guide_html_pdf_comparison.md`
@@ -110,13 +114,13 @@ Run only selected years (useful when validating `Suppleanter` in 2015):
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py --years 2015
 ```
 
-Append board leadership rows to `data/general_states.csv` (categories 0, 1, 2, 3, 4, 8):
+Append board leadership rows to `data/general_states.csv` (categories 0, 1, 2, 3, 4, 8, 9):
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_board_leadership.py --append
 ```
 
-The script now also extracts `Suppleanter` and writes them to category `8`.
+The script now also extracts `Suppleanter` (category `8`) and signed-auditor names under the audit report section (category `9`).
 
 ## Legacy financial extraction (states/events)
 
@@ -175,4 +179,37 @@ Extract pre-2009 core states/events (2003, 2004, 2006, 2007, 2008):
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_pre2009_states_events.py --append
+```
+
+## Soliditet readiness and calculation
+
+Check whether `data/financial_states.csv` currently contains both required ingredients for soliditet (`eget kapital` and `summa tillgangar`):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/check_soliditet_readiness.py
+```
+
+Compute yearly soliditet (decimal ratio) as a check only (stdout):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/calculate_soliditet.py
+```
+
+Extract candidate `eget kapital` + `summa tillgangar` rows from annual reports (dry-run to stdout):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_soliditet_states_candidates.py
+```
+
+Append only missing year/category rows into `data/financial_states.csv`:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/extract_soliditet_states_candidates.py --append
+```
+
+If category auto-detection fails due to naming differences, pin IDs explicitly in both scripts:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/check_soliditet_readiness.py --equity-category-id <id> --assets-category-id <id>
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/calculate_soliditet.py --equity-category-id <id> --assets-category-id <id>
 ```

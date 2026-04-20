@@ -364,6 +364,14 @@
         <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
     </div>
 
+    <!-- Capital / Debt / Soliditet Chart -->
+    <div class="chart-container">
+        <h2 class="chart-title">Eget kapital, skulder och soliditet</h2>
+        <p class="chart-conclusion">Visar utvecklingen av eget kapital (kategori 6), totala skulder till kreditinstitut (kategori 0 + 1) samt soliditet i procent (eget kapital / summa tillgångar, kategori 7).</p>
+        <div id="capitalSoliditetChart"></div>
+        <p style="color: #999; font-size: 0.8em; margin: 6px 0 0 0; text-align: center;"><span class="hint-desktop">Dubbelklicka</span><span class="hint-touch">Dubbeltyck</span> för att återställa graf</p>
+    </div>
+
     <!-- Interest Chart -->
     <div class="chart-container">
         <h2 class="chart-title">Räntekostnader</h2>
@@ -654,6 +662,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
         let macroPriceIndexByYear = {};
         let macroBaseYear = '';
         let currentDebtData = [];
+        let currentCapitalSoliditetData = [];
         let currentCashData = [];
         let currentInterestData = {};
         let currentInflationDisplayRows = [];
@@ -1098,6 +1107,136 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                     source: sourceData[d.year]
                 }))
                 .sort((a, b) => a.year.localeCompare(b.year));
+        }
+
+        async function loadCapitalSoliditetData() {
+            const response = await fetch('data/financial_states.csv' + cacheBust);
+            const csvText = await response.text();
+            const lines = csvText.trim().split('\n');
+
+            const byYear = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                const v = lines[i].split(',');
+                const year = v[0];
+                const catId = parseInt(v[1]);
+                const amount = parseInt(v[2]);
+
+                if (!byYear[year]) {
+                    byYear[year] = {
+                        year,
+                        shortDebt: 0,
+                        longDebt: 0,
+                        equity: null,
+                        assets: null
+                    };
+                }
+
+                if (catId === 0) byYear[year].shortDebt = amount;
+                if (catId === 1) byYear[year].longDebt = amount;
+                if (catId === 6) byYear[year].equity = amount;
+                if (catId === 7) byYear[year].assets = amount;
+            }
+
+            return Object.values(byYear)
+                .map(d => {
+                    const debt = d.shortDebt + d.longDebt;
+                    const soliditetPct = d.equity != null && d.assets != null && d.assets !== 0
+                        ? (d.equity / d.assets) * 100
+                        : null;
+                    return {
+                        year: d.year,
+                        debt,
+                        equity: d.equity,
+                        assets: d.assets,
+                        soliditetPct
+                    };
+                })
+                .sort((a, b) => a.year.localeCompare(b.year));
+        }
+
+        function renderCapitalSoliditetChart(data) {
+            const years = data.map(d => d.year);
+            const isMobile = window.innerWidth <= 768;
+
+            const equityTrace = {
+                x: years,
+                y: data.map(d => d.equity != null ? getRealValue(d.equity, d.year) : null),
+                name: 'Eget kapital',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#2e7d32', width: 3 },
+                marker: { size: 8, color: '#2e7d32' },
+                yaxis: 'y',
+                hovertemplate: '%{x}: %{y:,.0f} SEK' + normSuffix + '<extra>Eget kapital</extra>'
+            };
+
+            const debtTrace = {
+                x: years,
+                y: data.map(d => getRealValue(d.debt, d.year)),
+                name: 'Skulder till kreditinstitut',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#e53935', width: 3 },
+                marker: { size: 8, color: '#e53935' },
+                yaxis: 'y',
+                hovertemplate: '%{x}: %{y:,.0f} SEK' + normSuffix + '<extra>Skulder</extra>'
+            };
+
+            const soliditetTrace = {
+                x: years,
+                y: data.map(d => d.soliditetPct != null ? parseFloat(d.soliditetPct.toFixed(2)) : null),
+                name: 'Soliditet',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#1f3f95', width: 3, dash: 'dot' },
+                marker: { size: 7, color: '#1f3f95', symbol: 'diamond' },
+                yaxis: 'y2',
+                hovertemplate: '%{x}: %{y:.2f}%<extra>Soliditet</extra>'
+            };
+
+            const layout = {
+                height: isMobile ? 350 : 500,
+                margin: isMobile
+                    ? { t: 10, r: 60, b: 80, l: 80 }
+                    : { t: 20, r: 90, b: 60, l: 80 },
+                xaxis: {
+                    title: 'År',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: true,
+                    gridcolor: '#e9ecef'
+                },
+                yaxis: {
+                    title: isMobile ? '' : normYAxisTitle(adjustForInflation
+                        ? `Belopp (SEK, ${macroBaseYear} ars penningvarde)`
+                        : 'Belopp (SEK)'),
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    tickformat: ',.0f',
+                    showgrid: true,
+                    gridcolor: '#e9ecef'
+                },
+                yaxis2: {
+                    title: isMobile ? '' : 'Soliditet (%)',
+                    overlaying: 'y',
+                    side: 'right',
+                    ticksuffix: '%',
+                    tickfont: { size: isMobile ? 10 : 12 },
+                    showgrid: false
+                },
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: isMobile ? 11 : 13 }
+                },
+                hovermode: 'x unified',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+            Plotly.newPlot('capitalSoliditetChart', [equityTrace, debtTrace, soliditetTrace], layout, config);
         }
 
         function renderCashChart(cashData) {
@@ -2126,7 +2265,9 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 updateInflationStaticLabels();
                 currentFlowsData = flowsData;
                 const cashData = await loadCashData();
+                const capitalSoliditetData = await loadCapitalSoliditetData();
                 renderChart(debtData, cashData);
+                renderCapitalSoliditetChart(capitalSoliditetData);
                 renderInterestChart(debtData, interestData);
                 renderInterestRatioChart(interestData, flowsData);
                 renderEffectiveRateChart(debtData, interestData, inflationDisplayRows);
@@ -2148,6 +2289,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 updateInflationNote();
 
                 currentDebtData = debtData;
+                currentCapitalSoliditetData = capitalSoliditetData;
                 currentCashData = cashData;
                 currentInterestData = interestData;
 
@@ -2173,6 +2315,7 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
 
                 function reRenderAll() {
                     renderChart(currentDebtData, currentCashData);
+                    renderCapitalSoliditetChart(currentCapitalSoliditetData);
                     renderInterestChart(currentDebtData, currentInterestData);
                     renderEffectiveRateChart(currentDebtData, currentInterestData, currentInflationDisplayRows);
                     renderInterestSensitivityChart(currentDebtData, currentFlowsData);
