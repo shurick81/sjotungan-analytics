@@ -1,0 +1,37 @@
+{
+  "year": 2023,
+  "pdf": "stamma-2024.pdf",
+  "page": 1,
+  "parsed": {
+    "chair": "",
+    "vice": "",
+    "members": [],
+    "valberedning": [],
+    "suppleanter": [],
+    "boxes": {
+      "year": [
+        133.4979,
+        445.556,
+        187.9899,
+        461.48
+      ],
+      "chair": null,
+      "vice": null,
+      "members": null,
+      "valberedning": null,
+      "suppleanter": null,
+      "revisorer_signed": [
+        77.7008,
+        612.482,
+        270.4808,
+        626.5841
+      ]
+    },
+    "revisorer_signed": [
+      "Agnes Milton",
+      "Mattias Matti"
+    ],
+    "revisorer_signed_page": 22
+  },
+  "line_count": 42
+}

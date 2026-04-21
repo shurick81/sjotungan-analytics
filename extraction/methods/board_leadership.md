@@ -11,6 +11,7 @@ This method extracts annual-report board leadership rows into `data/general_stat
   - `3`: Ledamoter (semicolon-separated)
    - `4`: Valberedning (semicolon-separated)
    - `8`: Suppleanter (semicolon-separated)
+   - `9`: Revisorer signerat årsredovisningen (semicolon-separated)
 - Target years: `2003` to `2018`
 
 ## Pipeline
@@ -24,6 +25,7 @@ This method extracts annual-report board leadership rows into `data/general_stat
    - Ledamoter
    - Suppleanter
    - Valberedning
+   - Signed auditors from the audit-report signature section
 5. Persist artifacts for each year:
    - `YYYY_board_lines.txt` (evidence lines)
    - `YYYY_board_extraction.json` (parsed result)

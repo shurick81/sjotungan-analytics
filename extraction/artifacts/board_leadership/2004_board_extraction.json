@@ -28,9 +28,9 @@
     "boxes": {
       "year": [
         70.8,
-        194.37968,
-        108.23572,
-        204.31568
+        119.37968,
+        111.76448,
+        129.31568
       ],
       "chair": [
         184.2,
@@ -61,8 +61,23 @@
         371.25968,
         290.17908,
         406.39568
+      ],
+      "revisorer_signed": [
+        184.2,
+        473.49968,
+        264.7282,
+        496.15568
       ]
-    }
+    },
+    "board_revisorer": [
+      "Karin Skeppström",
+      "Alfonso Morales"
+    ],
+    "revisorer_signed": [
+      "Karin Skeppström",
+      "Alfonso Morales"
+    ],
+    "revisorer_signed_page": null
   },
   "line_count": 45
 }

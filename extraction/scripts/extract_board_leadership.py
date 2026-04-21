@@ -10,13 +10,16 @@ Upserted categories:
 - 2: Vice ordförande
 - 3: Ledamoter (semicolon-separated)
 - 4: Valberedning (semicolon-separated)
+- 5: Revisorer (semicolon-separated)
 - 8: Suppleanter (semicolon-separated)
+- 9: Revisorer signerat årsredovisningen (semicolon-separated)
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+from difflib import SequenceMatcher
 import json
 import html
 import re
@@ -51,13 +54,19 @@ YEAR_SOURCES: Sequence[YearSource] = [
     YearSource(2009, "arsredovisning_2009.pdf"),
     YearSource(2010, "arsredovisning2010.pdf"),
     YearSource(2011, "arsredovisning2012.pdf"),
-    YearSource(2012, "arsredovisning_2013.pdf"),
+    YearSource(2012, "arsredovisning2013.pdf"),
     YearSource(2013, "arsredovisning_2013.pdf"),
     YearSource(2014, "arsredovisning2014.pdf"),
     YearSource(2015, "arsredovisning2015.pdf"),
     YearSource(2016, "arsredovisning_2016.pdf"),
     YearSource(2017, "kallelse_stamma2018.pdf"),
     YearSource(2018, "kallelse_stamma_2019.pdf"),
+    YearSource(2019, "BRF_Sjotungan_arsredovisning_2019.pdf"),
+    YearSource(2020, "stamma_kallelse-2021.pdf"),
+    YearSource(2021, "stamma_kallelse_2022.pdf"),
+    YearSource(2022, "stamma-2023.pdf"),
+    YearSource(2023, "stamma-2024.pdf"),
+    YearSource(2024, "stamma2025.pdf"),
 ]
 
 
@@ -137,6 +146,245 @@ def extract_names_from_fragment(fragment: str) -> List[str]:
     return names
 
 
+def dedupe_preserve(values: Sequence[str]) -> List[str]:
+    deduped: List[str] = []
+    seen = set()
+    for value in values:
+        key = normalize_text(value)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(value)
+    return deduped
+
+
+def normalize_firm_name(text: str) -> str:
+    cleaned = re.sub(r"\s+", " ", text).strip(" .,:;|-\t")
+    cleaned = re.sub(r"(?i)\bav\s+hsb\b.*$", "", cleaned).strip(" .,:;|-\t")
+    cleaned = re.sub(r"(?i)\bab\b\.?$", "", cleaned).strip(" .,:;|-\t")
+    cleaned = re.sub(r"(?i)\bbo\s+revision\b", "BoRevision", cleaned)
+    return cleaned
+
+
+def extract_revisor_signers(lines: Sequence[str]) -> List[str]:
+    if not lines:
+        return []
+
+    start_idx: Optional[int] = None
+    for idx, line in enumerate(lines):
+        if "digitalt signerad av" in normalize_text(line):
+            start_idx = idx + 1
+            break
+
+    # Digital-sign pages place names right after the marker, while scanned
+    # reports usually put signatures near the bottom of the page.
+    if start_idx is None:
+        start_idx = max(0, len(lines) - 35)
+
+    window = list(lines[start_idx : start_idx + 40])
+    if not window:
+        window = list(lines)
+
+    signers: List[str] = []
+
+    def is_strict_person_name(text: str) -> bool:
+        candidate = clean_name(text)
+        if not candidate:
+            return False
+
+        normalized = normalize_text(candidate)
+        blocked = [
+            "signerat",
+            "digitalt",
+            "uttalanden",
+            "grund for uttalanden",
+            "stockholm",
+            "tyreso",
+            "revisionsberattelse",
+            "arsredovisning",
+            "foreningen",
+            "penneo",
+            "dokumentnyckel",
+            "ordforande",
+            "styrelse",
+            "hsb",
+            "riksforbund",
+            "borevision",
+            "international",
+            "standards",
+            "auditing",
+            "enligt",
+            "revisorns",
+            "revisors",
+            "sverige",
+        ]
+        if any(token in normalized for token in blocked):
+            return False
+
+        if re.search(r"\d", candidate):
+            return False
+
+        if not re.fullmatch(r"[A-Za-zÅÄÖåäöÉé\-\s]+", candidate):
+            return False
+
+        parts = [p for p in candidate.split() if p]
+        if len(parts) < 2 or len(parts) > 4:
+            return False
+
+        if any(len(part) < 2 for part in parts):
+            return False
+
+        # Reject OCR noise such as "Bar Dar" where every token is implausibly short.
+        if max(len(part) for part in parts) < 4:
+            return False
+
+        # Reject OCR fragments like "Zbz" that contain no vowels.
+        if any(not re.search(r"[aeiouyåäöéAEIOUYÅÄÖÉ]", part) for part in parts):
+            return False
+
+        return is_probable_name(candidate)
+
+    for line in window:
+        normalized = normalize_text(line)
+        if not normalized:
+            continue
+
+        if any(stop in normalized for stop in ["penneo", "dokumentnyckel", "page", "sida"]):
+            break
+
+        if any(token in normalized for token in ["borevision", "bo revision", "revision ab", "kungsbron"]):
+            continue
+
+        # Strip role/firm suffixes that OCR often appends to the same line.
+        line_for_names = re.split(
+            r"(?i)\b(?:borevision|bo\s*revision|av\s+foreningen\s+vald\s+revisor|av\s+hsb\s+riksforbund\s+utsedd\s+revisor|utsedd\s+revisor|vald\s+revisor)\b",
+            line,
+            maxsplit=1,
+        )[0]
+
+        for fragment in re.split(r"[;,]", line_for_names):
+            candidate = clean_name(fragment)
+            if not candidate:
+                continue
+
+            parts = [p for p in candidate.split() if p]
+            # OCR can merge two names on one line: "Joakim Hall Olle Wicander".
+            if len(parts) == 4:
+                left = f"{parts[0]} {parts[1]}"
+                right = f"{parts[2]} {parts[3]}"
+                if is_strict_person_name(left):
+                    signers.append(left)
+                if is_strict_person_name(right):
+                    signers.append(right)
+                continue
+
+            if is_strict_person_name(candidate):
+                signers.append(candidate)
+
+            # Fallback for OCR lines where names are embedded in a long sentence,
+            # for example "... Joakim Hall Olle Wicander ...".
+            if any(ctx in normalized for ctx in ["stockholm", "revisor", "foreningen", "riksforbund"]):
+                word_tokens = re.findall(r"[A-Za-zÅÄÖåäöÉé\-]+", candidate)
+                capitalized = [token for token in word_tokens if token and token[0].isupper()]
+                if len(capitalized) >= 4:
+                    pair_candidates = [
+                        f"{capitalized[-4]} {capitalized[-3]}",
+                        f"{capitalized[-2]} {capitalized[-1]}",
+                    ]
+                    for pair in pair_candidates:
+                        if is_strict_person_name(pair):
+                            signers.append(pair)
+
+    return dedupe_preserve(signers)
+
+
+def extract_board_revisors(lines: Sequence[str]) -> List[str]:
+    revisors: List[str] = []
+    in_revisor_section = False
+
+    for line in lines:
+        normalized = normalize_text(line)
+        if not normalized:
+            continue
+
+        if "revisor" in normalized and not in_revisor_section:
+            in_revisor_section = True
+
+        if not in_revisor_section:
+            continue
+
+        if any(
+            stop in normalized
+            for stop in [
+                "representanter i hsb",
+                "representant pa hsb",
+                "valberedning",
+                "studie och fritidsverksamhet",
+                "fastighetsforvaltning",
+                "foreningens stadgar",
+            ]
+        ):
+            break
+
+        candidate_line = line
+        candidate_line = re.split(r"(?i)\brevisor har varit\b", candidate_line, maxsplit=1)[-1]
+        candidate_line = re.split(r"(?i)\bsamt en revisor\b", candidate_line, maxsplit=1)[0]
+        candidate_line = re.split(r"(?i)\bmed\b", candidate_line, maxsplit=1)[0]
+        candidate_line = re.split(r"(?i)\bvalda vid\b", candidate_line, maxsplit=1)[0]
+        candidate_line = re.split(r"(?i)\butsedd av\b", candidate_line, maxsplit=1)[0]
+        candidate_line = re.split(r"(?i)\bhos\s+bo\s*revision\b", candidate_line, maxsplit=1)[0]
+        candidate_line = re.sub(r"(?i)^\s*revisor\s+", "", candidate_line).strip()
+
+        if not candidate_line:
+            continue
+
+        candidate_line = re.sub(r"(?i)\boch\b", ";", candidate_line)
+        for fragment in re.split(r"[;,:]", candidate_line):
+            candidate = clean_name(fragment)
+            if candidate and is_probable_name(candidate):
+                revisors.append(candidate)
+
+    return dedupe_preserve(revisors)
+
+
+def _names_look_related(left: str, right: str) -> bool:
+    ln = normalize_text(left)
+    rn = normalize_text(right)
+    if not ln or not rn:
+        return False
+    if ln == rn:
+        return True
+
+    l_tokens = [t for t in re.split(r"\s+", ln) if t]
+    r_tokens = [t for t in re.split(r"\s+", rn) if t]
+    if not l_tokens or not r_tokens:
+        return False
+
+    if l_tokens[-1] == r_tokens[-1]:
+        return True
+
+    return SequenceMatcher(None, ln, rn).ratio() >= 0.74
+
+
+def reconcile_signed_revisors(
+    signed_revisors: Sequence[str],
+    board_revisors: Sequence[str],
+) -> List[str]:
+    signed = dedupe_preserve(list(signed_revisors))
+    board = dedupe_preserve(list(board_revisors))
+    if not board:
+        return signed
+    if not signed:
+        return board
+
+    if any(_names_look_related(signed_name, board_name) for signed_name in signed for board_name in board):
+        return signed
+
+    # If signer-page OCR names do not resemble board-revisor names at all,
+    # trust board-page names for older scanned reports.
+    return board
+
+
 def run_command(command: List[str]) -> str:
     proc = subprocess.run(command, check=True, capture_output=True, text=True)
     return proc.stdout
@@ -146,7 +394,34 @@ def normalize_token(text: str) -> str:
     lowered = text.strip().lower()
     decomposed = unicodedata.normalize("NFD", lowered)
     no_marks = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
-    return re.sub(r"[^0-9a-z]+", "", no_marks)
+    token = re.sub(r"[^0-9a-z]+", "", no_marks)
+    # OCR in scanned pages can substitute similar-looking characters.
+    return (
+        token.replace("0", "o")
+        .replace("1", "l")
+        .replace("3", "e")
+        .replace("5", "s")
+        .replace("6", "o")
+        .replace("8", "b")
+    )
+
+
+def tokens_match(expected: str, actual: str) -> bool:
+    if expected == actual:
+        return True
+    if not expected or not actual:
+        return False
+    if expected[0] != actual[0]:
+        return False
+
+    ratio = SequenceMatcher(None, expected, actual).ratio()
+    if ratio >= 0.82:
+        return True
+
+    # Accept a single edit for short OCR glitches in otherwise matching names.
+    if abs(len(expected) - len(actual)) <= 1 and ratio >= 0.72:
+        return True
+    return False
 
 
 def extract_page_words_bbox(pdf_path: Path, page: int) -> List[WordBox]:
@@ -273,17 +548,30 @@ def find_phrase_bbox(words: Sequence[WordBox], phrase: str) -> Optional[Tuple[fl
 
     for i in range(len(words) - len(tokens) + 1):
         chunk = words[i : i + len(tokens)]
-        if [w[5] for w in chunk] == tokens:
+        if all(tokens_match(expected, actual) for expected, actual in zip(tokens, [w[5] for w in chunk])):
             return bbox_union([(w[0], w[1], w[2], w[3]) for w in chunk])
 
     # Fallback: all tokens exist somewhere on same line neighborhood.
     token_boxes = []
     for token in tokens:
-        hit = next((w for w in words if w[5] == token), None)
+        hit = next((w for w in words if tokens_match(token, w[5])), None)
         if not hit:
             return None
         token_boxes.append((hit[0], hit[1], hit[2], hit[3]))
     return bbox_union(token_boxes)
+
+
+def find_lower_page_region_bbox(words: Sequence[WordBox], start_ratio: float = 0.55) -> Optional[Tuple[float, float, float, float]]:
+    if not words:
+        return None
+
+    top = min(word[1] for word in words)
+    bottom = max(word[3] for word in words)
+    threshold = top + (bottom - top) * start_ratio
+    region_boxes = [(word[0], word[1], word[2], word[3]) for word in words if word[1] >= threshold]
+    if len(region_boxes) < 3:
+        return None
+    return bbox_union(region_boxes)
 
 
 def bbox_to_csv(box: Optional[Tuple[float, float, float, float]]) -> Tuple[str, str, str, str]:
@@ -371,6 +659,41 @@ def choose_board_page(pdf_path: Path) -> Tuple[int, str]:
             best_page = page
             best_text = text
 
+    return best_page, best_text
+
+
+def choose_signed_revisor_page(pdf_path: Path) -> Tuple[Optional[int], str]:
+    page_count = get_page_count(pdf_path)
+    best_page: Optional[int] = None
+    best_text = ""
+    best_score = -1
+
+    start_page = max(1, page_count - 30)
+    for page in range(start_page, page_count + 1):
+        text = extract_page_text(pdf_path, page)
+        n = normalize_text(text)
+        score = 0
+        if "rapport om arsredovisningen" in n:
+            score += 6
+        if "rapport om andra krav" in n:
+            score += 5
+        if "digitalt signerad av" in n:
+            score += 6
+        if "av foreningen vald revisor" in n:
+            score += 3
+        if "utsedd revisor" in n:
+            score += 2
+        if "stockholm den" in n:
+            score += 2
+        if "stockholm" in n:
+            score += 1
+        if score > best_score or (score == best_score and best_page is not None and page > best_page):
+            best_score = score
+            best_page = page
+            best_text = text
+
+    if best_score < 6:
+        return None, ""
     return best_page, best_text
 
 
@@ -646,6 +969,58 @@ def write_rows(path: Path, rows: List[Dict[str, str]]) -> None:
             writer.writerow({field: row.get(field, "") for field in CSV_FIELDNAMES})
 
 
+def _row_brief(row: Dict[str, str]) -> str:
+    return (
+        f"year={row.get('year', '')!r},cat={row.get('category_id', '')!r},"
+        f"file={row.get('file', '')!r},page={row.get('page', '')!r},value={row.get('value', '')[:60]!r}"
+    )
+
+
+def _count_blank_year_rows(rows: Sequence[Dict[str, str]]) -> int:
+    return sum(1 for row in rows if not (row.get("year") or "").strip())
+
+
+def assert_no_existing_year_loss(before_rows: Sequence[Dict[str, str]], after_rows: Sequence[Dict[str, str]]) -> None:
+    lost: List[str] = []
+    for idx, before in enumerate(before_rows):
+        before_year = (before.get("year") or "").strip()
+        if not before_year:
+            continue
+
+        if idx >= len(after_rows):
+            lost.append(f"idx={idx}: missing row after update ({_row_brief(before)})")
+            continue
+
+        after_year = (after_rows[idx].get("year") or "").strip()
+        if not after_year:
+            lost.append(
+                f"idx={idx}: year lost ({_row_brief(before)}) -> ({_row_brief(after_rows[idx])})"
+            )
+
+        if len(lost) >= 10:
+            break
+
+    if lost:
+        raise RuntimeError(
+            "Refusing to write CSV because at least one existing row lost its year value. "
+            f"Examples: {lost}"
+        )
+
+
+def assert_no_new_blank_year_rows(before_rows: Sequence[Dict[str, str]], after_rows: Sequence[Dict[str, str]]) -> None:
+    before_blank = _count_blank_year_rows(before_rows)
+    after_blank = _count_blank_year_rows(after_rows)
+    if after_blank <= before_blank:
+        return
+
+    new_blanks = [row for row in after_rows if not (row.get("year") or "").strip()]
+    sample = [_row_brief(row) for row in new_blanks[:10]]
+    raise RuntimeError(
+        "Refusing to write CSV because append/update introduced additional blank-year rows. "
+        f"before_blank={before_blank}, after_blank={after_blank}, sample={sample}"
+    )
+
+
 def save_artifacts(year: int, pdf: str, page: int, lines: Sequence[str], parsed: Dict[str, object]) -> None:
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     txt_path = ARTIFACTS_DIR / f"{year}_board_lines.txt"
@@ -680,13 +1055,53 @@ def extract_year(source: YearSource) -> Dict[str, object]:
     page, text = choose_board_page(pdf_path)
     lines = split_lines(text)
     parsed = extract_roles(lines)
+    board_revisors = extract_board_revisors(lines)
     words = extract_page_words_bbox(pdf_path, page)
 
+    signed_page, signed_text = choose_signed_revisor_page(pdf_path)
+    signed_lines = split_lines(signed_text) if signed_text else []
+    signed_revisors = extract_revisor_signers(signed_lines)
+    signed_words = extract_page_words_bbox(pdf_path, signed_page) if signed_page else []
+
+    # Older scanned annual reports can place signer names on the following page
+    # after the "Rapport om arsredovisningen" section.
+    if signed_page and not signed_revisors:
+        page_count = get_page_count(pdf_path)
+        if signed_page < page_count:
+            next_page = signed_page + 1
+            next_text = extract_page_text(pdf_path, next_page)
+            next_lines = split_lines(next_text)
+            next_revisors = extract_revisor_signers(next_lines)
+            if next_revisors:
+                signed_page = next_page
+                signed_text = next_text
+                signed_lines = next_lines
+                signed_revisors = next_revisors
+                signed_words = extract_page_words_bbox(pdf_path, signed_page)
     chair = str(parsed.get("chair", "") or "")
     vice = str(parsed.get("vice", "") or "")
     members = parsed.get("members", []) if isinstance(parsed.get("members", []), list) else []
     valberedning = parsed.get("valberedning", []) if isinstance(parsed.get("valberedning", []), list) else []
     suppleanter = parsed.get("suppleanter", []) if isinstance(parsed.get("suppleanter", []), list) else []
+    signed_revisor_boxes = [find_phrase_bbox(signed_words, entry) for entry in signed_revisors]
+    signed_revisor_boxes = [b for b in signed_revisor_boxes if b is not None]
+    signed_revisor_box = bbox_union(signed_revisor_boxes)
+
+    if signed_revisor_box is None and signed_words:
+        anchor_boxes = [
+            find_phrase_bbox(signed_words, "Stockholm"),
+            find_phrase_bbox(signed_words, "Av föreningen vald revisor"),
+            find_phrase_bbox(signed_words, "Av HSB Riksförbund utsedd revisor"),
+        ]
+        anchor_boxes = [b for b in anchor_boxes if b is not None]
+        signed_revisor_box = bbox_union(anchor_boxes)
+
+    if not signed_revisors and signed_page and board_revisors:
+        signed_revisors = board_revisors
+        if signed_revisor_box is None:
+            signed_revisor_box = find_lower_page_region_bbox(signed_words) or None
+
+    signed_revisors = reconcile_signed_revisors(signed_revisors, board_revisors)
 
     chair_box = find_phrase_bbox(words, chair) if chair else None
     vice_box = find_phrase_bbox(words, vice) if vice else None
@@ -699,7 +1114,13 @@ def extract_year(source: YearSource) -> Dict[str, object]:
     suppleant_boxes = [find_phrase_bbox(words, name) for name in suppleanter]
     suppleant_boxes = [b for b in suppleant_boxes if b is not None]
     suppleanter_box = bbox_union(suppleant_boxes)
+    board_revisor_boxes = [find_phrase_bbox(words, name) for name in board_revisors]
+    board_revisor_boxes = [b for b in board_revisor_boxes if b is not None]
+    board_revisor_box = bbox_union(board_revisor_boxes)
     year_box = find_phrase_bbox(words, "Styrelse") or find_phrase_bbox(words, "Ordinarie")
+
+    if signed_revisor_box is None and signed_revisors:
+        signed_revisor_box = board_revisor_box
 
     parsed["boxes"] = {
         "year": year_box,
@@ -708,7 +1129,11 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "members": members_box,
         "valberedning": valberedning_box,
         "suppleanter": suppleanter_box,
+        "revisorer_signed": signed_revisor_box,
     }
+    parsed["board_revisorer"] = board_revisors
+    parsed["revisorer_signed"] = signed_revisors
+    parsed["revisorer_signed_page"] = signed_page
     save_artifacts(source.year, source.pdf, page, lines, parsed)
 
     return {
@@ -720,6 +1145,8 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "members": members,
         "valberedning": valberedning,
         "suppleanter": suppleanter,
+        "revisorer_signed": signed_revisors,
+        "revisorer_signed_page": signed_page,
         "boxes": parsed.get("boxes", {}),
     }
 
@@ -763,6 +1190,7 @@ def main() -> int:
 
     if args.append:
         rows = load_existing_rows(OUTPUT_CSV)
+        rows_before_append = [dict(row) for row in rows]
         for item in results:
             year = int(item["year"])
             page = int(item["page"])
@@ -772,6 +1200,8 @@ def main() -> int:
             members = item["members"] if isinstance(item["members"], list) else []
             valberedning = item["valberedning"] if isinstance(item.get("valberedning"), list) else []
             suppleanter = item["suppleanter"] if isinstance(item.get("suppleanter"), list) else []
+            revisorer_signed = item["revisorer_signed"] if isinstance(item.get("revisorer_signed"), list) else []
+            revisorer_signed_page = item.get("revisorer_signed_page")
             boxes = item["boxes"] if isinstance(item.get("boxes"), dict) else {}
 
             year_box = boxes.get("year")
@@ -780,15 +1210,48 @@ def main() -> int:
             members_box = boxes.get("members")
             valberedning_box = boxes.get("valberedning")
             suppleanter_box = boxes.get("suppleanter")
+            revisorer_signed_box = boxes.get("revisorer_signed")
+            has_board_roles = bool(chair or vice or members or valberedning or suppleanter)
+            existing_signed_row = next(
+                (
+                    row
+                    for row in rows_before_append
+                    if row.get("year") == str(year) and row.get("category_id") == "9"
+                ),
+                None,
+            )
 
-            upsert_row(rows, year, 0, f"{year}-01-01 – {year}-12-31", pdf, page, year_box)
-            upsert_row(rows, year, 1, chair, pdf, page, chair_box)
-            upsert_row(rows, year, 2, vice, pdf, page, vice_box)
-            upsert_row(rows, year, 3, ";".join(members), pdf, page, members_box)
+            if has_board_roles and year_box is not None:
+                upsert_row(rows, year, 0, f"{year}-01-01 – {year}-12-31", pdf, page, year_box)
+            if chair:
+                upsert_row(rows, year, 1, chair, pdf, page, chair_box)
+            if vice:
+                upsert_row(rows, year, 2, vice, pdf, page, vice_box)
+            if members:
+                upsert_row(rows, year, 3, ";".join(members), pdf, page, members_box)
             if valberedning:
                 upsert_row(rows, year, 4, ";".join(valberedning), pdf, page, valberedning_box)
+            if isinstance(revisorer_signed_page, int) and not revisorer_signed:
+                raise RuntimeError(
+                    "Refusing to write stale category 9 data: "
+                    f"year={year} found signer page={revisorer_signed_page} but parsed zero signers. "
+                    f"existing_row={_row_brief(existing_signed_row) if existing_signed_row else 'None'}"
+                )
+            if revisorer_signed and isinstance(revisorer_signed_page, int):
+                upsert_row(
+                    rows,
+                    year,
+                    9,
+                    ";".join(dedupe_preserve(revisorer_signed)),
+                    pdf,
+                    int(revisorer_signed_page),
+                    revisorer_signed_box,
+                )
             if suppleanter:
                 upsert_row(rows, year, 8, ";".join(suppleanter), pdf, page, suppleanter_box)
+
+        assert_no_existing_year_loss(rows_before_append, rows)
+        assert_no_new_blank_year_rows(rows_before_append, rows)
 
         write_rows(OUTPUT_CSV, rows)
         print(f"Upserted board rows into {OUTPUT_CSV}")

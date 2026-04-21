@@ -1,0 +1,37 @@
+{
+  "year": 2024,
+  "pdf": "stamma2025.pdf",
+  "page": 3,
+  "parsed": {
+    "chair": "",
+    "vice": "",
+    "members": [],
+    "valberedning": [],
+    "suppleanter": [],
+    "boxes": {
+      "year": [
+        133.4946,
+        474.3549,
+        187.9866,
+        490.2789
+      ],
+      "chair": null,
+      "vice": null,
+      "members": null,
+      "valberedning": null,
+      "suppleanter": null,
+      "revisorer_signed": [
+        61.260009,
+        615.286552,
+        260.617359,
+        629.978933
+      ]
+    },
+    "revisorer_signed": [
+      "Joakim Häll",
+      "Mattias Matti"
+    ],
+    "revisorer_signed_page": 43
+  },
+  "line_count": 45
+}

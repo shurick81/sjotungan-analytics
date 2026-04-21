@@ -27,9 +27,9 @@
     "boxes": {
       "year": [
         70.5,
-        217.81625,
-        108.0767,
-        227.94125
+        142.06625,
+        111.1157,
+        152.19125
       ],
       "chair": [
         183.75,
@@ -60,8 +60,23 @@
         394.06625,
         250.63365,
         429.69125
+      ],
+      "revisorer_signed": [
+        183.75,
+        508.81625,
+        263.44195,
+        557.94125
       ]
-    }
+    },
+    "board_revisorer": [
+      "Karin Skeppström",
+      "Per Gustavsson"
+    ],
+    "revisorer_signed": [
+      "Karin Skeppström",
+      "Per Gustavsson"
+    ],
+    "revisorer_signed_page": null
   },
   "line_count": 37
 }

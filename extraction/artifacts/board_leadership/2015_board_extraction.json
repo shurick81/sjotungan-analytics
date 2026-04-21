@@ -52,10 +52,23 @@
       "suppleanter": [
         105.83999999999999,
         276.48,
-        164.16,
-        287.03999999999996
+        207.35999999999999,
+        297.59999999999997
+      ],
+      "revisorer_signed": [
+        88.8,
+        86.16,
+        495.84,
+        733.4399999999999
       ]
-    }
+    },
+    "board_revisorer": [
+      "Olle Wicander"
+    ],
+    "revisorer_signed": [
+      "Olle Wicander"
+    ],
+    "revisorer_signed_page": 17
   },
   "line_count": 46
 }

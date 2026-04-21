@@ -1,0 +1,58 @@
+{
+  "year": 2021,
+  "pdf": "stamma_kallelse_2022.pdf",
+  "page": 4,
+  "parsed": {
+    "chair": "",
+    "vice": "",
+    "members": [
+      "Björn Bergström",
+      "Bertil Neij",
+      "Lukas Sveman",
+      "Stefan Bengtsson",
+      "Leila Isaksson",
+      "Hans Håkansson",
+      "Jessica Bolonassos",
+      "Jan-Stefan Dahlgren"
+    ],
+    "valberedning": [
+      "Gunilla Lovén och Victor Aronsson (ordförande)"
+    ],
+    "suppleanter": [],
+    "boxes": {
+      "year": [
+        31.1811,
+        153.6812,
+        67.8879,
+        169.8692
+      ],
+      "chair": null,
+      "vice": null,
+      "members": [
+        31.1811,
+        181.8692,
+        141.2331,
+        299.0492
+      ],
+      "valberedning": [
+        151.0107,
+        469.8692,
+        406.9395,
+        486.2492
+      ],
+      "suppleanter": null,
+      "revisorer_signed": [
+        56.0074,
+        631.9952,
+        270.2254,
+        644.5502
+      ]
+    },
+    "revisorer_signed": [
+      "Joakim Häll",
+      "Mattias Matti"
+    ],
+    "revisorer_signed_page": 24
+  },
+  "line_count": 47
+}

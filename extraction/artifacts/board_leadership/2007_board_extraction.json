@@ -22,10 +22,10 @@
     ],
     "boxes": {
       "year": [
-        70.32,
-        184.07999999999998,
-        109.67999999999999,
-        195.12
+        70.08,
+        118.08,
+        109.2,
+        128.4
       ],
       "chair": [
         184.07999999999998,
@@ -56,8 +56,23 @@
         414.71999999999997,
         245.76,
         425.52
+      ],
+      "revisorer_signed": [
+        53.76,
+        636.72,
+        537.12,
+        718.8
       ]
-    }
+    },
+    "board_revisorer": [
+      "Karin Skeppström",
+      "samt BoRevision AB"
+    ],
+    "revisorer_signed": [
+      "Karin Skeppström",
+      "samt BoRevision AB"
+    ],
+    "revisorer_signed_page": 17
   },
   "line_count": 29
 }

@@ -46,21 +46,34 @@
         96.47999999999999,
         172.32,
         221.28,
-        244.07999999999998
+        256.8
       ],
       "valberedning": [
-        353.76,
+        205.92,
         463.2,
         515.76,
-        473.28
+        474.0
       ],
       "suppleanter": [
         96.47999999999999,
         286.08,
         191.28,
         307.2
+      ],
+      "revisorer_signed": [
+        287.76,
+        648.24,
+        321.84,
+        655.4399999999999
       ]
-    }
+    },
+    "board_revisorer": [
+      "Alfonso Morales"
+    ],
+    "revisorer_signed": [
+      "Alfonso Morales"
+    ],
+    "revisorer_signed_page": 16
   },
   "line_count": 39
 }

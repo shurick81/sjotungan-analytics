@@ -13,13 +13,13 @@
       "Hans Buhlmann"
     ],
     "valberedning": [
+      "Hilde Bjns",
       "Christina Fredriksson",
       "Sven Back"
     ],
     "suppleanter": [
       "Lena Wiklund",
-      "Rolf Lovén",
-      "Anita Buske. Lena Wiklund, Rolf Lovén"
+      "Rolf Lovén"
     ],
     "boxes": {
       "year": [
@@ -47,18 +47,31 @@
         227.28
       ],
       "valberedning": [
-        356.64,
+        205.67999999999998,
         447.35999999999996,
         521.76,
-        456.96
+        457.68
       ],
       "suppleanter": [
-        94.32,
+        95.28,
         257.03999999999996,
-        284.15999999999997,
-        329.76
+        160.79999999999998,
+        277.92
+      ],
+      "revisorer_signed": [
+        53.28,
+        144.23999999999998,
+        492.0,
+        621.6
       ]
-    }
+    },
+    "board_revisorer": [
+      "Alfonso Morales"
+    ],
+    "revisorer_signed": [
+      "Alfonso Morales"
+    ],
+    "revisorer_signed_page": 18
   },
   "line_count": 39
 }

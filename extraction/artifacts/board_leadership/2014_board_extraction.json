@@ -54,8 +54,16 @@
         276.96,
         169.92,
         297.84
+      ],
+      "revisorer_signed": [
+        114.0,
+        144.23999999999998,
+        499.68,
+        737.04
       ]
-    }
+    },
+    "revisorer_signed": [],
+    "revisorer_signed_page": 17
   },
   "line_count": 45
 }
