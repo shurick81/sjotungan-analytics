@@ -6,9 +6,9 @@ year,category_id,value,file,page,x,y,width,height
 2023,0,2023-01-01 – 2023-12-31,stamma-2024.pdf,4,100,396,216,12
 2023,1,Lukas Sveman,stamma-2024.pdf,5,100,478,489,12
 2023,3,Stefan Bengtsson;Bertil Neij;Anne-Christine Åhlund;Stefan Dahlgren;Jessica Bolonassos;Inna Danishevska;Gabriela Reyes Quinonez;Andrea Vrcic,stamma-2024.pdf,5,100,500,489,177
-2022,0,2022-01-01 – 2022-12-31,stamma-2023.pdf,3,120,394,224,12
-2022,1,Lukas Sveman,stamma-2023.pdf,4,96,258,501,12
-2022,3,Stefan Bengtsson;Bertil Neij;Stefan Dahlgren;Jessica Bolonassos;Fredrik Sander;Maria Gabriela Reyes Quinonez;Mikaela Olsson,stamma-2023.pdf,4,96,288,501,220
+2022,0,2022-01-01 – 2022-12-31,stamma-2023.pdf,4,64,130,42,12
+2022,1,Lukas Sveman (fr.o.m. 2022-07-13);Björn Bergström (t.o.m. 2022-07-13),stamma-2023.pdf,4,64,169,60,27
+2022,3,Stefan Bengtsson;Leila Isaksson (t.o.m. 2022-07-13);Hans Olof Håkansson (t.o.m. 2022-07-13);Bertil Neij;Stefan Dahlgren;Jessica Bolonassos;Fredrik Sander (fr.o.m. 2022-07-13);Maria Gabriela Reyes Quinonez (fr.o.m. 2022-07-13);Mikaela Olsson (fr.o.m. 2022-07-13),stamma-2023.pdf,4,64,201,118,139
 2021,0,2021-01-01 – 2021-12-31,stamma_kallelse_2022.pdf,4,31,154,37,16
 2021,1,Björn Bergström,stamma_kallelse_2022.pdf,9,86,766,296,12
 2021,2,Lukas Sveman,stamma_kallelse_2022.pdf,9,86,798,320,12
