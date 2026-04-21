@@ -1,0 +1,62 @@
+{
+  "year": 2019,
+  "pdf": "BRF_Sjotungan_arsredovisning_2019.pdf",
+  "page": 4,
+  "parsed": {
+    "chair": "",
+    "vice": "",
+    "members": [
+      "Björn Bergström",
+      "Bertil Neij",
+      "Lukas Sveman",
+      "Stefan Bengtsson",
+      "Hans-Göran Vistrand",
+      "Leila Isaksson",
+      "Jaime Martinez",
+      "Gia Carneström",
+      "Jan-Stefan Dahlgren"
+    ],
+    "valberedning": [
+      "Gunilla Lovén",
+      "samt Aune Nordlund och Victor"
+    ],
+    "suppleanter": [],
+    "boxes": {
+      "year": [
+        41.6385,
+        120.016718,
+        80.272065,
+        134.032547
+      ],
+      "chair": null,
+      "vice": null,
+      "members": [
+        41.635406,
+        145.750388,
+        151.524624,
+        268.966247
+      ],
+      "valberedning": [
+        159.343518,
+        439.428306,
+        462.428089,
+        455.001406
+      ],
+      "suppleanter": null,
+      "revisorer_signed": [
+        38.879999999999995,
+        564.72,
+        242.16,
+        574.3199999999999
+      ]
+    },
+    "board_revisorer": [
+      "Olle Wicander"
+    ],
+    "revisorer_signed": [
+      "Olle Wicander"
+    ],
+    "revisorer_signed_page": 18
+  },
+  "line_count": 50
+}

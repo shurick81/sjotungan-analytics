@@ -41,9 +41,9 @@
     "boxes": {
       "year": [
         33.1464,
-        207.9146,
-        73.8024,
-        223.9106
+        133.26932,
+        74.11584,
+        147.77588
       ],
       "chair": [
         146.5464,
@@ -74,8 +74,21 @@
         273.4226,
         305.4651,
         572.0419
+      ],
+      "revisorer_signed": [
+        53.519999999999996,
+        623.04,
+        179.51999999999998,
+        694.56
       ]
-    }
+    },
+    "board_revisorer": [
+      "Karin Skeppström"
+    ],
+    "revisorer_signed": [
+      "Karin Skeppström"
+    ],
+    "revisorer_signed_page": 17
   },
   "line_count": 36
 }

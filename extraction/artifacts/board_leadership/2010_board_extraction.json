@@ -19,8 +19,7 @@
     ],
     "suppleanter": [
       "Lena Wiklund",
-      "Rolf Lovén",
-      "Tollefors-Bristam, Markku Sandelin"
+      "Rolf Lovén"
     ],
     "boxes": {
       "year": [
@@ -56,10 +55,23 @@
       "suppleanter": [
         90.0,
         282.96,
-        259.92,
-        355.68
+        155.28,
+        304.56
+      ],
+      "revisorer_signed": [
+        173.51999999999998,
+        395.76,
+        251.51999999999998,
+        405.12
       ]
-    }
+    },
+    "board_revisorer": [
+      "Alfonso Morales"
+    ],
+    "revisorer_signed": [
+      "Alfonso Morales"
+    ],
+    "revisorer_signed_page": null
   },
   "line_count": 39
 }

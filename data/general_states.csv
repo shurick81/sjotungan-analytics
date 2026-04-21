@@ -9,20 +9,20 @@ year,category_id,value,file,page,x,y,width,height
 2022,0,2022-01-01 – 2022-12-31,stamma-2023.pdf,3,120,394,224,12
 2022,1,Lukas Sveman,stamma-2023.pdf,4,96,258,501,12
 2022,3,Stefan Bengtsson;Bertil Neij;Stefan Dahlgren;Jessica Bolonassos;Fredrik Sander;Maria Gabriela Reyes Quinonez;Mikaela Olsson,stamma-2023.pdf,4,96,288,501,220
-2021,0,2021-01-01 – 2021-12-31,stamma_kallelse_2022.pdf,7,282,448,322,21
+2021,0,2021-01-01 – 2021-12-31,stamma_kallelse_2022.pdf,4,31,154,37,16
 2021,1,Björn Bergström,stamma_kallelse_2022.pdf,9,86,766,296,12
 2021,2,Lukas Sveman,stamma_kallelse_2022.pdf,9,86,798,320,12
-2021,3,Hans Håkansson;Jessica Bolonassos;Leila Isaksson;Stefan Bengtsson;Stefan Dahlgren,stamma_kallelse_2022.pdf,9,86,814,296,78
-2020,0,2020-01-01 – 2020-12-31,stamma_kallelse-2021.pdf,7,290,460,316,21
+2021,3,Bertil Neij;Stefan Bengtsson;Leila Isaksson;Hans Håkansson;Jessica Bolonassos;Jan-Stefan Dahlgren,stamma_kallelse_2022.pdf,4,31,182,110,117
+2020,0,2020-01-01 – 2020-12-31,stamma_kallelse-2021.pdf,4,31,95,47,17
 2020,1,Björn Bergström,stamma_kallelse-2021.pdf,9,94,558,285,10
 2020,2,Lukas Sveman,stamma_kallelse-2021.pdf,9,94,588,309,10
-2020,3,Stefan Bengtsson;Leila Isaksson;Gia Carneström;Hans Håkansson;Stefan Dahlgren,stamma_kallelse-2021.pdf,9,94,603,285,63
-2019,0,2019-01-01 – 2019-12-31,BRF_Sjotungan_arsredovisning_2019.pdf,3,78,202,464,16
+2020,3,Bertil Neij;Stefan Bengtsson;Leila Isaksson;Hans Håkansson;Gia Carneström;Jan-Stefan Dahlgren,stamma_kallelse-2021.pdf,4,31,123,110,112
+2019,0,2019-01-01 – 2019-12-31,BRF_Sjotungan_arsredovisning_2019.pdf,4,42,120,39,14
 2019,1,Björn Bergström,BRF_Sjotungan_arsredovisning_2019.pdf,4,62,224,378,16
 2019,2,Lukas Sveman,BRF_Sjotungan_arsredovisning_2019.pdf,4,62,264,414,16
-2019,3,Stefan Bengtsson;Hans-Göran Vistrand;Leila Isaksson;Jaime Martinez;Gia Carneström;Jan-Stefan Dahlgren,BRF_Sjotungan_arsredovisning_2019.pdf,4,62,304,567,98
+2019,3,Bertil Neij;Stefan Bengtsson;Hans-Göran Vistrand;Leila Isaksson;Jaime Martinez;Gia Carneström;Jan-Stefan Dahlgren,BRF_Sjotungan_arsredovisning_2019.pdf,4,42,146,110,123
 2018,0,2018-01-01 – 2018-12-31,kallelse_stamma_2019.pdf,4,84,130,37,10
-2018,1,Björn Bergström,kallelse_stamma_2019.pdf,4,,,,
+2018,1,Björn Bergström,kallelse_stamma_2019.pdf,4,84,156,82,11
 2018,2,Bo Gustafsson,kallelse_stamma_2019.pdf,4,84,182,74,9
 2018,3,Stefan Bengtsson;Lena Wiklund;Hans-Göran Vistrand;Leila Isaksson;Jaime Martinez;Jan-Stefan Dahlgren,kallelse_stamma_2019.pdf,4,83,195,107,78
 2017,0,2017-01-01 – 2017-12-31,kallelse_stamma2018.pdf,4,76,108,46,12
@@ -44,18 +44,18 @@ year,category_id,value,file,page,x,y,width,height
 2013,0,2013-01-01 – 2013-12-31,arsredovisning_2013.pdf,4,97,109,42,11
 2013,1,Bengt Rapp,arsredovisning_2013.pdf,4,98,134,57,11
 2013,2,Pether Johnsson,arsredovisning_2013.pdf,4,98,147,81,9
-2013,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén;Hans Bählmann,arsredovisning_2013.pdf,4,96,172,125,72
+2013,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén;Hans Bählmann,arsredovisning_2013.pdf,4,96,172,125,84
 2024,4,Joachim Holmberg;Odd Viking,stamma2025.pdf,23,63,682,573,15
 2024,5,Mattias Matti;Kungsbron Borevision,stamma2025.pdf,23,42,417,135,26
 2023,4,Joachim Holmberg;Birgitta Blom,stamma-2024.pdf,5,100,888,483,12
 2023,5,Mattias Matti;BoRevision,stamma-2024.pdf,5,138,554,334,9
 2022,4,Gunilla Hellgren Lovén;Leila Isaksson,stamma-2023.pdf,4,95,764,636,12
 2022,5,Mattias Matti;BoRevision,stamma-2023.pdf,4,136,469,343,11
-2021,4,Gunilla Lovén;Victor Aronsson,stamma_kallelse_2022.pdf,4,47,711,564,18
+2021,4,Gunilla Lovén och Victor Aronsson (ordförande),stamma_kallelse_2022.pdf,4,151,470,256,16
 2021,5,Mattias Matti;BoRevision,stamma_kallelse_2022.pdf,4,31,355,159,31
-2020,4,Gunilla Lovén;Victor Aronsson,stamma_kallelse-2021.pdf,4,47,622,557,18
+2020,4,Gunilla Lovén och Victor Aronsson,stamma_kallelse-2021.pdf,4,151,411,187,16
 2020,5,Olle Wicander;Mattias Matti;BoRevision,stamma_kallelse-2021.pdf,4,110,301,181,30
-2019,4,Gunilla Lovén;Aune Nordlund;Victor Aronsson,BRF_Sjotungan_arsredovisning_2019.pdf,4,62,665,631,38
+2019,4,Gunilla Lovén;samt Aune Nordlund och Victor,BRF_Sjotungan_arsredovisning_2019.pdf,4,159,439,303,16
 2019,5,Olle Wicander;BoRevision,BRF_Sjotungan_arsredovisning_2019.pdf,4,130,332,205,29
 2018,4,Gunilla Lovén;samt Aune Nordlund och Victor,kallelse_stamma_2019.pdf,4,197,486,298,12
 2018,5,Olle Wicander;BoRevision,kallelse_stamma_2019.pdf,4,169,380,200,24
@@ -67,8 +67,8 @@ year,category_id,value,file,page,x,y,width,height
 2015,5,Olle Wicander;BoRevision,arsredovisning2015.pdf,5,188,365,145,21
 2014,4,Gunilla Lovén;Aune Nordlund;Hilde Bjöns,arsredovisning2014.pdf,4,215,452,298,11
 2014,5,Alfonso Morales;BoRevision,arsredovisning2014.pdf,4,186,365,172,21
-2013,4,Hilde Bjéns;Christina Fredriksson;Sven Back,arsredovisning_2013.pdf,4,354,463,162,10
-2013,5,Alfonso Morales;BoRevision,arsredovisning_2013.pdf,4,178,374,170,21
+2013,4,Hilde Bjéns;Christina Fredriksson;Sven Back,arsredovisning_2013.pdf,4,206,463,310,11
+2013,5,Alfonso Morales;BoRevision,arsredovisning_2013.pdf,4,186,365,172,21
 2025,6,100,stamma2025-protokoll.pdf,2,484,707,18,13
 2025,7,4,stamma2025-protokoll.pdf,2,154,721,6,13
 2024,6,46,protokoll2024.pdf,2,484,707,12,13
@@ -141,10 +141,10 @@ year,category_id,value,file,page,x,y,width,height
 2011,1,Bengt Rapp,arsredovisning2012.pdf,5,96,131,57,10
 2011,2,Pether Johnsson,arsredovisning2012.pdf,5,96,143,81,8
 2011,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Hans Buhlmann,arsredovisning2012.pdf,5,95,168,126,59
-2012,0,2012-01-01 – 2012-12-31,arsredovisning_2013.pdf,4,97,109,42,11
-2012,1,Bengt Rapp,arsredovisning_2013.pdf,4,98,134,57,11
-2012,2,Pether Johnsson,arsredovisning_2013.pdf,4,98,147,81,9
-2012,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén;Hans Bählmann,arsredovisning_2013.pdf,4,96,172,125,72
+2012,0,2012-01-01 – 2012-12-31,arsredovisning2013.pdf,4,86,110,42,11
+2012,1,Bengt Rapp,arsredovisning2013.pdf,4,86,135,57,11
+2012,2,Pether Johnsson,arsredovisning2013.pdf,4,86,148,81,9
+2012,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén;Hans Bihimann,arsredovisning2013.pdf,4,85,173,126,72
 2003,4,Lars Andersson;Åke Berg;Ewa Forsberg,arsredovisning_03_B.pdf,2,184,600,70,36
 2004,4,Lars Andersson;Åke Berg;Ewa Forsberg;Sanna Havlind,Arsredovisning_2004.pdf,2,184,525,69,48
 2005,4,Lars Andersson;Åke Berg;Ewa Forsberg,bokslut2005.pdf,2,147,639,76,43
@@ -153,11 +153,50 @@ year,category_id,value,file,page,x,y,width,height
 2008,4,Ake Berg;Ewa Forsberg;Hakan Kylsater;Lolita Lall;Lena Wiklund,Arsredovisning_2008.pdf,3,178,607,66,62
 2009,4,Håkan Kylsäter;Lolita Lall;Karna Henseby,arsredovisning_2009.pdf,4,207,469,299,12
 2010,4,Hilde Bjéns;Christina Fredriksson;Sven Back,arsredovisning2010.pdf,4,202,480,312,14
-2011,4,Christina Fredriksson;Sven Back,arsredovisning2012.pdf,5,357,447,165,10
-2012,4,Hilde Bjéns;Christina Fredriksson;Sven Back,arsredovisning_2013.pdf,4,354,463,162,10
+2011,4,Hilde Bjns;Christina Fredriksson;Sven Back,arsredovisning2012.pdf,5,206,447,316,10
+2012,4,Hilde Bjéns;Christina Fredriksson;Sven Back,arsredovisning2013.pdf,4,196,463,315,12
 2013,8,Mats Falt;Thomas Martinsson,arsredovisning_2013.pdf,4,96,286,95,21
 2014,8,Peter Fleury;Peter Benisch,arsredovisning2014.pdf,4,103,277,67,21
-2015,8,Peter Fleury;Hans-Géran Vistrand,arsredovisning2015.pdf,5,106,276,58,11
+2015,8,Peter Fleury;Hans-Géran Vistrand,arsredovisning2015.pdf,5,106,276,102,21
 2016,8,Jaime Martinez;Bo Gustafsson;Lukas Sveman,arsredovisning_2016.pdf,4,106,290,73,35
 2017,8,Jaime Martinez;Lukas Sveman,kallelse_stamma2018.pdf,4,77,288,82,23
 2018,8,Lukas Sveman,kallelse_stamma_2019.pdf,4,83,301,75,9
+2003,5,Karin Skeppström;Per Gustavsson,arsredovisning_03_B.pdf,2,184,509,80,49
+2003,8,Maria Neiglick;Gun Hallgren;Kjell Signell,arsredovisning_03_B.pdf,2,184,394,67,36
+2004,5,Karin Skeppström;Alfonso Morales,Arsredovisning_2004.pdf,2,184,473,81,23
+2004,8,Maria Neiglick;Ingela Livchitz;Marie-Louise Sandqvist,Arsredovisning_2004.pdf,2,184,371,106,35
+2005,5,Karin Skeppström;BoRevision AB,bokslut2005.pdf,2,117,572,88,16
+2005,8,Robert Frick;Bengt Rapp;Benny Strand;Rolf Stohr;Pether Johnsson;Stefan Bengtsson;Gun Hallgren;Ann-Christine Wisén;Mats Pjons;Maria Neiglick;Ingela Livchitz;Margueite Bjärevall;Alfonso Morales,bokslut2005.pdf,2,147,273,159,299
+2005,9,Karin Skeppström;Eva Wedberg,bokslut2005.pdf,17,389,661,75,15
+2006,5,Karin Skeppström;BoRevision AB,Arsredovisning_2006.pdf,2,155,583,88,11
+2006,8,Bertil Neij;Ingela Livchitz,Arsredovisning_2006.pdf,2,184,460,73,25
+2007,5,Karin Skeppström;BoRevision AB,Arsredovisning_2007.pdf,2,150,520,79,10
+2007,8,Siv Nordqvist,Arsredovisning_2007.pdf,2,186,415,60,11
+2007,9,Karin Skeppström;Lars-Göran Petersson,Arsredovisning_2007.pdf,17,54,637,390,67
+2008,5,Karin Skeppström;BoRevision,Arsredovisning_2008.pdf,3,133,543,70,10
+2008,8,Markku Sandelin;Lena Holmberg,Arsredovisning_2008.pdf,3,177,400,66,23
+2008,9,Karin Skeppström;Lena Strömbäck,Arsredovisning_2008.pdf,15,358,645,72,9
+2009,5,Karin Skeppström;BoRevision,arsredovisning_2009.pdf,4,180,380,86,11
+2009,8,Lena Wiklund;Rolf Lovén,arsredovisning_2009.pdf,4,97,265,66,21
+2009,9,Karin Skeppström;Lena Strömbäck,arsredovisning_2009.pdf,16,360,639,71,10
+2010,5,Alfonso Morales;BoRevision,arsredovisning2010.pdf,4,174,396,78,9
+2010,8,Lena Wiklund;Rolf Lovén,arsredovisning2010.pdf,4,90,283,65,22
+2010,9,Alfonso Morales;Lena Strömbäck,arsredovisning2010.pdf,17,359,658,69,9
+2011,5,Alfonso Morales;BoRevision,arsredovisning2012.pdf,5,178,358,78,8
+2011,8,Lena Wiklund;Rolf Lovén,arsredovisning2012.pdf,5,95,257,66,21
+2014,9,Hans Kypengren;Jonny Pegestam,arsredovisning2014.pdf,17,114,144,386,593
+2015,9,Olle Wicander;Pontus Stormsköld,arsredovisning2015.pdf,17,89,86,407,647
+2016,9,Olle Wicander;Pontus Stormsköld,arsredovisning_2016.pdf,17,189,390,144,20
+2017,9,Olle Wicander;Olena Azoulyak,kallelse_stamma2018.pdf,17,166,99,354,324
+2018,9,Olle Wicander;Joakim Häll,kallelse_stamma_2019.pdf,17,301,398,163,9
+2019,9,Olle Wicander;Joakim Häll,BRF_Sjotungan_arsredovisning_2019.pdf,18,39,565,203,10
+2020,9,Olle Wicander;Mattias Matti,stamma_kallelse-2021.pdf,4,110,301,181,30
+2021,9,Joakim Häll;Mattias Matti,stamma_kallelse_2022.pdf,24,56,632,214,13
+2022,9,Joakim Häll;Mattias Matti,stamma-2023.pdf,19,75,663,197,12
+2023,9,Agnes Milton;Mattias Matti,stamma-2024.pdf,22,78,612,193,14
+2024,9,Joakim Häll;Mattias Matti,stamma2025.pdf,43,61,615,199,15
+2011,9,Alfonso Morales;Lena Strömbäck,arsredovisning2012.pdf,18,53,144,439,477
+2012,5,Alfonso Morales;BoRevision,arsredovisning2013.pdf,4,168,375,78,9
+2012,9,Alfonso Morales;Elias Nesru,arsredovisning2013.pdf,16,95,133,385,597
+2012,8,Mats Falt;Thomas Martinsson,arsredovisning2013.pdf,4,85,287,96,21
+2013,9,Alfonso Morales;Elias Nesru,arsredovisning_2013.pdf,16,48,645,406,117

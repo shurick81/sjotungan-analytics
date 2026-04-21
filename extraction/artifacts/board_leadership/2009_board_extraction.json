@@ -45,7 +45,7 @@
         96.96,
         138.72,
         241.2,
-        223.2
+        235.92
       ],
       "valberedning": [
         206.64,
@@ -58,8 +58,21 @@
         265.2,
         162.48,
         286.32
+      ],
+      "revisorer_signed": [
+        179.76,
+        379.91999999999996,
+        265.44,
+        390.47999999999996
       ]
-    }
+    },
+    "board_revisorer": [
+      "Karin Skeppström"
+    ],
+    "revisorer_signed": [
+      "Karin Skeppström"
+    ],
+    "revisorer_signed_page": null
   },
   "line_count": 44
 }

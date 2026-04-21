@@ -58,8 +58,21 @@
         287.52,
         158.16,
         310.8
+      ],
+      "revisorer_signed": [
+        165.84,
+        99.36,
+        519.36,
+        423.12
       ]
-    }
+    },
+    "board_revisorer": [
+      "Olle Wicander"
+    ],
+    "revisorer_signed": [
+      "Olle Wicander"
+    ],
+    "revisorer_signed_page": 17
   },
   "line_count": 40
 }
