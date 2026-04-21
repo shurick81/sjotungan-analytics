@@ -175,7 +175,7 @@ year,category_id,value,file,page,x,y,width,height
 2007,9,Karin Skeppström;samt BoRevision AB,Arsredovisning_2007.pdf,17,54,637,483,82
 2008,5,Karin Skeppström;BoRevision,Arsredovisning_2008.pdf,3,133,543,70,10
 2008,8,Markku Sandelin;Lena Holmberg,Arsredovisning_2008.pdf,3,177,400,66,23
-2008,9,Karin Skeppstrém,Arsredovisning_2008.pdf,15,358,645,72,9
+2008,9,Karin Skeppström;Lena Strömbäck,Arsredovisning_2008.pdf,15,358,645,72,9
 2009,5,Karin Skeppström;BoRevision,arsredovisning_2009.pdf,4,180,380,86,11
 2009,8,Lena Wiklund;Rolf Lovén,arsredovisning_2009.pdf,4,97,265,66,21
 2009,9,Karin Skeppström;Lena Strömbäck,arsredovisning_2009.pdf,16,360,639,71,10
@@ -195,10 +195,10 @@ year,category_id,value,file,page,x,y,width,height
 2022,9,Joakim Häll;Mattias Matti,stamma-2023.pdf,19,75,663,197,12
 2023,9,Agnes Milton;Mattias Matti,stamma-2024.pdf,22,78,612,193,14
 2024,9,Joakim Häll;Mattias Matti,stamma2025.pdf,43,61,615,199,15
-2011,9,Alfonso Morales,arsredovisning2012.pdf,18,53,144,439,477
+2011,9,Alfonso Morales;Lena Strömbäck,arsredovisning2012.pdf,18,53,144,439,477
 2012,5,Alfonso Morales;BoRevision,arsredovisning2013.pdf,4,168,375,78,9
-2012,9,Alfonso Morales,arsredovisning2013.pdf,16,95,133,385,597
+2012,9,Alfonso Morales;Elias Nesru,arsredovisning2013.pdf,16,95,133,385,597
 2012,8,Mats Falt;Thomas Martinsson,arsredovisning2013.pdf,4,85,287,96,21
-2013,9,Alfonso Morales,arsredovisning_2013.pdf,16,288,648,34,7
+2013,9,Alfonso Morales;Elias Nesru,arsredovisning_2013.pdf,16,288,648,34,7
 2006,9,Karin Skeppström,Arsredovisning_2006.pdf,15,96,100,156,314
 2009,10,Hans Bühlmann,arsredovisning_2009.pdf,4,97,227,77,9
