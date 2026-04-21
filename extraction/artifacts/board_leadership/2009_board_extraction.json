@@ -3,15 +3,17 @@
   "pdf": "arsredovisning_2009.pdf",
   "page": 4,
   "parsed": {
-    "chair": "Pether Johnsson",
+    "chair": "Bengt Rapp",
     "vice": "Pether Johnsson",
     "members": [
+      "Bertil Neij",
       "Andreas Tollefors Gustafsson",
       "Stefan Bengtsson",
       "Anita Buske",
-      "Markku Sandelin",
-      "Hans Bäöhlmann",
-      "Bengt Rapp"
+      "Markku Sandelin"
+    ],
+    "external_hsb_ledamoter": [
+      "Hans Bühlmann"
     ],
     "valberedning": [
       "Håkan Kylsäter",
@@ -30,10 +32,10 @@
         123.6
       ],
       "chair": [
-        98.16,
-        151.2,
-        179.51999999999998,
-        159.84
+        98.39999999999999,
+        138.72,
+        155.51999999999998,
+        149.28
       ],
       "vice": [
         98.16,
@@ -43,9 +45,9 @@
       ],
       "members": [
         96.96,
-        138.72,
+        163.92,
         241.2,
-        235.92
+        223.2
       ],
       "valberedning": [
         206.64,
@@ -58,6 +60,12 @@
         265.2,
         162.48,
         286.32
+      ],
+      "external_hsb_ledamoter": [
+        97.44,
+        227.28,
+        174.48,
+        235.92
       ],
       "revisorer_signed": [
         179.76,

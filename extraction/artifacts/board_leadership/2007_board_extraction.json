@@ -4,12 +4,14 @@
   "page": 2,
   "parsed": {
     "chair": "Bengt Rapp",
-    "vice": "Pether Johnsson",
+    "vice": "",
     "members": [
+      "Pether Johnsson",
       "Marguerite Bjärevall",
       "Bertil Neij",
       "Rolf Stohr",
-      "Stefan Bengtsson"
+      "Stefan Bengtsson",
+      "Roine Hammar (t.o.m. 2007-10-08)"
     ],
     "valberedning": [
       "Lars Andersson",
@@ -33,17 +35,12 @@
         234.48,
         258.71999999999997
       ],
-      "vice": [
-        184.07999999999998,
-        260.88,
-        253.67999999999998,
-        269.28
-      ],
+      "vice": null,
       "members": [
         184.07999999999998,
-        273.12,
+        260.88,
         274.32,
-        321.84
+        345.59999999999997
       ],
       "valberedning": [
         187.44,

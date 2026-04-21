@@ -12,6 +12,7 @@ This method extracts annual-report board leadership rows into `data/general_stat
    - `4`: Valberedning (semicolon-separated)
    - `8`: Suppleanter (semicolon-separated)
    - `9`: Revisorer signerat årsredovisningen (semicolon-separated)
+   - `10`: Externa ledamoter (HSB) (semicolon-separated)
 - Target years: `2003` to `2018`
 
 ## Pipeline

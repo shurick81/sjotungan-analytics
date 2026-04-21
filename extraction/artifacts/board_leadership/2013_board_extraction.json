@@ -6,13 +6,16 @@
     "chair": "Bengt Rapp",
     "vice": "Pether Johnsson",
     "members": [
+      "Bertil Neij",
       "Andreas Tollefors Bristam",
       "Stefan Bengtsson",
       "Anita Buske",
       "Markku Sandelin",
       "Lena Wiklund",
-      "Rolf Lovén",
-      "Hans Bählmann"
+      "Rolf Lovén"
+    ],
+    "external_hsb_ledamoter": [
+      "Hans Bühlmann"
     ],
     "valberedning": [
       "Hilde Bjéns",
@@ -44,9 +47,9 @@
       ],
       "members": [
         96.47999999999999,
-        172.32,
+        159.6,
         221.28,
-        256.8
+        244.07999999999998
       ],
       "valberedning": [
         205.92,
@@ -59,6 +62,12 @@
         286.08,
         191.28,
         307.2
+      ],
+      "external_hsb_ledamoter": [
+        96.96,
+        248.16,
+        173.51999999999998,
+        256.8
       ],
       "revisorer_signed": [
         287.76,

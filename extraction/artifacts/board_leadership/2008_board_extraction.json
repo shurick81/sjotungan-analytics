@@ -4,12 +4,14 @@
   "page": 3,
   "parsed": {
     "chair": "Bengt Rapp",
-    "vice": "Pether Johnsson",
+    "vice": "",
     "members": [
+      "Pether Johnsson",
       "Bertil Neij",
       "Rolf Stohr",
       "Stefan Bengtsson",
-      "Anita Buske"
+      "Anita Buske",
+      "Marguerite Bjarevall (t.o.m. 2008-12-31)"
     ],
     "valberedning": [
       "Ake Berg",
@@ -35,17 +37,12 @@
         222.95999999999998,
         282.0
       ],
-      "vice": [
-        176.64,
-        284.4,
-        242.64,
-        292.8
-      ],
+      "vice": null,
       "members": [
         176.16,
-        297.12,
-        246.48,
-        343.44
+        284.4,
+        255.35999999999999,
+        358.32
       ],
       "valberedning": [
         177.84,

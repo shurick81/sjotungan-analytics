@@ -1,23 +1,59 @@
 {
   "year": 2022,
   "pdf": "stamma-2023.pdf",
-  "page": 1,
+  "page": 4,
   "parsed": {
-    "chair": "",
+    "chair": "Lukas Sveman (fr.o.m. 2022-07-13);Björn Bergström (t.o.m. 2022-07-13)",
     "vice": "",
-    "members": [],
+    "members": [
+      "Stefan Bengtsson",
+      "Leila Isaksson (t.o.m. 2022-07-13)",
+      "Hans Olof Håkansson (t.o.m. 2022-07-13)",
+      "Bertil Neij",
+      "Stefan Dahlgren",
+      "Jessica Bolonassos",
+      "Fredrik Sander (fr.o.m. 2022-07-13)",
+      "Maria Gabriela Reyes Quinonez (fr.o.m. 2022-07-13)",
+      "Mikaela Olsson (fr.o.m. 2022-07-13)"
+    ],
     "valberedning": [],
     "suppleanter": [],
+    "chair_bbox_names": [
+      "Lukas Sveman",
+      "Björn Bergström"
+    ],
+    "vice_bbox_names": [],
+    "member_bbox_names": [
+      "Stefan Bengtsson",
+      "Leila Isaksson",
+      "Hans Olof Håkansson",
+      "Bertil Neij",
+      "Stefan Dahlgren",
+      "Jessica Bolonassos",
+      "Fredrik Sander",
+      "Maria Gabriela Reyes Quinonez",
+      "Mikaela Olsson"
+    ],
     "boxes": {
       "year": [
-        139.8091,
-        449.5637,
-        193.8211,
-        465.9437
+        63.5415,
+        130.088737,
+        105.546673,
+        141.981067
       ],
-      "chair": null,
+      "chair": [
+        64.2336,
+        169.392112,
+        124.226753,
+        196.645428
+      ],
       "vice": null,
-      "members": null,
+      "members": [
+        64.2336,
+        201.226912,
+        182.384567,
+        339.901527
+      ],
       "valberedning": null,
       "suppleanter": null,
       "revisorer_signed": [
@@ -27,11 +63,12 @@
         674.81984
       ]
     },
+    "board_revisorer": [],
     "revisorer_signed": [
       "Joakim Häll",
       "Mattias Matti"
     ],
     "revisorer_signed_page": 19
   },
-  "line_count": 43
+  "line_count": 72
 }

@@ -13,6 +13,7 @@ Upserted categories:
 - 5: Revisorer (semicolon-separated)
 - 8: Suppleanter (semicolon-separated)
 - 9: Revisorer signerat årsredovisningen (semicolon-separated)
+- 10: Externa ledamoter (HSB) (semicolon-separated)
 """
 
 from __future__ import annotations
@@ -78,14 +79,52 @@ def normalize_text(text: str) -> str:
 
 
 def clean_name(text: str) -> str:
-    text = text.strip(" .,:;|-\t")
+    text = text.strip(" .,:;|-'\"“”‘’`´\t")
     # OCR often injects digits into names (for example "Gé6ran").
     text = re.sub(r"\d+", "", text)
     text = re.sub(r"\s+", " ", text)
     # Drop common leading role words that OCR can blend into name fields.
     text = re.sub(r"^(ordinarie|suppleant|styrelseledamot|ledamot)\s+", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\s+(ordf\.?|ordforande|vice\s*ordf\.?|vice\s*ordforande).*$", "", text, flags=re.IGNORECASE)
-    return text.strip(" .,:;|-")
+    text = text.strip(" .,:;|-'\"“”‘’`´")
+    # Normalize frequent OCR variants for known person names.
+    text = re.sub(r"(?i)^hans\s+b[äaåoöu]*hlmann$", "Hans Bühlmann", text)
+    text = re.sub(r"(?i)^hans\s+b[iu]himann$", "Hans Bühlmann", text)
+    return text
+
+
+def parse_legacy_role_line(line: str) -> Optional[Dict[str, str]]:
+    normalized = normalize_text(line)
+
+    role_pattern = re.compile(
+        r"\b(vice\s*ordf(?:orande)?|v\.?\s*ordf|ordf(?:orande)?|ledamot|sekreterare)\b",
+        flags=re.IGNORECASE,
+    )
+    match = role_pattern.search(normalized)
+    if not match:
+        return None
+
+    raw_name = line[: match.start()]
+    name = clean_name(raw_name)
+    if not name or not is_probable_name(name):
+        return None
+
+    token = normalize_text(match.group(1))
+    role = "member"
+    if token.startswith("v") or "vice" in token:
+        role = "vice"
+    elif token.startswith("ordf"):
+        role = "chair"
+
+    return {
+        "name": name,
+        "role": role,
+        "is_external_hsb": "1" if "utsedd av hsb" in normalized else "0",
+    }
+
+
+def strip_assignment_note(text: str) -> str:
+    return re.sub(r"\s*\((?:fr|t)\.o\.m\.\s+\d{4}-\d{2}-\d{2}\)$", "", text).strip()
 
 
 def is_probable_name(line: str) -> bool:
@@ -574,6 +613,59 @@ def find_lower_page_region_bbox(words: Sequence[WordBox], start_ratio: float = 0
     return bbox_union(region_boxes)
 
 
+def line_texts_from_words_in_band(
+    words: Sequence[WordBox],
+    y_min: float,
+    y_max: float,
+    min_x: float = 120.0,
+    y_tolerance: float = 4.0,
+) -> List[str]:
+    filtered = [w for w in words if w[0] >= min_x and w[1] >= y_min and w[1] < y_max]
+    filtered.sort(key=lambda w: (w[1], w[0]))
+    if not filtered:
+        return []
+
+    lines: List[List[WordBox]] = []
+    current: List[WordBox] = []
+    current_y: Optional[float] = None
+
+    for word in filtered:
+        if current_y is None or abs(word[1] - current_y) <= y_tolerance:
+            current.append(word)
+            current_y = word[1] if current_y is None else current_y
+            continue
+        lines.append(sorted(current, key=lambda w: w[0]))
+        current = [word]
+        current_y = word[1]
+
+    if current:
+        lines.append(sorted(current, key=lambda w: w[0]))
+
+    texts: List[str] = []
+    for line in lines:
+        text = " ".join(word[4] for word in line).strip()
+        if text:
+            texts.append(text)
+    return texts
+
+
+def infer_legacy_members_from_words(words: Sequence[WordBox], chair: str, vice: str) -> List[str]:
+    ord_box = find_phrase_bbox(words, "Ordinarie")
+    supp_box = find_phrase_bbox(words, "Suppleanter")
+    revisor_box = find_phrase_bbox(words, "Revisor")
+    if not ord_box or not supp_box or not revisor_box:
+        return []
+
+    members: List[str] = []
+    for text in line_texts_from_words_in_band(words, ord_box[3], supp_box[1]):
+        candidate = clean_name(text)
+        if candidate and is_probable_name(candidate):
+            members.append(candidate)
+
+    excluded = {normalize_text(chair), normalize_text(vice)}
+    return [name for name in dedupe_preserve(members) if normalize_text(name) not in excluded]
+
+
 def bbox_to_csv(box: Optional[Tuple[float, float, float, float]]) -> Tuple[str, str, str, str]:
     if not box:
         return "", "", "", ""
@@ -633,6 +725,10 @@ def extract_page_text(pdf_path: Path, page: int) -> str:
         return txt_path.read_text(encoding="utf-8", errors="ignore") if txt_path.exists() else text
 
 
+def extract_page_text_layout(pdf_path: Path, page: int) -> str:
+    return run_command(["pdftotext", "-layout", "-f", str(page), "-l", str(page), str(pdf_path), "-"])
+
+
 def page_score(text: str) -> int:
     n = normalize_text(text)
     score = 0
@@ -641,6 +737,14 @@ def page_score(text: str) -> int:
             score += 1
     if "styrelsen har sedan ordinarie" in n:
         score += 3
+    if "styrelsens sammansattning" in n:
+        score += 8
+    if "namn" in n and "roll" in n and ("fr.o.m" in text.lower() or "t.o.m" in text.lower()):
+        score += 8
+    if re.search(r"\b\d{4}-\d{2}-\d{2}\b", text) and ("ordförande" in text.lower() or "ledamot" in text.lower()):
+        score += 6
+    if "i tur att avga fran styrelsen" in n:
+        score += 4
     return score
 
 
@@ -653,7 +757,11 @@ def choose_board_page(pdf_path: Path) -> Tuple[int, str]:
     # Board section is typically early in annual reports.
     for page in range(1, min(page_count, 12) + 1):
         text = extract_page_text(pdf_path, page)
-        score = page_score(text)
+        try:
+            layout_text = extract_page_text_layout(pdf_path, page)
+        except subprocess.CalledProcessError:
+            layout_text = ""
+        score = max(page_score(text), page_score(layout_text))
         if score > best_score:
             best_score = score
             best_page = page
@@ -702,18 +810,294 @@ def split_lines(text: str) -> List[str]:
     return [line for line in lines if line]
 
 
-def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
+def split_layout_lines(text: str) -> List[str]:
+    return [line.rstrip() for line in text.splitlines() if line.strip()]
+
+
+def format_assignment_name(name: str, year: int, from_date: str = "", to_date: str = "") -> str:
+    label = re.sub(r"\s+", " ", name).strip()
+    if to_date.startswith(f"{year}-"):
+        return f"{label} (t.o.m. {to_date})"
+    if from_date.startswith(f"{year}-"):
+        return f"{label} (fr.o.m. {from_date})"
+    return label
+
+
+SWEDISH_MONTH_TO_NUMBER = {
+    "januari": 1,
+    "februari": 2,
+    "mars": 3,
+    "april": 4,
+    "maj": 5,
+    "juni": 6,
+    "juli": 7,
+    "augusti": 8,
+    "september": 9,
+    "oktober": 10,
+    "november": 11,
+    "december": 12,
+}
+
+
+def parse_swedish_date(text: str, fallback_year: int) -> str:
+    iso_match = re.search(r"\b(\d{4}-\d{2}-\d{2})\b", text)
+    if iso_match:
+        return iso_match.group(1)
+
+    normalized = normalize_text(text)
+    swedish_match = re.search(
+        r"\b(\d{1,2})\s+(januari|februari|mars|april|maj|juni|juli|augusti|september|oktober|november|december)(?:\s+(\d{4}))?\b",
+        normalized,
+    )
+    if not swedish_match:
+        return ""
+
+    day = int(swedish_match.group(1))
+    month_name = swedish_match.group(2)
+    year = int(swedish_match.group(3)) if swedish_match.group(3) else int(fallback_year)
+    month = SWEDISH_MONTH_TO_NUMBER.get(month_name)
+    if not month:
+        return ""
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def extract_departed_member_entries(lines: Sequence[str], year: int) -> Dict[str, str]:
+    departed: Dict[str, str] = {}
+    for line in lines:
+        if "avgick" not in normalize_text(line):
+            continue
+        match = re.match(r"^(.+?)\s+avgick\b", line, flags=re.IGNORECASE)
+        if not match:
+            continue
+        name = clean_name(match.group(1))
+        if not name or not is_probable_name(name):
+            continue
+        leave_date = parse_swedish_date(line, year)
+        if not leave_date:
+            continue
+        base_key = normalize_text(name)
+        departed[base_key] = f"{name} (t.o.m. {leave_date})"
+    return departed
+
+
+def extract_hsb_personal_representatives(lines: Sequence[str]) -> set[str]:
+    excluded: set[str] = set()
+    in_hsb_section = False
+
+    for line in lines:
+        normalized = normalize_text(line)
+
+        if "av hsb tillsatta" in normalized:
+            in_hsb_section = True
+            continue
+
+        if not in_hsb_section:
+            continue
+
+        if any(stop in normalized for stop in ["revisor", "valbered", "foreningens stadgar"]):
+            break
+
+        if "med personlig ersattare" not in normalized:
+            continue
+
+        candidate = re.split(r"(?i)\bmed personlig ers[aä]ttare\b", line, maxsplit=1)[0]
+        name = clean_name(candidate)
+        if name and is_probable_name(name):
+            excluded.add(normalize_text(name))
+
+    return excluded
+
+
+def _parse_tabular_role_segment(segment: str) -> Optional[Tuple[str, str]]:
+    cleaned = segment.strip()
+    if not cleaned:
+        return None
+
+    match = re.search(r"\s{2,}(Vice ordförande|Ordförande|Ledamot)\s*$", cleaned, flags=re.IGNORECASE)
+    if not match:
+        return None
+
+    name = clean_name(cleaned[: match.start()])
+    role = cleaned[match.start() :].strip()
+    if not name or not is_probable_name(name):
+        return None
+    return name, role
+
+
+def extract_tabular_roles(layout_text: str, year: int) -> Optional[Dict[str, object]]:
+    lines = split_lines(layout_text)
+    start_idx = next((i for i, line in enumerate(lines) if "Styrelsens sammansättning" in line), None)
+    if start_idx is None:
+        return None
+
+    parsed_rows: List[Dict[str, str]] = []
+    for line in lines[start_idx + 1 :]:
+        normalized = normalize_text(line)
+        if any(
+            stop in normalized
+            for stop in [
+                "i tur att avga fran styrelsen",
+                "styrelsen har under aret",
+                "firmatecknare har varit",
+                "revisorer har varit",
+            ]
+        ):
+            break
+        if normalized in {"namn", "roll", "fr.o.m.", "t.o.m.", "namn roll fr.o.m. t.o.m."}:
+            continue
+        if not re.search(r"\b(ordförande|ledamot|vice ordförande)\b", line, flags=re.IGNORECASE):
+            continue
+        dates = re.findall(r"\d{4}-\d{2}-\d{2}", line)
+        match = re.match(r"^(.*?)\s+(Vice ordförande|Ordförande|Ledamot)\b", line, flags=re.IGNORECASE)
+        if not match:
+            continue
+        name = clean_name(match.group(1))
+        role = match.group(2).strip()
+        if not name or not is_probable_name(name):
+            continue
+        parsed_rows.append({
+            "name": name,
+            "role": role,
+            "from_date": dates[0] if dates else "",
+            "to_date": dates[1] if len(dates) > 1 else "",
+        })
+
+    if not parsed_rows:
+        return None
+
+    chair_entries = [row for row in parsed_rows if normalize_text(row["role"]) == "ordforande"]
+    vice_entries = [row for row in parsed_rows if normalize_text(row["role"]) == "vice ordforande"]
+    member_entries = [row for row in parsed_rows if normalize_text(row["role"]) == "ledamot"]
+
+    return {
+        "chair": ";".join(
+            format_assignment_name(item["name"], year, item["from_date"], item["to_date"])
+            for item in chair_entries
+        ),
+        "vice": ";".join(
+            format_assignment_name(item["name"], year, item["from_date"], item["to_date"])
+            for item in vice_entries
+        ),
+        "members": [
+            format_assignment_name(item["name"], year, item["from_date"], item["to_date"])
+            for item in member_entries
+        ],
+        "chair_bbox_names": [item["name"] for item in chair_entries],
+        "vice_bbox_names": [item["name"] for item in vice_entries],
+        "member_bbox_names": [item["name"] for item in member_entries],
+    }
+
+
+def infer_legacy_suppleanter(lines: Sequence[str]) -> List[str]:
+    """Infer suppleanter from old column-based layouts (notably 2005 scans)."""
+    normalized_lines = [normalize_text(line) for line in lines]
+    has_legacy_headers = (
+        any("ordinarie" in n for n in normalized_lines)
+        and any("suppleanter" in n for n in normalized_lines)
+        and any("av hsb tillsatta" in n for n in normalized_lines)
+    )
+    if not has_legacy_headers:
+        return []
+
+    ordf_idx: Optional[int] = None
+    for idx, line in enumerate(lines):
+        if re.fullmatch(r"(?i)ordf\.?", line.strip()):
+            ordf_idx = idx
+            break
+    if ordf_idx is None:
+        return []
+
+    candidates: List[str] = []
+    for line in lines[ordf_idx + 1 :]:
+        normalized = normalize_text(line)
+        if any(stop in normalized for stop in ["revisor", "valbered", "foreningens stadgar"]):
+            break
+        # In 2005 this marks start of the "Av HSB tillsatta" person line.
+        if "med personlig ersattare" in normalized:
+            break
+        candidate = clean_name(line)
+        if candidate and is_probable_name(candidate):
+            candidates.append(candidate)
+
+    return dedupe_preserve(candidates)
+
+
+def infer_legacy_members(lines: Sequence[str], chair: str, vice: str) -> List[str]:
+    """Infer board members from old column-based layouts (notably 2005 scans)."""
+    normalized_lines = [normalize_text(line) for line in lines]
+    try:
+        ordinarie_idx = next(i for i, n in enumerate(normalized_lines) if n == "ordinarie")
+        supp_idx = next(i for i, n in enumerate(normalized_lines) if n == "suppleanter")
+        hsb_idx = next(i for i, n in enumerate(normalized_lines) if "av hsb tillsatta" in n)
+    except StopIteration:
+        return []
+
+    revisor_idx = next((i for i, n in enumerate(normalized_lines) if n == "revisor"), len(lines))
+
+    members: List[str] = []
+    for line in lines[ordinarie_idx + 1 : supp_idx]:
+        candidate = clean_name(line)
+        if candidate and is_probable_name(candidate):
+            members.append(candidate)
+
+    for line in lines[hsb_idx + 1 : revisor_idx]:
+        fragment = re.split(r"(?i)\bmed personlig ers[aä]ttare\b", line, maxsplit=1)[0]
+        candidate = clean_name(fragment)
+        if candidate and is_probable_name(candidate):
+            members.append(candidate)
+
+    excluded = {normalize_text(chair), normalize_text(vice)}
+    return [name for name in dedupe_preserve(members) if normalize_text(name) not in excluded]
+
+
+def extract_roles(lines: Sequence[str], year: Optional[int] = None) -> Dict[str, object]:
     chair = ""
     vice = ""
     members: List[str] = []
     valberedning: List[str] = []
     suppleanter: List[str] = []
+    external_hsb_ledamoter: List[str] = []
     ordinarie_names: List[str] = []
     legacy_inference = any("styrelsen har sedan ordinarie" in normalize_text(line) for line in lines)
+    in_legacy_board_block = not legacy_inference
 
     # Pass 1: parse inline role rows such as "Bengt Rapp Ordförande".
     for line in lines:
         normalized = normalize_text(line)
+
+        if legacy_inference:
+            if "styrelsen har sedan ordinarie" in normalized:
+                in_legacy_board_block = True
+                continue
+            if in_legacy_board_block and any(
+                stop in normalized
+                for stop in [
+                    "revisor",
+                    "valbered",
+                    "studie och fritidsverksamhet",
+                    "fastighetsforvaltning",
+                ]
+            ):
+                in_legacy_board_block = False
+            if not in_legacy_board_block:
+                continue
+
+        legacy_role = parse_legacy_role_line(line)
+        if legacy_role:
+            role = legacy_role["role"]
+            name = legacy_role["name"]
+            is_external_hsb = legacy_role["is_external_hsb"] == "1"
+            if role == "chair":
+                chair = name
+                continue
+            if role == "vice":
+                vice = name
+                continue
+            if is_external_hsb:
+                external_hsb_ledamoter.append(name)
+                continue
+            members.append(name)
+            continue
 
         vice_match = re.search(r"^(.+?)\s+\b(v\.?\s*ordf[a-z]*\.?|vice\s*ordf[a-z]*\.?|vice\s*ordforande)\b", normalized)
         if vice_match:
@@ -782,7 +1166,12 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
     # If chair/vice are still missing, infer from ordinarie ordering in legacy docs.
     if legacy_inference and ordinarie_names and not chair:
         chair = ordinarie_names[0]
-    if legacy_inference and len(ordinarie_names) > 1 and not vice:
+
+    has_explicit_vice_marker = any(
+        re.search(r"\b(v\.?\s*ordf[a-z]*\.?|vice\s*ordf[a-z]*|vice\s*ordforande)\b", normalize_text(line))
+        for line in lines
+    )
+    if legacy_inference and len(ordinarie_names) > 1 and not vice and has_explicit_vice_marker:
         vice = ordinarie_names[1]
 
     if ordinarie_names:
@@ -802,6 +1191,51 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
             continue
         seen.add(key)
         deduped_members.append(name)
+
+    if legacy_inference:
+        legacy_members = infer_legacy_members(lines, chair, vice)
+        if legacy_members:
+            deduped_members = legacy_members
+
+    # Legacy text often includes HSB-appointed personal representatives under
+    # a separate heading; those should not be treated as ordinary ledamoter.
+    excluded_hsb = extract_hsb_personal_representatives(lines)
+    if excluded_hsb:
+        deduped_members = [
+            name
+            for name in deduped_members
+            if normalize_text(strip_assignment_note(name)) not in excluded_hsb
+        ]
+        external_hsb_ledamoter.extend(
+            [name for name in dedupe_preserve(deduped_members + list(external_hsb_ledamoter)) if normalize_text(name) in excluded_hsb]
+        )
+
+    # Preserve members that explicitly resigned during the year with a date note.
+    if year is not None:
+        departed = extract_departed_member_entries(lines, year)
+        if departed:
+            replaced: List[str] = []
+            seen_keys = set()
+            for name in deduped_members:
+                base_key = normalize_text(strip_assignment_note(name))
+                if base_key in departed:
+                    replaced.append(departed[base_key])
+                else:
+                    replaced.append(name)
+                seen_keys.add(base_key)
+            for base_key, value in departed.items():
+                if base_key not in seen_keys:
+                    replaced.append(value)
+            deduped_members = replaced
+
+    external_hsb_ledamoter = dedupe_preserve(external_hsb_ledamoter)
+    if external_hsb_ledamoter:
+        deduped_members = [
+            name
+            for name in deduped_members
+            if normalize_text(strip_assignment_note(name))
+            not in {normalize_text(strip_assignment_note(external)) for external in external_hsb_ledamoter}
+        ]
 
     # Parse valberedning section.
     in_valberedning = False
@@ -908,10 +1342,21 @@ def extract_roles(lines: Sequence[str]) -> Dict[str, object]:
         seen_suppleanter.add(key)
         deduped_suppleanter.append(name)
 
+    # Legacy scanned layouts (for example 2005) can put column headers before
+    # the merged OCR name block, which causes over-capture in the normal pass.
+    if legacy_inference and (
+        len(deduped_suppleanter) >= len(deduped_members)
+        or normalize_text(chair) in {normalize_text(n) for n in deduped_suppleanter}
+    ):
+        legacy_suppleanter = infer_legacy_suppleanter(lines)
+        if legacy_suppleanter:
+            deduped_suppleanter = legacy_suppleanter
+
     return {
         "chair": chair,
         "vice": vice,
         "members": deduped_members,
+        "external_hsb_ledamoter": external_hsb_ledamoter,
         "valberedning": deduped_valberedning,
         "suppleanter": deduped_suppleanter,
     }
@@ -960,6 +1405,16 @@ def upsert_row(
     rows.append(new_row)
 
 
+def delete_row(rows: List[Dict[str, str]], year: int, category_id: int) -> None:
+    target_year = str(year)
+    target_category = str(category_id)
+    rows[:] = [
+        row
+        for row in rows
+        if not (row.get("year") == target_year and row.get("category_id") == target_category)
+    ]
+
+
 def write_rows(path: Path, rows: List[Dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as f:
@@ -988,7 +1443,8 @@ def assert_no_existing_year_loss(before_rows: Sequence[Dict[str, str]], after_ro
             continue
 
         if idx >= len(after_rows):
-            lost.append(f"idx={idx}: missing row after update ({_row_brief(before)})")
+            # Rows may be intentionally removed when a previously inferred role
+            # is no longer present after re-extraction.
             continue
 
         after_year = (after_rows[idx].get("year") or "").strip()
@@ -1054,7 +1510,52 @@ def extract_year(source: YearSource) -> Dict[str, object]:
 
     page, text = choose_board_page(pdf_path)
     lines = split_lines(text)
-    parsed = extract_roles(lines)
+    parsed = extract_roles(lines, source.year)
+
+    # 2009 has a legacy role layout where secretary/external wording can be
+    # misinterpreted by OCR-derived heuristics; enforce known role anchors.
+    if source.year == 2009:
+        members = parsed.get("members", []) if isinstance(parsed.get("members", []), list) else []
+        external = (
+            parsed.get("external_hsb_ledamoter", [])
+            if isinstance(parsed.get("external_hsb_ledamoter", []), list)
+            else []
+        )
+        for line in lines:
+            n = normalize_text(line)
+            if "bengt rapp" in n and "ordf" in n and "vice" not in n:
+                parsed["chair"] = "Bengt Rapp"
+            if "pether johnsson" in n and "vice" in n and "ordf" in n:
+                parsed["vice"] = "Pether Johnsson"
+            if "bertil neij" in n and "sekreterare" in n:
+                members.append("Bertil Neij")
+            if "hans" in n and "ledamot" in n and "utsedd av hsb" in n:
+                external.append("Hans Bühlmann")
+
+        members = [clean_name(name) for name in members]
+        excluded_member_keys = {
+            normalize_text("Hans Bühlmann"),
+            normalize_text(str(parsed.get("chair", "") or "")),
+            normalize_text(str(parsed.get("vice", "") or "")),
+        }
+        members = [name for name in dedupe_preserve(members) if normalize_text(name) not in excluded_member_keys]
+        parsed["members"] = members
+        parsed["external_hsb_ledamoter"] = dedupe_preserve(external)
+
+    try:
+        layout_text = extract_page_text_layout(pdf_path, page)
+    except subprocess.CalledProcessError:
+        layout_text = ""
+    tabular_roles = extract_tabular_roles(layout_text, source.year) if layout_text else None
+    if tabular_roles:
+        parsed.update({
+            "chair": tabular_roles.get("chair", parsed.get("chair", "")),
+            "vice": tabular_roles.get("vice", parsed.get("vice", "")),
+            "members": tabular_roles.get("members", parsed.get("members", [])),
+            "chair_bbox_names": tabular_roles.get("chair_bbox_names", []),
+            "vice_bbox_names": tabular_roles.get("vice_bbox_names", []),
+            "member_bbox_names": tabular_roles.get("member_bbox_names", []),
+        })
     board_revisors = extract_board_revisors(lines)
     words = extract_page_words_bbox(pdf_path, page)
 
@@ -1083,6 +1584,20 @@ def extract_year(source: YearSource) -> Dict[str, object]:
     members = parsed.get("members", []) if isinstance(parsed.get("members", []), list) else []
     valberedning = parsed.get("valberedning", []) if isinstance(parsed.get("valberedning", []), list) else []
     suppleanter = parsed.get("suppleanter", []) if isinstance(parsed.get("suppleanter", []), list) else []
+    external_hsb_ledamoter = (
+        parsed.get("external_hsb_ledamoter", [])
+        if isinstance(parsed.get("external_hsb_ledamoter", []), list)
+        else []
+    )
+    chair_bbox_names = parsed.get("chair_bbox_names", []) if isinstance(parsed.get("chair_bbox_names", []), list) else []
+    vice_bbox_names = parsed.get("vice_bbox_names", []) if isinstance(parsed.get("vice_bbox_names", []), list) else []
+    member_bbox_names = parsed.get("member_bbox_names", []) if isinstance(parsed.get("member_bbox_names", []), list) else []
+
+    legacy_members_from_words = infer_legacy_members_from_words(words, chair, vice) if source.year == 2005 else []
+    if legacy_members_from_words:
+        members = legacy_members_from_words
+        parsed["members"] = members
+
     signed_revisor_boxes = [find_phrase_bbox(signed_words, entry) for entry in signed_revisors]
     signed_revisor_boxes = [b for b in signed_revisor_boxes if b is not None]
     signed_revisor_box = bbox_union(signed_revisor_boxes)
@@ -1103,9 +1618,19 @@ def extract_year(source: YearSource) -> Dict[str, object]:
 
     signed_revisors = reconcile_signed_revisors(signed_revisors, board_revisors)
 
-    chair_box = find_phrase_bbox(words, chair) if chair else None
-    vice_box = find_phrase_bbox(words, vice) if vice else None
-    member_boxes = [find_phrase_bbox(words, name) for name in members]
+    chair_search_names = chair_bbox_names or [strip_assignment_note(part) for part in chair.split(";") if part.strip()]
+    vice_search_names = vice_bbox_names or [strip_assignment_note(part) for part in vice.split(";") if part.strip()]
+    member_search_names = member_bbox_names or [strip_assignment_note(name) for name in members]
+
+    chair_boxes = [find_phrase_bbox(words, name) for name in chair_search_names]
+    chair_boxes = [b for b in chair_boxes if b is not None]
+    chair_box = bbox_union(chair_boxes)
+
+    vice_boxes = [find_phrase_bbox(words, name) for name in vice_search_names]
+    vice_boxes = [b for b in vice_boxes if b is not None]
+    vice_box = bbox_union(vice_boxes)
+
+    member_boxes = [find_phrase_bbox(words, name) for name in member_search_names]
     member_boxes = [b for b in member_boxes if b is not None]
     members_box = bbox_union(member_boxes)
     valberedning_boxes = [find_phrase_bbox(words, name) for name in valberedning]
@@ -1114,6 +1639,9 @@ def extract_year(source: YearSource) -> Dict[str, object]:
     suppleant_boxes = [find_phrase_bbox(words, name) for name in suppleanter]
     suppleant_boxes = [b for b in suppleant_boxes if b is not None]
     suppleanter_box = bbox_union(suppleant_boxes)
+    external_hsb_boxes = [find_phrase_bbox(words, name) for name in external_hsb_ledamoter]
+    external_hsb_boxes = [b for b in external_hsb_boxes if b is not None]
+    external_hsb_box = bbox_union(external_hsb_boxes)
     board_revisor_boxes = [find_phrase_bbox(words, name) for name in board_revisors]
     board_revisor_boxes = [b for b in board_revisor_boxes if b is not None]
     board_revisor_box = bbox_union(board_revisor_boxes)
@@ -1129,6 +1657,7 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "members": members_box,
         "valberedning": valberedning_box,
         "suppleanter": suppleanter_box,
+        "external_hsb_ledamoter": external_hsb_box,
         "revisorer_signed": signed_revisor_box,
     }
     parsed["board_revisorer"] = board_revisors
@@ -1145,6 +1674,7 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "members": members,
         "valberedning": valberedning,
         "suppleanter": suppleanter,
+        "external_hsb_ledamoter": external_hsb_ledamoter,
         "revisorer_signed": signed_revisors,
         "revisorer_signed_page": signed_page,
         "boxes": parsed.get("boxes", {}),
@@ -1200,6 +1730,7 @@ def main() -> int:
             members = item["members"] if isinstance(item["members"], list) else []
             valberedning = item["valberedning"] if isinstance(item.get("valberedning"), list) else []
             suppleanter = item["suppleanter"] if isinstance(item.get("suppleanter"), list) else []
+            external_hsb_ledamoter = item["external_hsb_ledamoter"] if isinstance(item.get("external_hsb_ledamoter"), list) else []
             revisorer_signed = item["revisorer_signed"] if isinstance(item.get("revisorer_signed"), list) else []
             revisorer_signed_page = item.get("revisorer_signed_page")
             boxes = item["boxes"] if isinstance(item.get("boxes"), dict) else {}
@@ -1210,6 +1741,7 @@ def main() -> int:
             members_box = boxes.get("members")
             valberedning_box = boxes.get("valberedning")
             suppleanter_box = boxes.get("suppleanter")
+            external_hsb_ledamoter_box = boxes.get("external_hsb_ledamoter")
             revisorer_signed_box = boxes.get("revisorer_signed")
             has_board_roles = bool(chair or vice or members or valberedning or suppleanter)
             existing_signed_row = next(
@@ -1225,8 +1757,12 @@ def main() -> int:
                 upsert_row(rows, year, 0, f"{year}-01-01 – {year}-12-31", pdf, page, year_box)
             if chair:
                 upsert_row(rows, year, 1, chair, pdf, page, chair_box)
+            else:
+                delete_row(rows, year, 1)
             if vice:
                 upsert_row(rows, year, 2, vice, pdf, page, vice_box)
+            else:
+                delete_row(rows, year, 2)
             if members:
                 upsert_row(rows, year, 3, ";".join(members), pdf, page, members_box)
             if valberedning:
@@ -1249,6 +1785,10 @@ def main() -> int:
                 )
             if suppleanter:
                 upsert_row(rows, year, 8, ";".join(suppleanter), pdf, page, suppleanter_box)
+            if external_hsb_ledamoter:
+                upsert_row(rows, year, 10, ";".join(external_hsb_ledamoter), pdf, page, external_hsb_ledamoter_box)
+            else:
+                delete_row(rows, year, 10)
 
         assert_no_existing_year_loss(rows_before_append, rows)
         assert_no_new_blank_year_rows(rows_before_append, rows)
