@@ -1,48 +1,77 @@
 year=2022
 pdf=stamma-2023.pdf
-page=1
+page=4
 
 lines:
-HSB:s Brf Sjötungan i Tyresö
+BRF Sjötungan
+Myggdalsvägen 102
+135 43 Tyresö
 Org.nr 712400-1467
-Kallelse till årsstämma 2023
-Medlemmarna i HSB bostadsrättsförening Sjötungan i Tyresö
-kallas härmed till ordinarie föreningsstämma.
-Tid: Torsdag den 1 juni 2023 kl 18:30
-Plats: Bio Forellen, Tyresö Centrum
-På föreningsstämman har varje medlem en röst.
-Innehar flera medlemmar en bostadsrätt gemensamt, har de likväl tillsammans endast en röst.
-Innehar en medlem flera bostadsrätter i föreningen har medlemmen endast en röst.
-Röstberättigad är endast medlem som fullgjort sina förpliktelser mot föreningen.
-Dagordning:
-1. Föreningsstämmans öppnande
-2. Val av ordförande vid stämman
-3. Anmälan av ordförandens val av protokollförare
-4. Godkännande av röstlängd
-5. Fråga om närvarorätt på stämman
-6. Godkännande av dagordning
-7. Val av två personer att jämte ordföranden justera protokollet
-8. Val av minst två rösträknare
-9. Fråga om kallelse skett i behörig ordning
-10. Genomgång av styrelsens årsredovisning
-11. Genomgång av revisorernas berättelse
-12. Beslut om fastställande av resultaträkningen och balansräkningen
-13. Beslut om föreningens vinst eller förlust enligt den fastställda balansräkningen
-14. Beslut om ansvarsfrihet för styrelsen
-15. Beslut om arvoden för styrelseledamöter, revisorer och valberedning för kommande mandatperiod
-16. Beslut om antal styrelseledamöter och suppleanter
-17. Val av styrelseordförande, styrelseledamöter och suppleanter
-18. Presentation av HSB-ledamot
-19. Beslut om antal revisorer och suppleanter
-20. Val av revisor och revisorssuppleant
-21. Beslut om antal ledamöter i valberedningen
-22. Val av valberedning, en ledamot utses till valberedningens ordförande
-23. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
-24. Övriga i kallelsen anmälda ärenden (motioner)
-25. Föreningsstämmans avslutande
-Tyresö den 5 maj 2023
-HSB:s bostadsrättsförening Sjötungan i Tyresö
+2022
+HSB Bostadsrättsförening Sjötungan i Tyresö
+712400-1467
+ÅRSREDOVISNING
+2 (15)
+Styrelsens sammansättning
+Namn
+Roll
+Fr.o.m.
 Lukas Sveman
-Styrelseordförande
-OBS! Stämman kommer inte behandla stambytet. Separat kallelse kommer att skickas ut för
-framtida informationsmöten och extrastämma gällande stambytet.
+Ordförande
+2022-07-13
+T.o.m.
+Björn Bergström
+Ordförande
+2017-06-22
+Stefan Bengtsson
+Ledamot
+2005-01-18
+Leila Isaksson
+Ledamot
+2016-06-22
+2022-07-13
+Hans Olof Håkansson
+Ledamot
+2020-10-16
+2022-07-13
+Bertil Neij
+Ledamot
+2007-05-14
+Stefan Dahlgren
+Ledamot
+2016-06-22
+Jessica Bolonassos
+Ledamot
+2021-07-15
+Fredrik Sander
+Ledamot
+2022-07-13
+Maria Gabriela Reyes Quinonez
+Ledamot
+2022-07-13
+Mikaela Olsson
+Ledamot
+2022-07-13
+2022-07-13
+I tur att avgå från styrelsen vid ordinarie föreningsstämma är: Fredrik Sander, Stefan Bengtsson och Jessica Bolonassos är
+valda till 2023. Samt Lukas Sveman som väljs på ett år som ordförande.
+Styrelsen har under året hållit 22 protokollförda styrelsemöten.
+Firmatecknare har varit: Stefan Bengtsson, Bertil Neij, Björn Bergström, Jessica Bolonassos, Lukas Sveman.
+Firman tecknas enligt ovan av Två i förening.
+Revisorer har varit: Mattias Matti vald av föreningen, samt en av HSB Riksförbund utsedd revisor hos BoRevision i Sverige
+Aktiebolag.
+Valberedning har varit: Gunilla Hellgren Lovén (sammankallande) och Leila Isaksson , valda vid föreningsstämman.
+Föreningsstämma
+Ordinarie föreningsstämma hölls 2022-06-01. På stämman deltog 58 medlemmar varav 4 med fullmakt.
+VÄSENTLIGA HÄNDELSER UNDER RÄKENSKAPSÅRET
+Årsavgiften höjdes med 5 % den 1 juli.
+Föreningen har en underhållsplan som redovisar fastighetens underhållsbehov.
+Föreningen har en investeringsplan som redovisar större åtgärder som kräver investering.
+Styrelsen har beslutat och genomfört reservation till föreningens underhållsfond i enlighet med gällande stadgar.
+Senaste stadgeenliga fastighetsbesiktning utfördes i enlighet med föreningens underhållsplan den 2022-05-17.
+Under 2022 har åtskilliga standardhöjande och framtidssäkrande underhållsåtgärder slutförts, i enlighet med föreningens
+underhållsplanering.
+Markarbetena har färdigställts och slutbesiktigats enligt plan, med mycket gott resultat. Vissa mindre justeringar och
+reparationer kommer att utföras under 2023.
+Transaktion 09222115557491848839
+Signerat LS, BN, SD, FS, MGRQ, SB, JB, MO, aM, JHBA

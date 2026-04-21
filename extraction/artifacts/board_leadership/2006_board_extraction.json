@@ -4,8 +4,9 @@
   "page": 2,
   "parsed": {
     "chair": "Robert Frick",
-    "vice": "Bengt Rapp",
+    "vice": "",
     "members": [
+      "Bengt Rapp",
       "Benny Strand",
       "Rolf Stohr",
       "Pether Johnsson",
@@ -35,15 +36,10 @@
         245.124,
         295.1037
       ],
-      "vice": [
-        184.2,
-        298.0437,
-        241.2096,
-        308.8437
-      ],
+      "vice": null,
       "members": [
         184.2,
-        311.8437,
+        298.0437,
         280.5792,
         377.8437
       ],

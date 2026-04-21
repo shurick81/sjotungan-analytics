@@ -4,27 +4,8 @@
   "page": 2,
   "parsed": {
     "chair": "Robert Frick",
-    "vice": "Bengt Rapp",
+    "vice": "",
     "members": [
-      "Benny Strand",
-      "Rolf Stohr",
-      "Pether Johnsson",
-      "Stefan Bengtsson",
-      "Gun Hallgren",
-      "Ann-Christine Wisén",
-      "Mats Pjons",
-      "Maria Neiglick",
-      "Ingela Livchitz",
-      "Margueite Bjärevall",
-      "Alfonso Morales"
-    ],
-    "valberedning": [
-      "Lars Andersson",
-      "Åke Berg",
-      "Ewa Forsberg"
-    ],
-    "suppleanter": [
-      "Robert Frick",
       "Bengt Rapp",
       "Benny Strand",
       "Rolf Stohr",
@@ -32,11 +13,17 @@
       "Stefan Bengtsson",
       "Gun Hallgren",
       "Ann-Christine Wisén",
-      "Mats Pjons",
+      "Mats Pjons"
+    ],
+    "valberedning": [
+      "Lars Andersson",
+      "Åke Berg",
+      "Ewa Forsberg"
+    ],
+    "suppleanter": [
       "Maria Neiglick",
       "Ingela Livchitz",
-      "Margueite Bjärevall",
-      "Alfonso Morales"
+      "Margueite Bjärevall"
     ],
     "boxes": {
       "year": [
@@ -51,17 +38,12 @@
         207.4224,
         289.1906
       ],
-      "vice": [
-        146.5464,
-        287.2226,
-        203.4504,
-        302.9906
-      ],
+      "vice": null,
       "members": [
         146.5464,
-        301.0226,
-        305.4651,
-        572.0419
+        287.2226,
+        248.9304,
+        399.5905
       ],
       "valberedning": [
         146.5463,
@@ -71,9 +53,9 @@
       ],
       "suppleanter": [
         146.5464,
-        273.4226,
-        305.4651,
-        572.0419
+        449.3425,
+        242.7744,
+        492.7105
       ],
       "revisorer_signed": [
         53.519999999999996,

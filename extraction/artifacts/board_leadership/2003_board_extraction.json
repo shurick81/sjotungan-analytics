@@ -4,15 +4,21 @@
   "page": 2,
   "parsed": {
     "chair": "Robert Frick",
-    "vice": "Sven Sjögren",
+    "vice": "",
     "members": [
+      "Sven Sjögren",
       "Benny Strand",
       "Bengt Rapp",
       "Rolf Stohr",
       "Pether Johnsson",
       "Mats Pjons",
       "Ann-Christine Wisén",
-      "Stefan Bengtsson"
+      "Stefan Bengtsson",
+      "Karin Skeppström",
+      "Per Gustavsson",
+      "Lars Andersson",
+      "Åke Berg",
+      "Ewa Forsberg"
     ],
     "valberedning": [
       "Lars Andersson",
@@ -37,17 +43,12 @@
         240.10225,
         277.44125
       ],
-      "vice": [
-        183.75,
-        280.06625,
-        243.11375,
-        290.19125
-      ],
+      "vice": null,
       "members": [
         183.75,
-        292.81625,
+        280.06625,
         278.3219,
-        378.69125
+        635.19125
       ],
       "valberedning": [
         183.75,

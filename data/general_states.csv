@@ -24,27 +24,28 @@ year,category_id,value,file,page,x,y,width,height
 2018,0,2018-01-01 – 2018-12-31,kallelse_stamma_2019.pdf,4,84,130,37,10
 2018,1,Björn Bergström,kallelse_stamma_2019.pdf,4,84,156,82,11
 2018,2,Bo Gustafsson,kallelse_stamma_2019.pdf,4,84,182,74,9
-2018,3,Stefan Bengtsson;Lena Wiklund;Hans-Göran Vistrand;Leila Isaksson;Jaime Martinez;Jan-Stefan Dahlgren,kallelse_stamma_2019.pdf,4,83,195,107,78
+2018,3,Bertil Neij;Stefan Bengtsson;Lena Wiklund;Hans-Göran Vistrand;Leila Isaksson;Jaime Martinez;Jan-Stefan Dahlgren,kallelse_stamma_2019.pdf,4,83,195,107,78
 2017,0,2017-01-01 – 2017-12-31,kallelse_stamma2018.pdf,4,76,108,46,12
 2017,1,Björn Bergström,kallelse_stamma2018.pdf,4,76,135,86,12
 2017,2,Bo Gustafsson,kallelse_stamma2018.pdf,4,77,163,78,10
-2017,3,Stefan Bengtsson;Lena Wiklund;Hans-Göran Vistrand;Hans Rosander;Leila Isaksson;Jan-Stefan Dahlgren,kallelse_stamma2018.pdf,4,76,177,112,81
+2017,3,Bertil Neij;Stefan Bengtsson;Lena Wiklund;Hans-Göran Vistrand;Hans Rosander;Leila Isaksson;Jan-Stefan Dahlgren,kallelse_stamma2018.pdf,4,76,177,112,81
 2016,0,2016-01-01 – 2016-12-31,arsredovisning_2016.pdf,4,104,124,42,11
 2016,1,Bengt Rapp,arsredovisning_2016.pdf,4,105,150,56,11
 2016,2,,arsredovisning_2016.pdf,4,,,,
-2016,3,Björn Bergström;Stefan Bengtsson;Hans-Göran Vistrand;Hans Rosander;Lena Wiklund;Leila Isaksson;Jan-Stefan Dahlgren,arsredovisning_2016.pdf,4,105,175,101,86
+2016,3,Bertil Neij;Björn Bergström;Stefan Bengtsson;Hans-Göran Vistrand;Hans Rosander;Lena Wiklund;Leila Isaksson;Jan-Stefan Dahlgren,arsredovisning_2016.pdf,4,105,175,101,86
 2015,0,2015-01-01 – 2015-12-31,arsredovisning2015.pdf,5,106,111,42,10
 2015,1,Bengt Rapp,arsredovisning2015.pdf,5,106,137,57,10
 2015,2,,arsredovisning2015.pdf,5,,,,
-2015,3,Mats Falt;Bjorn Bergstrém;Stefan Bengtsson;Anita Buske;Lena Wiklund;Mats Jaderland;Jan-Stefan Dahlgren,arsredovisning2015.pdf,5,105,149,100,99
+2015,3,Mats Falt;Bertil Neij;Bjorn Bergstrém;Stefan Bengtsson;Anita Buske;Lena Wiklund;Mats Jaderland;Jan-Stefan Dahlgren,arsredovisning2015.pdf,5,105,149,100,99
 2014,0,2014-01-01 – 2014-12-31,arsredovisning2014.pdf,4,101,112,42,11
 2014,1,Bengt Rapp,arsredovisning2014.pdf,4,102,137,57,11
 2014,2,,arsredovisning2014.pdf,4,,,,
-2014,3,Mats Falt;Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Cecilia Alm,arsredovisning2014.pdf,4,101,150,126,97
+2014,3,Mats Falt;Bertil Neij;Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Cecilia Alm,arsredovisning2014.pdf,4,101,150,126,97
 2013,0,2013-01-01 – 2013-12-31,arsredovisning_2013.pdf,4,97,109,42,11
 2013,1,Bengt Rapp,arsredovisning_2013.pdf,4,98,134,57,11
 2013,2,Pether Johnsson,arsredovisning_2013.pdf,4,98,147,81,9
-2013,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén;Hans Bählmann,arsredovisning_2013.pdf,4,96,172,125,84
+2013,3,Bertil Neij;Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén,arsredovisning_2013.pdf,4,96,160,125,84
+2013,10,Hans Bühlmann,arsredovisning_2013.pdf,4,97,248,77,9
 2024,4,Joachim Holmberg;Odd Viking,stamma2025.pdf,23,63,682,573,15
 2024,5,Mattias Matti;Kungsbron Borevision,stamma2025.pdf,23,42,417,135,26
 2023,4,Joachim Holmberg;Birgitta Blom,stamma-2024.pdf,5,100,888,483,12
@@ -107,44 +108,43 @@ year,category_id,value,file,page,x,y,width,height
 2008,7,11,arsmotesprotokoll_2008.pdf,3,217,287,9,8
 2003,0,2003-01-01 – 2003-12-31,arsredovisning_03_B.pdf,2,70,218,38,10
 2003,1,Robert Frick,arsredovisning_03_B.pdf,2,184,267,56,10
-2003,2,Sven Sjögren,arsredovisning_03_B.pdf,2,184,280,59,10
-2003,3,Benny Strand;Bengt Rapp;Rolf Stohr;Pether Johnsson;Mats Pjons;Ann-Christine Wisén;Stefan Bengtsson,arsredovisning_03_B.pdf,2,184,293,95,86
+2003,2,,arsredovisning_03_B.pdf,2,,,,
+2003,3,Sven Sjögren;Benny Strand;Bengt Rapp;Rolf Stohr;Pether Johnsson;Mats Pjons;Ann-Christine Wisén;Stefan Bengtsson,arsredovisning_03_B.pdf,2,184,293,95,86
 2004,0,2004-01-01 – 2004-12-31,Arsredovisning_2004.pdf,2,71,194,37,10
 2004,1,Robert Frick,Arsredovisning_2004.pdf,2,184,245,56,10
 2004,2,Bengt Rapp,Arsredovisning_2004.pdf,2,184,257,52,10
 2004,3,Ann-Christine Wisén;Benny Strand;Rolf Stohr;Mats Pjons;Pether Johnsson;Stefan Bengtsson;Gun Hallgren,Arsredovisning_2004.pdf,2,184,270,94,86
-2005,0,2005-01-01 – 2005-12-31,bokslut2005.pdf,2,33,208,41,16
+2005,0,2005-01-01 – 2005-12-31,bokslut2005.pdf,2,33,133,41,15
 2005,1,Robert Frick,bokslut2005.pdf,2,147,273,61,16
-2005,2,Bengt Rapp,bokslut2005.pdf,2,147,287,57,16
-2005,3,Benny Strand;Rolf Stohr;Pether Johnsson;Stefan Bengtsson;Gun Hallgren;Ann-Christine Wisén;Mats Pjons;Maria Neiglick;Ingela Livchitz;Margueite Bjärevall;Alfonso Morales,bokslut2005.pdf,2,147,301,159,271
-2006,0,2006-01-01 – 2006-12-31,Arsredovisning_2006.pdf,2,71,219,41,11
+2005,3,Bengt Rapp;Benny Strand;Rolf Stohr;Pether Johnsson;Stefan Bengtsson;Gun Hallgren;Ann-Christine Wisén;Mats Pjons,bokslut2005.pdf,2,147,287,102,112
+2006,0,2006-01-01 – 2006-12-31,Arsredovisning_2006.pdf,2,71,144,41,10
 2006,1,Robert Frick,Arsredovisning_2006.pdf,2,184,284,61,11
-2006,2,Bengt Rapp,Arsredovisning_2006.pdf,2,184,298,57,11
-2006,3,Benny Strand;Rolf Stohr;Pether Johnsson;Stefan Bengtsson;Margueite Bjärevall,Arsredovisning_2006.pdf,2,184,312,96,66
-2007,0,2007-01-01 – 2007-12-31,Arsredovisning_2007.pdf,2,70,184,39,11
+2006,3,Bengt Rapp;Benny Strand;Rolf Stohr;Pether Johnsson;Stefan Bengtsson;Margueite Bjärevall,Arsredovisning_2006.pdf,2,184,298,96,80
+2007,0,2007-01-01 – 2007-12-31,Arsredovisning_2007.pdf,2,70,118,39,10
 2007,1,Bengt Rapp,Arsredovisning_2007.pdf,2,184,249,50,10
-2007,2,Pether Johnsson,Arsredovisning_2007.pdf,2,184,261,70,8
-2007,3,Marguerite Bjärevall;Bertil Neij;Rolf Stohr;Stefan Bengtsson,Arsredovisning_2007.pdf,2,184,273,90,49
-2008,0,2008-01-01 – 2008-12-31,Arsredovisning_2008.pdf,3,63,207,37,11
+2007,3,Pether Johnsson;Marguerite Bjärevall;Bertil Neij;Rolf Stohr;Stefan Bengtsson;Roine Hammar (t.o.m. 2007-10-08),Arsredovisning_2007.pdf,2,184,261,90,85
+2008,0,2008-01-01 – 2008-12-31,Arsredovisning_2008.pdf,3,63,129,36,10
 2008,1,Bengt Rapp,Arsredovisning_2008.pdf,3,177,272,46,10
-2008,2,Pether Johnsson,Arsredovisning_2008.pdf,3,177,284,66,8
-2008,3,Bertil Neij;Rolf Stohr;Stefan Bengtsson;Anita Buske,Arsredovisning_2008.pdf,3,176,297,70,46
+2008,3,Pether Johnsson;Bertil Neij;Rolf Stohr;Stefan Bengtsson;Anita Buske;Marguerite Bjarevall (t.o.m. 2008-12-31),Arsredovisning_2008.pdf,3,176,284,79,74
 2009,0,2009-01-01 – 2009-12-31,arsredovisning_2009.pdf,4,98,113,42,11
-2009,1,Pether Johnsson,arsredovisning_2009.pdf,4,98,151,81,9
+2009,1,Bengt Rapp,arsredovisning_2009.pdf,4,98,139,57,11
 2009,2,Pether Johnsson,arsredovisning_2009.pdf,4,98,151,81,9
-2009,3,Andreas Tollefors Gustafsson;Stefan Bengtsson;Anita Buske;Markku Sandelin;Hans Bäöhlmann;Bengt Rapp,arsredovisning_2009.pdf,4,97,139,144,84
+2009,3,Bertil Neij;Andreas Tollefors Gustafsson;Stefan Bengtsson;Anita Buske;Markku Sandelin,arsredovisning_2009.pdf,4,97,164,144,59
 2010,0,2010-01-01 – 2010-12-31,arsredovisning2010.pdf,4,89,132,42,11
 2010,1,Bengt Rapp,arsredovisning2010.pdf,4,89,157,57,10
 2010,2,Pether Johnsson,arsredovisning2010.pdf,4,89,170,80,9
-2010,3,Andreas Tollefors Bristam;” Stefan Bengtsson;Anita Buske;Markku Sandelin;Hans Buhimann,arsredovisning2010.pdf,4,89,194,124,47
+2010,3,Bertil Neij;Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin,arsredovisning2010.pdf,4,89,183,124,59
+2010,10,Hans Bühlmann,arsredovisning2010.pdf,4,90,246,77,9
 2011,0,2011-01-01 – 2011-12-31,arsredovisning2012.pdf,5,96,105,42,11
 2011,1,Bengt Rapp,arsredovisning2012.pdf,5,96,131,57,10
 2011,2,Pether Johnsson,arsredovisning2012.pdf,5,96,143,81,8
-2011,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Hans Buhlmann,arsredovisning2012.pdf,5,95,168,126,59
+2011,3,Bertil Neij;Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin,arsredovisning2012.pdf,5,95,156,126,59
+2011,10,Hans Bühlmann,arsredovisning2012.pdf,5,96,219,77,8
 2012,0,2012-01-01 – 2012-12-31,arsredovisning2013.pdf,4,86,110,42,11
 2012,1,Bengt Rapp,arsredovisning2013.pdf,4,86,135,57,11
 2012,2,Pether Johnsson,arsredovisning2013.pdf,4,86,148,81,9
-2012,3,Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén;Hans Bihimann,arsredovisning2013.pdf,4,85,173,126,72
+2012,3,Bertil Neij;Andreas Tollefors Bristam;Stefan Bengtsson;Anita Buske;Markku Sandelin;Lena Wiklund;Rolf Lovén,arsredovisning2013.pdf,4,85,161,126,84
+2012,10,Hans Bühlmann,arsredovisning2013.pdf,4,86,249,77,8
 2003,4,Lars Andersson;Åke Berg;Ewa Forsberg,arsredovisning_03_B.pdf,2,184,600,70,36
 2004,4,Lars Andersson;Åke Berg;Ewa Forsberg;Sanna Havlind,Arsredovisning_2004.pdf,2,184,525,69,48
 2005,4,Lars Andersson;Åke Berg;Ewa Forsberg,bokslut2005.pdf,2,147,639,76,43
@@ -166,16 +166,16 @@ year,category_id,value,file,page,x,y,width,height
 2004,5,Karin Skeppström;Alfonso Morales,Arsredovisning_2004.pdf,2,184,473,81,23
 2004,8,Maria Neiglick;Ingela Livchitz;Marie-Louise Sandqvist,Arsredovisning_2004.pdf,2,184,371,106,35
 2005,5,Karin Skeppström;BoRevision AB,bokslut2005.pdf,2,117,572,88,16
-2005,8,Robert Frick;Bengt Rapp;Benny Strand;Rolf Stohr;Pether Johnsson;Stefan Bengtsson;Gun Hallgren;Ann-Christine Wisén;Mats Pjons;Maria Neiglick;Ingela Livchitz;Margueite Bjärevall;Alfonso Morales,bokslut2005.pdf,2,147,273,159,299
-2005,9,Karin Skeppström;Eva Wedberg,bokslut2005.pdf,17,389,661,75,15
+2005,8,Maria Neiglick;Ingela Livchitz;Margueite Bjärevall,bokslut2005.pdf,2,147,449,96,43
+2005,9,Karin Skeppström,bokslut2005.pdf,17,54,623,126,72
 2006,5,Karin Skeppström;BoRevision AB,Arsredovisning_2006.pdf,2,155,583,88,11
 2006,8,Bertil Neij;Ingela Livchitz,Arsredovisning_2006.pdf,2,184,460,73,25
 2007,5,Karin Skeppström;BoRevision AB,Arsredovisning_2007.pdf,2,150,520,79,10
 2007,8,Siv Nordqvist,Arsredovisning_2007.pdf,2,186,415,60,11
-2007,9,Karin Skeppström;Lars-Göran Petersson,Arsredovisning_2007.pdf,17,54,637,390,67
+2007,9,Karin Skeppström;samt BoRevision AB,Arsredovisning_2007.pdf,17,54,637,483,82
 2008,5,Karin Skeppström;BoRevision,Arsredovisning_2008.pdf,3,133,543,70,10
 2008,8,Markku Sandelin;Lena Holmberg,Arsredovisning_2008.pdf,3,177,400,66,23
-2008,9,Karin Skeppström;Lena Strömbäck,Arsredovisning_2008.pdf,15,358,645,72,9
+2008,9,Karin Skeppstrém,Arsredovisning_2008.pdf,15,358,645,72,9
 2009,5,Karin Skeppström;BoRevision,arsredovisning_2009.pdf,4,180,380,86,11
 2009,8,Lena Wiklund;Rolf Lovén,arsredovisning_2009.pdf,4,97,265,66,21
 2009,9,Karin Skeppström;Lena Strömbäck,arsredovisning_2009.pdf,16,360,639,71,10
@@ -195,8 +195,10 @@ year,category_id,value,file,page,x,y,width,height
 2022,9,Joakim Häll;Mattias Matti,stamma-2023.pdf,19,75,663,197,12
 2023,9,Agnes Milton;Mattias Matti,stamma-2024.pdf,22,78,612,193,14
 2024,9,Joakim Häll;Mattias Matti,stamma2025.pdf,43,61,615,199,15
-2011,9,Alfonso Morales;Lena Strömbäck,arsredovisning2012.pdf,18,53,144,439,477
+2011,9,Alfonso Morales,arsredovisning2012.pdf,18,53,144,439,477
 2012,5,Alfonso Morales;BoRevision,arsredovisning2013.pdf,4,168,375,78,9
-2012,9,Alfonso Morales;Elias Nesru,arsredovisning2013.pdf,16,95,133,385,597
+2012,9,Alfonso Morales,arsredovisning2013.pdf,16,95,133,385,597
 2012,8,Mats Falt;Thomas Martinsson,arsredovisning2013.pdf,4,85,287,96,21
-2013,9,Alfonso Morales;Elias Nesru,arsredovisning_2013.pdf,16,48,645,406,117
+2013,9,Alfonso Morales,arsredovisning_2013.pdf,16,288,648,34,7
+2006,9,Karin Skeppström,Arsredovisning_2006.pdf,15,96,100,156,314
+2009,10,Hans Bühlmann,arsredovisning_2009.pdf,4,97,227,77,9
