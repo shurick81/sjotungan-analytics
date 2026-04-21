@@ -1865,6 +1865,10 @@
                 .join('<br>');
         }
 
+        function shouldRenderBoardList(value) {
+            return String(value || '').includes(';');
+        }
+
         function buildBoardParticipantRows(records) {
             const perYear = new Map();
 
@@ -1939,9 +1943,11 @@
                 return;
             }
 
+            const renderAsList = shouldRenderBoardList(text);
+
             const canLink = ref?.file && hasValidHighlightRef(ref);
             if (!canLink) {
-                if (label === 'Ledamöter') {
+                if (renderAsList) {
                     cell.innerHTML = normalizeBoardList(escapeHtml(text));
                 } else {
                     cell.textContent = text;
@@ -1952,7 +1958,7 @@
             const span = document.createElement('span');
             span.className = 'clickable-cell';
             span.title = 'Visa markering i årsredovisning-PDF';
-            if (label === 'Ledamöter') {
+            if (renderAsList) {
                 span.innerHTML = normalizeBoardList(escapeHtml(text));
             } else {
                 span.textContent = text;
