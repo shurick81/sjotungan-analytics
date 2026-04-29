@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Försäljningar – Vision Myggan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <style>
+        body { font-size: 1rem; }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 20px;
+            padding: 14px 18px;
+            background: #f6f9ff;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+        }
+        .controls label {
+            font-weight: 600;
+            color: var(--vm-blue);
+            font-size: 14px;
+        }
+        .controls select,
+        .controls input[type="checkbox"] {
+            margin-left: 8px;
+        }
+        .controls select {
+            padding: 6px 10px;
+            border: 1px solid var(--vm-border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            color: var(--vm-text);
+            cursor: pointer;
+        }
+        .controls .ctrl-group {
+            display: flex;
+            align-items: center;
+        }
+        .controls input[type="range"] {
+            accent-color: var(--vm-blue);
+        }
+        #start-label {
+            font-variant-numeric: tabular-nums;
+            color: var(--vm-text);
+            font-weight: 700;
+        }
+
+        .url-finder {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding: 12px 16px;
+            background: #f6f9ff;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+        }
+        .url-finder label {
+            font-weight: 600;
+            color: var(--vm-blue);
+            font-size: 14px;
+        }
+        .url-finder input[type="text"] {
+            flex: 1 1 360px;
+            min-width: 220px;
+            padding: 7px 10px;
+            border: 1px solid var(--vm-border);
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            color: var(--vm-text);
+        }
+        .url-finder button {
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .url-finder button:hover { background: #2c54bf; }
+        .url-finder button.secondary {
+            background: white;
+            color: var(--vm-blue);
+            border: 1px solid var(--vm-border);
+        }
+        .url-finder button.secondary:hover { background: #eef3fb; }
+        #url-status {
+            font-size: 13px;
+            color: var(--vm-muted);
+        }
+        #url-status.error { color: #b91c1c; }
+        #url-status.ok { color: #047857; }
+
+        .data-details {
+            margin-top: 18px;
+            background: #f6f9ff;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            padding: 10px 16px;
+        }
+        .data-details > summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--vm-blue);
+            font-size: 14px;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .data-details > summary::-webkit-details-marker { display: none; }
+        .data-details > summary::before {
+            content: "▸";
+            display: inline-block;
+            transition: transform 0.15s;
+            color: var(--vm-blue);
+        }
+        .data-details[open] > summary::before { transform: rotate(90deg); }
+        .data-details-body {
+            margin-top: 10px;
+            color: var(--vm-text);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        .data-details-body ul {
+            margin: 8px 0 0 1.2em;
+            padding: 0;
+            list-style: disc;
+        }
+        .data-details-body li { margin-bottom: 4px; }
+        .data-details-body code {
+            background: #eef3fb;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .data-details-body a {
+            color: var(--vm-blue);
+            text-decoration: underline;
+        }
+
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .stat-card {
+            background: var(--vm-card);
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            padding: 12px 18px;
+            min-width: 150px;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--vm-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--vm-blue);
+            margin-top: 4px;
+        }
+
+        #scatter-container {
+            width: 100%;
+            height: 640px;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            padding: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--vm-muted);
+        }
+
+        @media (max-width: 640px) {
+            #scatter-container { height: 460px; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+<button onclick="location.href='annual_details.html#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+<button onclick="location.href='annual_details.html#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+<button onclick="location.href='annual_details.html#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+<button onclick="location.href='annual_details.html#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+</nav>
+</header>
+
+<div class="md:hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-center text-sm py-2 px-4">
+  Sidan visas bäst på en större skärm, t.ex. dator eller surfplatta.
+</div>
+
+<main class="container mx-auto mt-8 p-4">
+    <section class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto">
+        <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Försäljningar</h1>
+        <p class="text-gray-600 mb-6">Sålda lägenheter i BRF Sjötungan – pris per kvadratmeter över tid (kr/m² beräknas från slutpris och boyta).</p>
+
+        <div id="loading" class="loading">Laddar försäljningsdata...</div>
+
+        <div id="content" style="display:none;">
+            <div class="controls">
+                <div class="ctrl-group">
+                    <label for="rooms-filter">Antal rum:</label>
+                    <select id="rooms-filter">
+                        <option value="all">Alla</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
+                    <label for="trendline">
+                        <input type="checkbox" id="trendline" checked>
+                        Visa trendlinje
+                    </label>
+                </div>
+                <div class="ctrl-group" style="flex: 1 1 280px; min-width: 240px;">
+                    <label for="start-slider" style="white-space: nowrap;">Från:&nbsp;<span id="start-label">—</span></label>
+                    <input type="range" id="start-slider" min="0" max="0" value="0" step="1" style="flex:1; margin-left: 10px;">
+                </div>
+            </div>
+
+            <div class="url-finder">
+                <label for="url-input">Hitta annons:</label>
+                <input type="text" id="url-input" placeholder="Klistra in Hemnet-länk (t.ex. .../myggdalsvagen-10-1277556)">
+                <button id="url-find-btn" type="button">Visa</button>
+                <button id="url-clear-btn" type="button" class="secondary" style="display:none;">Rensa</button>
+                <span id="url-status"></span>
+            </div>
+
+            <div class="stats" id="stats"></div>
+
+            <div id="scatter-container"></div>
+
+            <p class="text-xs text-gray-500 mt-3 text-center">
+                Källa: <code>data/sjotungan_sales.csv</code> – hämtat från Hemnet.
+                Storlek på punkten = boyta. Färg = antal rum.
+            </p>
+
+            <details class="data-details">
+                <summary>Om datan: hur affärerna är hämtade och filtrerade</summary>
+                <div class="data-details-body">
+                    <p>
+                        Punkterna i grafen kommer från Hemnets <em>slutpriser</em> –
+                        alltså bekräftade försäljningar, inte utgångspriser eller pågående
+                        budgivningar. Hämtningen och filtreringen är gjord så här:
+                    </p>
+                    <ul>
+                        <li>
+                            <b>Källa:</b> Hemnets sökresultat för Myggdalsvägen, Tyresö
+                            (<code>location_ids[]=485045</code>), bostadstyp
+                            <em>bostadsrätt</em>, sorterat på säljdatum.
+                        </li>
+                        <li>
+                            <b>Adressfilter (BRF Sjötungan):</b> bara
+                            <code>Myggdalsvägen 6–122</code> (jämna nummer). Det utesluter
+                            <code>nr 4</code>, som tillhör en annan förening, och eventuella
+                            okynnesträffar från andra gator som råkar matcha samma plats-id.
+                        </li>
+                        <li>
+                            <b>Avduplicering:</b> varje annons har ett stabilt
+                            <code>listingId</code> i Hemnets data; samma annons räknas en gång.
+                        </li>
+                        <li>
+                            <b>Datumtäckning:</b> Hemnets publika slutprisarkiv börjar
+                            <code>2013-05-27</code> för den här gatan. Tidigare överlåtelser
+                            finns men är inte publikt tillgängliga via Hemnet.
+                        </li>
+                        <li>
+                            <b>kr/m²:</b> beräknas på sidan som
+                            <code>slutpris ÷ boyta</code> – den lagrade kolumnen i CSV:en
+                            används inte.
+                        </li>
+                        <li>
+                            <b>Avgift:</b> <code>monthly_fee_kr</code> är avgiften
+                            <em>vid säljtillfället</em>, inte dagens avgift.
+                        </li>
+                        <li>
+                            <b>Nuvarande omfattning:</b> ~351 råa kort hämtas, efter
+                            avduplicering och adressfilter blir det 334 rader.
+                        </li>
+                    </ul>
+                    <p style="margin-top: 8px;">
+                        Fullständig metoddokumentation (inklusive fältmappning och kända
+                        kantfall) finns i
+                        <a href="extraction/methods/hemnet_sales.md" target="_blank" rel="noopener">
+                            extraction/methods/hemnet_sales.md
+                        </a>.
+                    </p>
+                </div>
+            </details>
+        </div>
+    </section>
+</main>
+
+<script>
+    /* ── CSV parser that handles quoted fields ───────── */
+    function parseCSV(text) {
+        const rows = [];
+        let row = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            const c = text[i];
+            if (inQuotes) {
+                if (c === '"') {
+                    if (text[i + 1] === '"') { cur += '"'; i++; }
+                    else { inQuotes = false; }
+                } else {
+                    cur += c;
+                }
+            } else {
+                if (c === '"') inQuotes = true;
+                else if (c === ',') { row.push(cur); cur = ''; }
+                else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+                else if (c === '\r') { /* skip */ }
+                else cur += c;
+            }
+        }
+        if (cur.length > 0 || row.length > 0) { row.push(cur); rows.push(row); }
+        const headers = rows[0].map(h => h.trim());
+        return rows.slice(1).filter(r => r.length === headers.length).map(r => {
+            const obj = {};
+            headers.forEach((h, i) => obj[h] = r[i]);
+            return obj;
+        });
+    }
+
+    async function loadCSV(url) {
+        const ts = Date.now();
+        const sep = url.includes('?') ? '&' : '?';
+        const resp = await fetch(`${url}${sep}t=${ts}`, { cache: 'no-store' });
+        const text = await resp.text();
+        return parseCSV(text);
+    }
+
+    /* ── Helpers ─────────────────────────────────────── */
+    const fmtNum = n => new Intl.NumberFormat('sv-SE').format(Math.round(n));
+    const fmtPrice = n => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
+
+    const ROOM_COLORS = {
+        1: '#f59e0b',
+        2: '#10b981',
+        3: '#3b82f6',
+        4: '#8b5cf6',
+        5: '#ef4444',
+        6: '#ec4899',
+    };
+    const colorForRooms = r => ROOM_COLORS[Math.round(r)] || '#6b7280';
+
+    function buildMonthlyDomain(minDateStr, maxDateStr) {
+        const [y0, m0] = minDateStr.split('-').map(Number);
+        const [y1, m1] = maxDateStr.split('-').map(Number);
+        const out = [];
+        let y = y0, m = m0;
+        while (y < y1 || (y === y1 && m <= m1)) {
+            out.push(`${y}-${String(m).padStart(2, '0')}-01`);
+            m++;
+            if (m > 12) { m = 1; y++; }
+        }
+        return out;
+    }
+
+    /* ── State ───────────────────────────────────────── */
+    let allDeals = [];
+    let sliderDates = []; // monthly granularity 'YYYY-MM-01' between min and max
+    let highlightDeal = null; // deal currently pinpointed by URL lookup
+
+    /* ── Build deal records ──────────────────────────── */
+    function buildDeals(rows) {
+        return rows.map(r => {
+            const price = parseFloat(r.final_price_kr);
+            const area = parseFloat(r.living_area_m2);
+            const rooms = parseFloat(r.rooms);
+            if (!isFinite(price) || !isFinite(area) || area <= 0) return null;
+            return {
+                date: r.sold_date,
+                address: r.address,
+                rooms,
+                area,
+                price,
+                kr_per_m2: price / area,
+                fee: parseFloat(r.monthly_fee_kr) || null,
+                url: r.hemnet_url,
+                listing_id: (r.listing_id || '').trim(),
+            };
+        }).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    /* ── Resolve a Hemnet URL/id to a deal ───────────── */
+    // Hemnet "salda" URLs end with a long numeric id, e.g.
+    //   .../myggdalsvagen-10,-5-tr-1277556
+    // We extract the trailing run of digits and match against listing_id;
+    // if that fails we fall back to a substring match on the full URL.
+    function findDealByUrl(input) {
+        if (!input) return null;
+        const trimmed = input.trim();
+        if (!trimmed) return null;
+
+        const idMatch = trimmed.match(/(\d{6,})\s*\/?\s*$/);
+        const candidateId = idMatch ? idMatch[1] : trimmed.replace(/\D/g, '');
+
+        if (candidateId) {
+            const byId = allDeals.find(d => d.listing_id && d.listing_id === candidateId);
+            if (byId) return byId;
+        }
+        const lower = trimmed.toLowerCase();
+        const byUrl = allDeals.find(d => d.url && lower.includes(d.url.toLowerCase()));
+        if (byUrl) return byUrl;
+        const byUrlReverse = allDeals.find(d => d.url && d.url.toLowerCase().includes(lower));
+        return byUrlReverse || null;
+    }
+
+    /* ── Render stats ────────────────────────────────── */
+    function renderStats(deals) {
+        const stats = document.getElementById('stats');
+        if (!deals.length) { stats.innerHTML = ''; return; }
+        const ppm = deals.map(d => d.kr_per_m2);
+        const avg = ppm.reduce((a, b) => a + b, 0) / ppm.length;
+        const sorted = [...ppm].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+        const min = sorted[0];
+        const max = sorted[sorted.length - 1];
+        const firstDate = deals[0].date;
+        const lastDate = deals[deals.length - 1].date;
+        stats.innerHTML = `
+            <div class="stat-card"><div class="stat-label">Antal affärer</div><div class="stat-value">${deals.length}</div></div>
+            <div class="stat-card"><div class="stat-label">Period</div><div class="stat-value" style="font-size:0.95rem;">${firstDate} – ${lastDate}</div></div>
+            <div class="stat-card"><div class="stat-label">Snitt kr/m²</div><div class="stat-value">${fmtNum(avg)}</div></div>
+            <div class="stat-card"><div class="stat-label">Median kr/m²</div><div class="stat-value">${fmtNum(median)}</div></div>
+            <div class="stat-card"><div class="stat-label">Spann kr/m²</div><div class="stat-value" style="font-size:0.95rem;">${fmtNum(min)} – ${fmtNum(max)}</div></div>
+        `;
+    }
+
+    /* ── Median kr/m² per year (anchored mid-year) ───── */
+    function yearlyMedians(deals) {
+        const buckets = new Map();
+        deals.forEach(d => {
+            const y = parseInt(d.date.slice(0, 4), 10);
+            if (!buckets.has(y)) buckets.set(y, []);
+            buckets.get(y).push(d.kr_per_m2);
+        });
+        return [...buckets.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([year, vals]) => {
+                const s = [...vals].sort((a, b) => a - b);
+                const mid = Math.floor(s.length / 2);
+                const median = s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+                return { year, median, count: vals.length };
+            });
+    }
+
+    /* ── Linear regression on date (epoch ms) → kr/m² ── */
+    function linearTrend(deals) {
+        const xs = deals.map(d => new Date(d.date).getTime());
+        const ys = deals.map(d => d.kr_per_m2);
+        const n = xs.length;
+        if (n < 2) return null;
+        const meanX = xs.reduce((a, b) => a + b, 0) / n;
+        const meanY = ys.reduce((a, b) => a + b, 0) / n;
+        let num = 0, den = 0;
+        for (let i = 0; i < n; i++) {
+            num += (xs[i] - meanX) * (ys[i] - meanY);
+            den += (xs[i] - meanX) ** 2;
+        }
+        if (den === 0) return null;
+        const slope = num / den;
+        const intercept = meanY - slope * meanX;
+        const xMin = Math.min(...xs);
+        const xMax = Math.max(...xs);
+        return {
+            x: [new Date(xMin), new Date(xMax)],
+            y: [intercept + slope * xMin, intercept + slope * xMax],
+        };
+    }
+
+    /* ── Render scatter ──────────────────────────────── */
+    function renderScatter(deals) {
+        const showTrend = document.getElementById('trendline').checked;
+
+        // Group by rooms so legend is meaningful
+        const byRooms = new Map();
+        deals.forEach(d => {
+            const k = Math.round(d.rooms);
+            if (!byRooms.has(k)) byRooms.set(k, []);
+            byRooms.get(k).push(d);
+        });
+
+        const traces = [...byRooms.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([rooms, list]) => ({
+                type: 'scatter',
+                mode: 'markers',
+                name: `${rooms} rum`,
+                x: list.map(d => d.date),
+                y: list.map(d => d.kr_per_m2),
+                customdata: list.map(d => [d.address, d.area, d.price, d.fee, rooms, d.url || '']),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    'Datum: %{x}<br>' +
+                    'Antal rum: %{customdata[4]}<br>' +
+                    'kr/m²: %{y:,.0f}<br>' +
+                    'Boyta: %{customdata[1]} m²<br>' +
+                    'Slutpris: %{customdata[2]:,.0f} kr<br>' +
+                    'Avgift/mån: %{customdata[3]:,.0f} kr<br>' +
+                    '<i>Klicka för Hemnet-annons</i>' +
+                    '<extra></extra>',
+                marker: {
+                    size: list.map(d => Math.max(6, Math.sqrt(d.area) * 1.6)),
+                    color: colorForRooms(rooms),
+                    opacity: 0.75,
+                    line: { width: 1, color: 'white' },
+                },
+            }));
+
+        // Median kr/m² per year — drawn over the dots
+        const medians = yearlyMedians(deals);
+        if (medians.length) {
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Årsmedian',
+                x: medians.map(m => `${m.year}-07-01`),
+                y: medians.map(m => m.median),
+                customdata: medians.map(m => [m.year, m.count]),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    'Median kr/m²: %{y:,.0f}<br>' +
+                    'Antal affärer: %{customdata[1]}' +
+                    '<extra></extra>',
+                line: { color: '#dc2626', width: 2.5 },
+                marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
+            });
+        }
+
+        if (showTrend && deals.length >= 2) {
+            const t = linearTrend(deals);
+            if (t) {
+                traces.push({
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Trend',
+                    x: t.x,
+                    y: t.y,
+                    line: { color: '#1f3f95', width: 2, dash: 'dot' },
+                    hoverinfo: 'skip',
+                    showlegend: true,
+                });
+            }
+        }
+
+        // Highlight ring for the URL-pinpointed deal
+        const annotations = [];
+        if (highlightDeal && deals.includes(highlightDeal)) {
+            traces.push({
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Vald annons',
+                x: [highlightDeal.date],
+                y: [highlightDeal.kr_per_m2],
+                marker: {
+                    size: 28,
+                    color: 'rgba(0,0,0,0)',
+                    line: { width: 3, color: '#dc2626' },
+                    symbol: 'circle',
+                },
+                hoverinfo: 'skip',
+                showlegend: true,
+            });
+            annotations.push({
+                x: highlightDeal.date,
+                y: highlightDeal.kr_per_m2,
+                text: `<b>${highlightDeal.address}</b><br>${highlightDeal.date} · ${fmtNum(highlightDeal.kr_per_m2)} kr/m²`,
+                showarrow: true,
+                arrowhead: 3,
+                arrowsize: 1.2,
+                arrowwidth: 1.5,
+                arrowcolor: '#dc2626',
+                ax: 0,
+                ay: -50,
+                bgcolor: 'rgba(255,255,255,0.92)',
+                bordercolor: '#dc2626',
+                borderwidth: 1,
+                borderpad: 6,
+                font: { size: 12, color: '#2f3d52' },
+            });
+        }
+
+        const layout = {
+            margin: { l: 70, r: 20, t: 20, b: 60 },
+            xaxis: {
+                title: 'Försäljningsdatum',
+                type: 'date',
+                gridcolor: '#e5e7eb',
+            },
+            yaxis: {
+                title: 'kr / m²',
+                gridcolor: '#e5e7eb',
+                tickformat: ',d',
+                separatethousands: true,
+            },
+            legend: { orientation: 'h', y: -0.18 },
+            hovermode: 'closest',
+            plot_bgcolor: '#f7f9fd',
+            paper_bgcolor: '#f7f9fd',
+            font: { family: 'system-ui, sans-serif', color: '#2f3d52' },
+            annotations,
+        };
+
+        Plotly.newPlot('scatter-container', traces, layout, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        });
+
+        // Click a marker to open the Hemnet listing
+        const el = document.getElementById('scatter-container');
+        el.removeAllListeners && el.removeAllListeners('plotly_click');
+        el.on('plotly_click', evt => {
+            const p = evt.points && evt.points[0];
+            if (!p) return;
+            const m = /^(\d+)\s+rum$/.exec(p.data.name || '');
+            if (!m) return;
+            const list = byRooms.get(parseInt(m[1], 10));
+            const deal = list && list[p.pointIndex];
+            if (deal && deal.url) window.open(deal.url, '_blank', 'noopener');
+        });
+    }
+
+    /* ── Apply filters and (re)render ────────────────── */
+    function applyAndRender() {
+        const roomsSel = document.getElementById('rooms-filter').value;
+        const slider = document.getElementById('start-slider');
+        const startIdx = parseInt(slider.value, 10);
+        const startDate = sliderDates[startIdx] || '';
+        document.getElementById('start-label').textContent = startDate || '—';
+
+        let filtered = allDeals.filter(d => d.date >= startDate);
+        if (roomsSel !== 'all') {
+            filtered = filtered.filter(d => Math.round(d.rooms) === parseInt(roomsSel));
+        }
+        renderStats(filtered);
+        renderScatter(filtered);
+    }
+
+    /* ── URL → highlight handling ────────────────────── */
+    function setStatus(msg, kind) {
+        const el = document.getElementById('url-status');
+        el.textContent = msg || '';
+        el.className = kind || '';
+    }
+
+    function highlightFromInput(rawInput, { silent = false } = {}) {
+        const deal = findDealByUrl(rawInput);
+        if (!deal) {
+            highlightDeal = null;
+            document.getElementById('url-clear-btn').style.display = 'none';
+            if (!silent) setStatus('Hittade ingen affär för den länken.', 'error');
+            applyAndRender();
+            return false;
+        }
+        highlightDeal = deal;
+        // Reset filters so the highlighted deal is visible
+        document.getElementById('rooms-filter').value = 'all';
+        document.getElementById('start-slider').value = 0;
+        document.getElementById('url-clear-btn').style.display = '';
+        setStatus(`Träff: ${deal.address} (${deal.date})`, 'ok');
+        applyAndRender();
+        return true;
+    }
+
+    function clearHighlight() {
+        highlightDeal = null;
+        document.getElementById('url-input').value = '';
+        document.getElementById('url-clear-btn').style.display = 'none';
+        setStatus('');
+        applyAndRender();
+    }
+
+    /* ── Init ────────────────────────────────────────── */
+    (async function init() {
+        try {
+            const rows = await loadCSV('data/sjotungan_sales.csv');
+            allDeals = buildDeals(rows);
+
+            const roomsSet = [...new Set(
+                allDeals.map(d => Math.round(d.rooms)).filter(r => Number.isFinite(r))
+            )].sort((a, b) => a - b);
+            const sel = document.getElementById('rooms-filter');
+            roomsSet.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = `${r} rum`;
+                sel.appendChild(opt);
+            });
+
+            // Build monthly slider domain from earliest to latest deal
+            const minDate = allDeals[0].date;
+            const maxDate = allDeals[allDeals.length - 1].date;
+            sliderDates = buildMonthlyDomain(minDate, maxDate);
+            const slider = document.getElementById('start-slider');
+            slider.min = 0;
+            slider.max = sliderDates.length - 1;
+            slider.value = 0;
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            sel.addEventListener('change', applyAndRender);
+            document.getElementById('trendline').addEventListener('change', applyAndRender);
+            slider.addEventListener('input', applyAndRender);
+
+            const urlInput = document.getElementById('url-input');
+            document.getElementById('url-find-btn').addEventListener('click', () => {
+                highlightFromInput(urlInput.value);
+            });
+            urlInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); highlightFromInput(urlInput.value); }
+            });
+            document.getElementById('url-clear-btn').addEventListener('click', clearHighlight);
+
+            // Allow ?url=... deep links
+            const params = new URLSearchParams(window.location.search);
+            const initialUrl = params.get('url');
+            if (initialUrl) {
+                urlInput.value = initialUrl;
+                highlightFromInput(initialUrl);
+            } else {
+                applyAndRender();
+            }
+        } catch (err) {
+            document.getElementById('loading').textContent = 'Fel vid laddning: ' + err.message;
+            console.error(err);
+        }
+    })();
+</script>
+</body>
+</html>
