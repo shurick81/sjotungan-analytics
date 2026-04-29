@@ -27,6 +27,8 @@ This folder groups reusable data-extraction assets in one place.
 - Reference: `methods/domain_conventions.md` (M-numbers, abbreviations)
 - Script: `scripts/compare_guide_html_pdf.py`
 - Method doc: `methods/guide_html_pdf_comparison.md`
+- Script: `scripts/scrape_hemnet_sales.py`
+- Method doc: `methods/hemnet_sales.md`
 
 ## Macro data note (inflation)
 
@@ -212,4 +214,20 @@ If category auto-detection fails due to naming differences, pin IDs explicitly i
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/check_soliditet_readiness.py --equity-category-id <id> --assets-category-id <id>
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/calculate_soliditet.py --equity-category-id <id> --assets-category-id <id>
+```
+
+## Hemnet sold-listings extraction
+
+Scrape all sold listings ("slutpriser") for Myggdalsvägen, Tyresö from Hemnet, filter to BRF Sjötungan's address range (#6–#122), and write `data/sjotungan_sales.csv` plus `data/sjotungan_sales_raw.json`. See `methods/hemnet_sales.md` for the field mapping, filtering rule, coverage, and Booli supplement notes.
+
+Scrape from the network:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py
+```
+
+Re-parse the CSV from the cached raw JSON without re-fetching:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py --from-cache
 ```
