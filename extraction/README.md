@@ -29,6 +29,10 @@ This folder groups reusable data-extraction assets in one place.
 - Method doc: `methods/guide_html_pdf_comparison.md`
 - Script: `scripts/scrape_hemnet_sales.py`
 - Method doc: `methods/hemnet_sales.md`
+- Script: `scripts/fetch_scb_brf_prices.py`
+- Method doc: `methods/sweden_brf_prices.md`
+- Script: `scripts/fetch_maklarstatistik_brf.py`
+- Method doc: `methods/maklarstatistik_brf.md`
 
 ## Macro data note (inflation)
 
@@ -218,7 +222,7 @@ If category auto-detection fails due to naming differences, pin IDs explicitly i
 
 ## Hemnet sold-listings extraction
 
-Scrape all sold listings ("slutpriser") for Myggdalsvägen, Tyresö from Hemnet, filter to BRF Sjötungan's address range (#6–#122), and write `data/sjotungan_sales.csv` plus `data/sjotungan_sales_raw.json`. See `methods/hemnet_sales.md` for the field mapping, filtering rule, coverage, and Booli supplement notes.
+Scrape all sold listings ("slutpriser") for Myggdalsvägen, Tyresö from Hemnet, filter to BRF Sjötungan's address range (#6–#122), and write `data/apartment_prices/sjotungan_sales.csv` plus `data/apartment_prices/sjotungan_sales_raw.json`. See `methods/hemnet_sales.md` for the field mapping, filtering rule, coverage, and Booli supplement notes.
 
 Scrape from the network:
 
@@ -230,4 +234,67 @@ Re-parse the CSV from the cached raw JSON without re-fetching:
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py --from-cache
+```
+
+Aggregate-only mode for a reference street (no per-listing data persisted, only annual medians). Outputs are not BRF-filtered — they cover every sale on the named street and are used as neighborhood market references.
+
+Sikvägen, Tyresö → `data/apartment_prices/sikvagen_annual_medians.csv`:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
+    --location-id 485023 --street-name Sikvägen --no-filter \
+    --aggregate-only --output-aggregated data/apartment_prices/sikvagen_annual_medians.csv
+```
+
+Björkbacksvägen, Tyresö → `data/apartment_prices/bjorkbacksvagen_annual_medians.csv`:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
+    --location-id 484982 --street-name Björkbacksvägen --no-filter \
+    --aggregate-only --output-aggregated data/apartment_prices/bjorkbacksvagen_annual_medians.csv
+```
+
+Tyresö kommun → `data/apartment_prices/tyreso_kommun_annual_medians.csv` (use empty `--street-name` since the query spans many streets). Pass `--shard-by-rooms` to expand past Hemnet's 2,500-result cap by sweeping one unfiltered baseline plus one query per room count (1, 2, 3, 4, 5, 6+); without it the dataset starts in mid-September 2019. With sharding the kommun output covers 2013–2026 (≈4,100 listings):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
+    --location-id 17792 --street-name "" --no-filter --shard-by-rooms \
+    --aggregate-only --output-aggregated data/apartment_prices/tyreso_kommun_annual_medians.csv
+```
+
+## National BRF price reference (SCB)
+
+Annual sold-tenant-owned-flats (BRF) prices for Sweden from the official SCB PxWeb API. Total median/average price in SEK thousands, 2000–2024. See `methods/sweden_brf_prices.md` — note that this is a **total price** series, not kr/m², so it is not directly unit-comparable to the per-m² Hemnet medians; normalize to an index before plotting alongside.
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/fetch_scb_brf_prices.py
+```
+
+Fetch a different region (e.g. Stockholm county = `01`) into a separate file:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/fetch_scb_brf_prices.py \
+    --region 01 --output data/stockholm_county_brf_annual.csv
+```
+
+## Mäklarstatistik BRF kr/m² (national + Stockholm county)
+
+SCB publishes BRF totals only and lags by ~12 months; Mäklarstatistik
+publishes the canonical kr/m² series including the previous month. Use
+this script for national and Stockholms län aggregates that cover 2026
+to-date. See `methods/maklarstatistik_brf.md` for endpoint shape and
+why pure monthly medians are not available.
+
+Fetch all configured regions (writes 4 CSVs: annual + rolling12 each
+for `sverige` and `stockholms_lan`):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/fetch_maklarstatistik_brf.py
+```
+
+Fetch a single region:
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/fetch_maklarstatistik_brf.py \
+    --region sverige
 ```
