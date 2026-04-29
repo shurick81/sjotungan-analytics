@@ -201,6 +201,18 @@
             padding: 8px;
         }
 
+        #median-loan-container,
+        #median-fee-container,
+        #median-compare-container,
+        #count-container {
+            width: 100%;
+            height: 380px;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            padding: 8px;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -209,6 +221,10 @@
 
         @media (max-width: 640px) {
             #scatter-container { height: 460px; }
+            #median-loan-container,
+            #median-fee-container,
+            #median-compare-container,
+            #count-container { height: 320px; }
         }
     </style>
 </head>
@@ -266,9 +282,81 @@
             <div id="scatter-container"></div>
 
             <p class="text-xs text-gray-500 mt-3 text-center">
-                Källa: <code>data/sjotungan_sales.csv</code> – hämtat från Hemnet.
+                Källa: <code>data/apartment_prices/sjotungan_sales.csv</code> – hämtat från Hemnet.
                 Storlek på punkten = boyta. Färg = antal rum.
             </p>
+
+            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Årsmedian kr/m² vs. föreningens lån</h2>
+            <p class="text-gray-600 mb-3">Median av kr/m² per försäljningsår överlagrad på föreningens totala lån per m².</p>
+            <div id="median-loan-container"></div>
+
+            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Årsmedian kr/m² vs. årsavgift</h2>
+            <p class="text-gray-600 mb-3">Samma försäljningsmedian överlagrad på föreningens årsavgifter per m².</p>
+            <div id="median-fee-container"></div>
+
+            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Median kr/m² – jämförelse med närliggande områden</h2>
+            <p class="text-gray-600 mb-3">
+                Årsmedian kr/m² för BRF Sjötungan jämfört med Sikvägen, Björkbacksvägen och Tyresö kommun,
+                samt Stockholms län och Sverige som helhet (Mäklarstatistik) som makro-referens.
+                Alla serier är i samma enhet (kr/m²).
+            </p>
+            <div id="median-compare-container"></div>
+
+            <details class="data-details">
+                <summary>Om datan: Stockholms län &amp; Sverige (Mäklarstatistik)</summary>
+                <div class="data-details-body">
+                    <p>
+                        De två makro-serierna kommer från
+                        <a href="https://www.maklarstatistik.se/" target="_blank" rel="noopener">Mäklarstatistik</a>,
+                        som publicerar månads- och årsmedianer för bostadsrätter på rikets, läns- och kommunnivå.
+                        Hämtningen och bearbetningen är gjord så här:
+                    </p>
+                    <ul>
+                        <li>
+                            <b>Källa:</b> samma datapunkter som drivs på Mäklarstatistiks
+                            <em>prisutveckling</em>-sidor. Ett <code>admin-ajax</code>-anrop
+                            per region (<code>action=price_trends_comparison</code>,
+                            <code>housing_tenure=bostadsratter</code>) returnerar JSON med
+                            samtliga år tillbaka till 1996.
+                        </li>
+                        <li>
+                            <b>Region-id:</b> Sverige (Riket) <code>post_id 6922</code>,
+                            Stockholms län <code>post_id 5948</code> – hämtade från
+                            shortlink-länken på respektive områdessida.
+                        </li>
+                        <li>
+                            <b>Enhet:</b> kronor per kvadratmeter, identisk enhet som
+                            de övriga serierna i grafen – ingen omräkning behövs.
+                        </li>
+                        <li>
+                            <b>Tidsspann:</b> 1996–föregående år, bara hela kalenderår.
+                            Det innevarande året (just nu 2026) finns inte i den årliga
+                            CSV:en; för aktuell prisnivå används Mäklarstatistiks
+                            rullande 12-månaderspublicering separat.
+                        </li>
+                        <li>
+                            <b>Varför Mäklarstatistik och inte Hemnet eller SCB:</b>
+                            Hemnets slutpris-bläddring kapar vid 2 500 träffar per sökning,
+                            vilket gör täckning på läns-/riksnivå opraktisk. SCB publicerar
+                            bara totalpriser för bostadsrätter, inte kr/m². Mäklarstatistik
+                            är därmed den kanoniska kr/m²-serien på den här nivån.
+                        </li>
+                    </ul>
+                    <p style="margin-top: 8px;">
+                        Fullständig metoddokumentation:
+                        <a href="extraction/methods/maklarstatistik_brf.md" target="_blank" rel="noopener">
+                            extraction/methods/maklarstatistik_brf.md
+                        </a>.
+                    </p>
+                </div>
+            </details>
+
+            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Antal försäljningar per år</h2>
+            <p class="text-gray-600 mb-3">
+                Antal sålda lägenheter per år för BRF Sjötungan jämfört med Sikvägen och Björkbacksvägen.
+                Tyresö kommun (höger axel) visas som referens – volymen är ca tio gånger större.
+            </p>
+            <div id="count-container"></div>
 
             <details class="data-details">
                 <summary>Om datan: hur affärerna är hämtade och filtrerade</summary>
@@ -367,6 +455,65 @@
         return parseCSV(text);
     }
 
+    /* ── Load total credit-institution debt per m² ───── */
+    // Sums category_id 0 (Övriga skulder till kreditinstitut) + 1 (Skulder till
+    // kreditinstitut), then divides by TOTAL_KVM, mirroring the breakdown
+    // used by changing_over_time.html.
+    async function loadDebtPerM2() {
+        const rows = await loadCSV('data/financial_states.csv');
+        const totalsByYear = {};
+        rows.forEach(r => {
+            const cat = parseInt(r.category_id, 10);
+            const amt = parseFloat(r.amount);
+            if ((cat === 0 || cat === 1) && Number.isFinite(amt)) {
+                totalsByYear[r.year] = (totalsByYear[r.year] || 0) + amt;
+            }
+        });
+        return Object.entries(totalsByYear)
+            .map(([year, total]) => ({ year, kr_per_m2: total / TOTAL_KVM, total }))
+            .sort((a, b) => a.year.localeCompare(b.year));
+    }
+
+    /* ── Load årsavgift per m² per year ──────────────── */
+    // category_id 17 in financial_events.csv is "Årsavgifter" (annual fees
+    // collected by the BRF). Same convention used by changing_over_time.html.
+    async function loadFeePerM2() {
+        const rows = await loadCSV('data/financial_events.csv');
+        const totalsByYear = {};
+        rows.forEach(r => {
+            const cat = parseInt(r.category_id, 10);
+            const amt = parseFloat(r.amount);
+            if (cat === 17 && Number.isFinite(amt)) {
+                totalsByYear[r.year] = (totalsByYear[r.year] || 0) + amt;
+            }
+        });
+        return Object.entries(totalsByYear)
+            .map(([year, total]) => ({ year, kr_per_m2: total / TOTAL_KVM, total }))
+            .sort((a, b) => a.year.localeCompare(b.year));
+    }
+
+    /* ── Load yearly medians for a comparison area ───── */
+    async function loadAreaMedians(url) {
+        const rows = await loadCSV(url);
+        return rows.map(r => ({
+            year: r.year,
+            n: parseInt(r.n, 10),
+            median: parseFloat(r.median_kr_per_m2),
+        })).filter(d => Number.isFinite(d.median)).sort((a, b) => a.year.localeCompare(b.year));
+    }
+
+    /* ── Load Mäklarstatistik annual kr/m² (region-wide) ── */
+    // Schema: `year, kr_per_m2`. Same unit as the Hemnet-derived area
+    // medians, so it slots straight onto the primary y-axis.
+    async function loadMaklarAnnual(url) {
+        const rows = await loadCSV(url);
+        return rows.map(r => ({
+            year: (r.year || '').trim(),
+            median: parseFloat(r.kr_per_m2),
+        })).filter(d => d.year && Number.isFinite(d.median))
+          .sort((a, b) => a.year.localeCompare(b.year));
+    }
+
     /* ── Helpers ─────────────────────────────────────── */
     const fmtNum = n => new Intl.NumberFormat('sv-SE').format(Math.round(n));
     const fmtPrice = n => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
@@ -398,6 +545,15 @@
     let allDeals = [];
     let sliderDates = []; // monthly granularity 'YYYY-MM-01' between min and max
     let highlightDeal = null; // deal currently pinpointed by URL lookup
+    let debtPerM2 = []; // [{year:'2013', kr_per_m2: 2622}, ...]
+    let feePerM2 = [];  // årsavgift per m² per year
+    let sikvagenMedians = [];      // [{year, n, median}, ...]
+    let bjorkbackenMedians = [];   // [{year, n, median}, ...]
+    let tyresoMedians = [];        // [{year, n, median}, ...] – Tyresö kommun
+    let stockholmsLanAnnual = [];  // [{year, median (kr/m²)}, ...] – Mäklarstatistik
+    let sverigeAnnual = [];        // [{year, median (kr/m²)}, ...] – Mäklarstatistik
+
+    const TOTAL_KVM = 51666; // BRF Sjötungan's total living area
 
     /* ── Build deal records ──────────────────────────── */
     function buildDeals(rows) {
@@ -452,16 +608,10 @@
         const avg = ppm.reduce((a, b) => a + b, 0) / ppm.length;
         const sorted = [...ppm].sort((a, b) => a - b);
         const median = sorted[Math.floor(sorted.length / 2)];
-        const min = sorted[0];
-        const max = sorted[sorted.length - 1];
-        const firstDate = deals[0].date;
-        const lastDate = deals[deals.length - 1].date;
         stats.innerHTML = `
             <div class="stat-card"><div class="stat-label">Antal affärer</div><div class="stat-value">${deals.length}</div></div>
-            <div class="stat-card"><div class="stat-label">Period</div><div class="stat-value" style="font-size:0.95rem;">${firstDate} – ${lastDate}</div></div>
             <div class="stat-card"><div class="stat-label">Snitt kr/m²</div><div class="stat-value">${fmtNum(avg)}</div></div>
             <div class="stat-card"><div class="stat-label">Median kr/m²</div><div class="stat-value">${fmtNum(median)}</div></div>
-            <div class="stat-card"><div class="stat-label">Spann kr/m²</div><div class="stat-value" style="font-size:0.95rem;">${fmtNum(min)} – ${fmtNum(max)}</div></div>
         `;
     }
 
@@ -660,6 +810,308 @@
         });
     }
 
+    /* ── Render a yearly-median + secondary line chart ─ */
+    // `secondary` shape: { series, label, hoverLabel, color, dash, symbol, axisTitle }
+    function renderMedianWithSecondary(containerId, deals, secondary) {
+        const medians = yearlyMedians(deals);
+
+        const slider = document.getElementById('start-slider');
+        const startYear = parseInt((sliderDates[parseInt(slider.value, 10)] || '0000').slice(0, 4), 10);
+        const cutoff = Math.max(2013, startYear || 0);
+        const secFiltered = secondary.series.filter(d => parseInt(d.year, 10) >= cutoff);
+
+        const traces = [{
+            type: 'scatter',
+            mode: 'lines+markers+text',
+            name: 'Försäljningar (median)',
+            x: medians.map(m => `${m.year}-07-01`),
+            y: medians.map(m => m.median),
+            customdata: medians.map(m => [m.year, m.count]),
+            text: medians.map(m => fmtNum(m.median)),
+            textposition: 'top center',
+            cliponaxis: false,
+            hovertemplate:
+                '<b>%{customdata[0]}</b><br>' +
+                'Median kr/m²: %{y:,.0f}<br>' +
+                'Antal affärer: %{customdata[1]}' +
+                '<extra></extra>',
+            line: { color: '#dc2626', width: 2.5 },
+            marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
+        }];
+
+        if (secFiltered.length) {
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: secondary.label,
+                x: secFiltered.map(d => `${d.year}-07-01`),
+                y: secFiltered.map(d => d.kr_per_m2),
+                yaxis: 'y2',
+                customdata: secFiltered.map(d => [d.year, d.total]),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    `${secondary.hoverLabel}: %{y:,.0f} kr/m²<br>` +
+                    'Total: %{customdata[1]:,.0f} kr' +
+                    '<extra></extra>',
+                line: { color: secondary.color, width: 2.5, dash: secondary.dash },
+                marker: { size: 8, color: secondary.color, symbol: secondary.symbol, line: { width: 1, color: 'white' } },
+            });
+        }
+
+        const layout = {
+            margin: { l: 70, r: 70, t: 30, b: 60 },
+            xaxis: { title: 'År', type: 'date', gridcolor: '#e5e7eb' },
+            yaxis: {
+                title: 'Median kr/m² (försäljning)',
+                gridcolor: '#e5e7eb',
+                tickformat: ',d',
+                separatethousands: true,
+                titlefont: { color: '#dc2626' },
+                tickfont: { color: '#dc2626' },
+            },
+            yaxis2: {
+                title: secondary.axisTitle,
+                overlaying: 'y',
+                side: 'right',
+                tickformat: ',d',
+                separatethousands: true,
+                titlefont: { color: secondary.color },
+                tickfont: { color: secondary.color },
+                showgrid: false,
+                rangemode: 'tozero',
+            },
+            plot_bgcolor: '#f7f9fd',
+            paper_bgcolor: '#f7f9fd',
+            font: { family: 'system-ui, sans-serif', color: '#2f3d52' },
+            legend: { orientation: 'h', y: -0.2 },
+            hovermode: 'x unified',
+        };
+        Plotly.newPlot(containerId, traces, layout, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        });
+    }
+
+    /* ── Render comparison median chart (3 areas) ────── */
+    // Sjötungan honors the rooms + start-year filter (its data comes from
+    // `deals`). Sikvägen and Björkbacksvägen lack a rooms breakdown, so they
+    // only respect the start-year cutoff.
+    function renderMedianComparison(deals) {
+        const slider = document.getElementById('start-slider');
+        const startYear = parseInt((sliderDates[parseInt(slider.value, 10)] || '0000').slice(0, 4), 10);
+        const cutoff = Math.max(2013, startYear || 0);
+
+        const sj = yearlyMedians(deals);
+        const sik = sikvagenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const bb = bjorkbackenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const ty = tyresoMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const sthlm = stockholmsLanAnnual.filter(d => parseInt(d.year, 10) >= cutoff);
+        const se = sverigeAnnual.filter(d => parseInt(d.year, 10) >= cutoff);
+
+        const traces = [
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'BRF Sjötungan',
+                x: sj.map(m => `${m.year}-07-01`),
+                y: sj.map(m => m.median),
+                customdata: sj.map(m => [m.year, m.count]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>BRF Sjötungan</extra>',
+                line: { color: '#dc2626', width: 2.5 },
+                marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'Sikvägen',
+                x: sik.map(d => `${d.year}-07-01`),
+                y: sik.map(d => d.median),
+                customdata: sik.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>Sikvägen</extra>',
+                line: { color: '#1f3f95', width: 2.5 },
+                marker: { size: 8, color: '#1f3f95', symbol: 'square', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'Björkbacksvägen',
+                x: bb.map(d => `${d.year}-07-01`),
+                y: bb.map(d => d.median),
+                customdata: bb.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>Björkbacksvägen</extra>',
+                line: { color: '#10b981', width: 2.5 },
+                marker: { size: 8, color: '#10b981', symbol: 'triangle-up', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'Tyresö kommun',
+                x: ty.map(d => `${d.year}-07-01`),
+                y: ty.map(d => d.median),
+                customdata: ty.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>Tyresö kommun</extra>',
+                line: { color: '#ea580c', width: 2.5 },
+                marker: { size: 8, color: '#ea580c', symbol: 'triangle-down', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'Stockholms län',
+                x: sthlm.map(d => `${d.year}-07-01`),
+                y: sthlm.map(d => d.median),
+                customdata: sthlm.map(d => [d.year]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<extra>Stockholms län</extra>',
+                line: { color: '#9333ea', width: 2, dash: 'dash' },
+                marker: { size: 7, color: '#9333ea', symbol: 'circle', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'Sverige',
+                x: se.map(d => `${d.year}-07-01`),
+                y: se.map(d => d.median),
+                customdata: se.map(d => [d.year]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<extra>Sverige</extra>',
+                line: { color: '#6b7280', width: 2, dash: 'dot' },
+                marker: { size: 7, color: '#6b7280', symbol: 'cross', line: { width: 1, color: 'white' } },
+            },
+        ];
+
+        const layout = {
+            margin: { l: 70, r: 20, t: 30, b: 60 },
+            xaxis: { title: 'År', type: 'date', gridcolor: '#e5e7eb' },
+            yaxis: {
+                title: 'Median kr/m²',
+                gridcolor: '#e5e7eb',
+                tickformat: ',d',
+                separatethousands: true,
+            },
+            plot_bgcolor: '#f7f9fd',
+            paper_bgcolor: '#f7f9fd',
+            font: { family: 'system-ui, sans-serif', color: '#2f3d52' },
+            legend: { orientation: 'h', y: -0.2 },
+            hovermode: 'x unified',
+        };
+        Plotly.newPlot('median-compare-container', traces, layout, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        });
+    }
+
+    /* ── Render yearly count chart ───────────────────── */
+    function renderCountChart(deals) {
+        const slider = document.getElementById('start-slider');
+        const startYear = parseInt((sliderDates[parseInt(slider.value, 10)] || '0000').slice(0, 4), 10);
+        const cutoff = Math.max(2013, startYear || 0);
+
+        const buckets = new Map();
+        deals.forEach(d => {
+            const y = d.date.slice(0, 4);
+            buckets.set(y, (buckets.get(y) || 0) + 1);
+        });
+        const years = [...buckets.keys()].sort();
+        const counts = years.map(y => buckets.get(y));
+
+        const sik = sikvagenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const bb = bjorkbackenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const ty = tyresoMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+
+        const traces = [
+            {
+                type: 'scatter',
+                mode: 'lines+markers+text',
+                name: 'BRF Sjötungan',
+                x: years.map(y => `${y}-07-01`),
+                y: counts,
+                text: counts.map(String),
+                textposition: 'top center',
+                cliponaxis: false,
+                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>BRF Sjötungan</extra>',
+                line: { color: '#dc2626', width: 2.5 },
+                marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Sikvägen',
+                x: sik.map(d => `${d.year}-07-01`),
+                y: sik.map(d => d.n),
+                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>Sikvägen</extra>',
+                line: { color: '#1f3f95', width: 2.5 },
+                marker: { size: 8, color: '#1f3f95', symbol: 'square', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Björkbacksvägen',
+                x: bb.map(d => `${d.year}-07-01`),
+                y: bb.map(d => d.n),
+                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>Björkbacksvägen</extra>',
+                line: { color: '#10b981', width: 2.5 },
+                marker: { size: 8, color: '#10b981', symbol: 'triangle-up', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Tyresö kommun',
+                x: ty.map(d => `${d.year}-07-01`),
+                y: ty.map(d => d.n),
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y:,}<extra>Tyresö kommun</extra>',
+                line: { color: '#ea580c', width: 2, dash: 'dash' },
+                marker: { size: 7, color: '#ea580c', symbol: 'triangle-down', line: { width: 1, color: 'white' } },
+            },
+        ];
+        const layout = {
+            margin: { l: 60, r: 70, t: 30, b: 50 },
+            xaxis: { title: 'År', type: 'date', gridcolor: '#e5e7eb' },
+            yaxis: {
+                title: 'Antal (Sjötungan, Sikvägen, Björkbacksvägen)',
+                gridcolor: '#e5e7eb',
+                rangemode: 'tozero',
+                tickformat: 'd',
+            },
+            yaxis2: {
+                title: 'Antal (Tyresö kommun)',
+                overlaying: 'y',
+                side: 'right',
+                rangemode: 'tozero',
+                tickformat: ',d',
+                separatethousands: true,
+                titlefont: { color: '#ea580c' },
+                tickfont: { color: '#ea580c' },
+                showgrid: false,
+            },
+            plot_bgcolor: '#f7f9fd',
+            paper_bgcolor: '#f7f9fd',
+            font: { family: 'system-ui, sans-serif', color: '#2f3d52' },
+            legend: { orientation: 'h', y: -0.2 },
+            hovermode: 'x unified',
+        };
+        Plotly.newPlot('count-container', traces, layout, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        });
+    }
+
+    function renderMedianCharts(deals) {
+        renderMedianWithSecondary('median-loan-container', deals, {
+            series: debtPerM2,
+            label: 'Föreningens lån (kr/m²)',
+            hoverLabel: 'Lån',
+            color: '#1f3f95',
+            dash: 'dash',
+            symbol: 'square',
+            axisTitle: 'Lån kr/m²',
+        });
+        renderMedianWithSecondary('median-fee-container', deals, {
+            series: feePerM2,
+            label: 'Årsavgift (kr/m²/år)',
+            hoverLabel: 'Årsavgift',
+            color: '#10b981',
+            dash: 'dot',
+            symbol: 'triangle-up',
+            axisTitle: 'Årsavgift kr/m²',
+        });
+    }
+
     /* ── Apply filters and (re)render ────────────────── */
     function applyAndRender() {
         const roomsSel = document.getElementById('rooms-filter').value;
@@ -674,6 +1126,9 @@
         }
         renderStats(filtered);
         renderScatter(filtered);
+        renderMedianCharts(filtered);
+        renderMedianComparison(filtered);
+        renderCountChart(filtered);
     }
 
     /* ── URL → highlight handling ────────────────────── */
@@ -713,8 +1168,24 @@
     /* ── Init ────────────────────────────────────────── */
     (async function init() {
         try {
-            const rows = await loadCSV('data/sjotungan_sales.csv');
+            const [rows, debt, fee, sik, bb, ty, sthlm, se] = await Promise.all([
+                loadCSV('data/apartment_prices/sjotungan_sales.csv'),
+                loadDebtPerM2().catch(() => []),
+                loadFeePerM2().catch(() => []),
+                loadAreaMedians('data/apartment_prices/sikvagen_annual_medians.csv').catch(() => []),
+                loadAreaMedians('data/apartment_prices/bjorkbacksvagen_annual_medians.csv').catch(() => []),
+                loadAreaMedians('data/apartment_prices/tyreso_kommun_annual_medians.csv').catch(() => []),
+                loadMaklarAnnual('data/apartment_prices/maklarstatistik_stockholms_lan_brf_annual.csv').catch(() => []),
+                loadMaklarAnnual('data/apartment_prices/maklarstatistik_sverige_brf_annual.csv').catch(() => []),
+            ]);
             allDeals = buildDeals(rows);
+            debtPerM2 = debt;
+            feePerM2 = fee;
+            sikvagenMedians = sik;
+            bjorkbackenMedians = bb;
+            tyresoMedians = ty;
+            stockholmsLanAnnual = sthlm;
+            sverigeAnnual = se;
 
             const roomsSet = [...new Set(
                 allDeals.map(d => Math.round(d.rooms)).filter(r => Number.isFinite(r))
