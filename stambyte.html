@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stambyte – Vision Myggan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-size: 1rem; }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        .map-section {
+            position: relative;
+            width: 100vw;
+            margin-left: calc(50% - 50vw);
+            margin-right: calc(50% - 50vw);
+        }
+        .map-stack {
+            position: relative;
+            width: 100%;
+            line-height: 0;
+        }
+        .map-stack img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .map-stack .map-overlay {
+            position: absolute;
+            inset: 0;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        .map-stack .port-marker-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .map-stack .port-marker {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            margin-left: -40px;
+            margin-top: -40px;
+            border-radius: 50%;
+            background: var(--port-bg, rgba(120, 120, 120, 0.4));
+            border: 2px solid var(--port-color, #6b7280);
+            box-shadow: 0 0 0 1px white inset;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+        }
+        .part-color-swatch {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            background: var(--port-bg);
+            vertical-align: -3px;
+            margin-right: 8px;
+        }
+
+        .opacity-switch {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 10;
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--vm-border);
+            border-radius: 9999px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .opacity-switch button {
+            border: none;
+            background: transparent;
+            color: var(--vm-text);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .opacity-switch button.active {
+            background: var(--vm-blue);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+<button onclick="location.href='annual_details.html#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+<button onclick="location.href='annual_details.html#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+<button onclick="location.href='annual_details.html#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+<button onclick="location.href='annual_details.html#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+</nav>
+</header>
+
+<div class="md:hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-center text-sm py-2 px-4">
+  Sidan visas bäst på en större skärm, t.ex. dator eller surfplatta.
+</div>
+
+<main class="container mx-auto mt-8 p-4">
+    <section class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto">
+        <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Stambyte</h1>
+        <p class="text-gray-600 mb-6">Översikt av stambytet i BRF Sjötungan.</p>
+    </section>
+
+    <section class="map-section mt-8">
+        <div class="map-stack">
+            <img src="maps/sjotungan-aerial.png" alt="Sjötungan flygfoto">
+            <img src="maps/sjotungan-linear.png" alt="Sjötungan karta" class="map-overlay" id="map-overlay">
+            <div id="port-marker-layer" class="port-marker-layer"></div>
+            <div class="opacity-switch" role="group" aria-label="Karta-opacitet">
+                <button type="button" data-opacity="0">0%</button>
+                <button type="button" data-opacity="0.5" class="active">50%</button>
+                <button type="button" data-opacity="1">100%</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="parts-section mt-8 max-w-6xl mx-auto">
+        <h2 class="text-blue-900 font-bold text-2xl mb-4">Etapper</h2>
+        <div id="parts-list" class="space-y-4"></div>
+    </section>
+</main>
+
+<script>
+    (function () {
+        const overlay = document.getElementById('map-overlay');
+        const buttons = document.querySelectorAll('.opacity-switch button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                overlay.style.opacity = btn.dataset.opacity;
+                buttons.forEach(b => b.classList.toggle('active', b === btn));
+            });
+        });
+    })();
+
+    (async function () {
+        const layer = document.getElementById('port-marker-layer');
+        const list = document.getElementById('parts-list');
+
+        const palette = [
+            '#a78bfa', // 1: light violet
+            '#16a34a', // 2: green
+            '#b85c47', // 3: brick
+            '#eab308', // 4: yellow
+            '#2563eb', // 5: blue
+            '#0891b2', // 6: cyan
+            '#ca8a04', // 7: amber
+            '#db2777', // 8: pink
+        ];
+        const fallbackColor = '#6b7280';
+        const colorForMain = (n) =>
+            Number.isFinite(n) && n >= 1 && palette[n - 1] ? palette[n - 1] : fallbackColor;
+        const setMarkerColor = (el, hex) => {
+            el.style.setProperty('--port-color', hex);
+            el.style.setProperty('--port-bg', hexToRgba(hex, 0.45));
+        };
+        function hexToRgba(hex, alpha) {
+            const m = hex.replace('#', '');
+            const r = parseInt(m.slice(0, 2), 16);
+            const g = parseInt(m.slice(2, 4), 16);
+            const b = parseInt(m.slice(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        async function loadCsv(path) {
+            try {
+                const res = await fetch(path, { cache: 'no-store' });
+                if (!res.ok) {
+                    console.warn(path + ' fetch failed', res.status);
+                    return null;
+                }
+                return await res.text();
+            } catch (err) {
+                console.warn(path + ' fetch error', err);
+                return null;
+            }
+        }
+
+        const [portsText, partsText] = await Promise.all([
+            loadCsv('maps/ports.csv'),
+            loadCsv('data/stambyte/parts.csv'),
+        ]);
+
+        // port -> main_part, and groups: main -> phase -> [ports]
+        const portToMain = new Map();
+        const groups = new Map();
+        if (partsText) {
+            partsText.split(/\r?\n/).forEach((line, idx) => {
+                if (!line.trim() || idx === 0) return;
+                const [portStr, mainStr, phaseStr] = line.split(',');
+                const port = parseInt(portStr, 10);
+                const main = parseInt(mainStr, 10);
+                const phase = parseInt(phaseStr, 10);
+                if (![port, main, phase].every(Number.isFinite)) return;
+                portToMain.set(port, main);
+                if (!groups.has(main)) groups.set(main, new Map());
+                const phaseMap = groups.get(main);
+                if (!phaseMap.has(phase)) phaseMap.set(phase, []);
+                phaseMap.get(phase).push(port);
+            });
+        }
+
+        if (layer && portsText) {
+            portsText.split(/\r?\n/).forEach((line, idx) => {
+                if (!line.trim() || idx === 0) return;
+                const [numStr, xStr, yStr] = line.split(',');
+                const num = parseInt(numStr, 10);
+                const x = parseFloat(xStr), y = parseFloat(yStr);
+                if (!Number.isFinite(num) || !Number.isFinite(x) || !Number.isFinite(y)) return;
+                const el = document.createElement('div');
+                el.className = 'port-marker';
+                el.textContent = num;
+                el.style.left = x + '%';
+                el.style.top = y + '%';
+                setMarkerColor(el, colorForMain(portToMain.get(num)));
+                layer.appendChild(el);
+            });
+        }
+
+        if (list && groups.size) {
+            [...groups.keys()].sort((a, b) => a - b).forEach(main => {
+                const color = colorForMain(main);
+                const block = document.createElement('div');
+                block.className = 'bg-white rounded-xl shadow p-4 border border-gray-200';
+
+                const h3 = document.createElement('h3');
+                h3.className = 'font-semibold text-lg mb-2';
+                h3.style.color = color;
+
+                const swatch = document.createElement('span');
+                swatch.className = 'part-color-swatch';
+                swatch.style.setProperty('--port-bg', hexToRgba(color, 0.45));
+                h3.appendChild(swatch);
+                h3.appendChild(document.createTextNode('Huvuddel ' + main));
+                block.appendChild(h3);
+
+                const ul = document.createElement('ul');
+                ul.className = 'space-y-1 text-gray-800';
+                const phases = [...groups.get(main).keys()].sort((a, b) => a - b);
+                phases.forEach(phase => {
+                    const ports = groups.get(main).get(phase).sort((a, b) => a - b);
+                    const li = document.createElement('li');
+                    li.innerHTML =
+                        '<span class="font-medium">Fas ' + phase + ':</span> ' +
+                        '<span>Portar ' + ports.join(', ') + '</span>';
+                    ul.appendChild(li);
+                });
+                block.appendChild(ul);
+                list.appendChild(block);
+            });
+        }
+    })();
+</script>
+</body>
+</html>

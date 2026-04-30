@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stambyte – Vision Myggan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-size: 1rem; }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        .map-section {
+            position: relative;
+            width: 100vw;
+            margin-left: calc(50% - 50vw);
+            margin-right: calc(50% - 50vw);
+        }
+        .map-stack {
+            position: relative;
+            width: 100%;
+            line-height: 0;
+        }
+        .map-stack img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .map-stack .map-overlay {
+            position: absolute;
+            inset: 0;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        /* TEMP-DRAG-CIRCLES: remove when done */
+        .map-stack .temp-drag-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .map-stack .temp-drag-circle {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            margin-left: -40px;
+            margin-top: -40px;
+            border-radius: 50%;
+            background: rgba(255, 0, 0, 0.4);
+            border: 2px solid #cc0000;
+            box-shadow: 0 0 0 1px white inset;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            pointer-events: auto;
+            touch-action: none;
+            user-select: none;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+        }
+        .map-stack .temp-drag-circle.dragging { cursor: grabbing; z-index: 30; }
+        .temp-csv-section {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .temp-csv-section pre {
+            white-space: pre;
+            font-size: 12px;
+        }
+
+        .opacity-switch {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 10;
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--vm-border);
+            border-radius: 9999px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .opacity-switch button {
+            border: none;
+            background: transparent;
+            color: var(--vm-text);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .opacity-switch button.active {
+            background: var(--vm-blue);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+<button onclick="location.href='annual_details.html#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+<button onclick="location.href='annual_details.html#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+<button onclick="location.href='annual_details.html#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+<button onclick="location.href='annual_details.html#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+</nav>
+</header>
+
+<div class="md:hidden bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-center text-sm py-2 px-4">
+  Sidan visas bäst på en större skärm, t.ex. dator eller surfplatta.
+</div>
+
+<main class="container mx-auto mt-8 p-4">
+    <section class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto">
+        <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Stambyte</h1>
+        <p class="text-gray-600 mb-6">Översikt av stambytet i BRF Sjötungan.</p>
+    </section>
+
+    <section class="map-section mt-8">
+        <div class="map-stack">
+            <img src="maps/sjotungan-aerial.png" alt="Sjötungan flygfoto">
+            <img src="maps/sjotungan-linear.png" alt="Sjötungan karta" class="map-overlay" id="map-overlay">
+            <!-- TEMP-DRAG-CIRCLES: remove when done -->
+            <div id="temp-drag-layer" class="temp-drag-layer"></div>
+            <div class="opacity-switch" role="group" aria-label="Karta-opacitet">
+                <button type="button" data-opacity="0">0%</button>
+                <button type="button" data-opacity="0.5" class="active">50%</button>
+                <button type="button" data-opacity="1">100%</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- TEMP-DRAG-CIRCLES: remove when done -->
+    <section class="temp-csv-section mt-6 max-w-6xl mx-auto">
+        <div class="flex items-center gap-3 mb-2">
+            <strong class="text-sm">Koordinater (CSV)</strong>
+            <button type="button" id="temp-csv-copy" class="text-xs px-2 py-1 border rounded bg-white hover:bg-gray-50">Kopiera</button>
+        </div>
+        <pre id="temp-csv-output" class="bg-gray-50 border rounded p-3 overflow-auto" style="max-height:280px"></pre>
+    </section>
+</main>
+
+<script>
+    (function () {
+        const overlay = document.getElementById('map-overlay');
+        const buttons = document.querySelectorAll('.opacity-switch button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                overlay.style.opacity = btn.dataset.opacity;
+                buttons.forEach(b => b.classList.toggle('active', b === btn));
+            });
+        });
+    })();
+
+    // TEMP-DRAG-CIRCLES: remove when done
+    (async function () {
+        const layer = document.getElementById('temp-drag-layer');
+        const output = document.getElementById('temp-csv-output');
+        const copyBtn = document.getElementById('temp-csv-copy');
+        if (!layer || !output) return;
+        const stack = layer.parentElement;
+
+        const numbers = [];
+        for (let n = 6; n <= 122; n += 2) numbers.push(n);
+
+        const positions = new Map();
+        // Fallback grid in case the CSV can't be loaded (e.g., file:// without a server)
+        const cols = 10, stepX = 8, stepY = 12, startX = 6, startY = 8;
+        numbers.forEach((n, i) => {
+            const r = Math.floor(i / cols), c = i % cols;
+            positions.set(n, { x: startX + c * stepX, y: startY + r * stepY });
+        });
+
+        try {
+            const res = await fetch('maps/ports.csv', { cache: 'no-store' });
+            if (res.ok) {
+                const text = await res.text();
+                text.split(/\r?\n/).forEach((line, idx) => {
+                    if (!line.trim() || idx === 0) return;
+                    const [numStr, xStr, yStr] = line.split(',');
+                    const num = parseInt(numStr, 10);
+                    const x = parseFloat(xStr), y = parseFloat(yStr);
+                    if (Number.isFinite(num) && Number.isFinite(x) && Number.isFinite(y)) {
+                        positions.set(num, { x, y });
+                    }
+                });
+            } else {
+                console.warn('temp-drag-circles: ports.csv fetch failed', res.status);
+            }
+        } catch (err) {
+            console.warn('temp-drag-circles: ports.csv fetch error, using fallback grid', err);
+        }
+
+        numbers.forEach((n) => {
+            const p = positions.get(n);
+            const el = document.createElement('div');
+            el.className = 'temp-drag-circle';
+            el.dataset.num = n;
+            el.textContent = n;
+            el.style.left = p.x + '%';
+            el.style.top = p.y + '%';
+            layer.appendChild(el);
+        });
+
+        function renderCsv() {
+            const lines = ['number,x_pct,y_pct'];
+            numbers.forEach(n => {
+                const p = positions.get(n);
+                lines.push(n + ',' + p.x.toFixed(2) + ',' + p.y.toFixed(2));
+            });
+            output.textContent = lines.join('\n');
+        }
+        renderCsv();
+
+        let dragEl = null, offX = 0, offY = 0;
+        layer.addEventListener('pointerdown', (e) => {
+            const t = e.target.closest('.temp-drag-circle');
+            if (!t) return;
+            dragEl = t;
+            t.setPointerCapture(e.pointerId);
+            t.classList.add('dragging');
+            const r = t.getBoundingClientRect();
+            offX = e.clientX - (r.left + r.width / 2);
+            offY = e.clientY - (r.top + r.height / 2);
+        });
+        layer.addEventListener('pointermove', (e) => {
+            if (!dragEl) return;
+            const sr = stack.getBoundingClientRect();
+            const x = (e.clientX - sr.left - offX) / sr.width * 100;
+            const y = (e.clientY - sr.top - offY) / sr.height * 100;
+            const cx = Math.max(0, Math.min(100, x));
+            const cy = Math.max(0, Math.min(100, y));
+            dragEl.style.left = cx + '%';
+            dragEl.style.top = cy + '%';
+            positions.set(+dragEl.dataset.num, { x: cx, y: cy });
+            renderCsv();
+        });
+        function endDrag(e) {
+            if (!dragEl) return;
+            try { dragEl.releasePointerCapture(e.pointerId); } catch (_) {}
+            dragEl.classList.remove('dragging');
+            dragEl = null;
+        }
+        layer.addEventListener('pointerup', endDrag);
+        layer.addEventListener('pointercancel', endDrag);
+
+        copyBtn?.addEventListener('click', () => {
+            navigator.clipboard.writeText(output.textContent).then(() => {
+                const orig = copyBtn.textContent;
+                copyBtn.textContent = 'Kopierat!';
+                setTimeout(() => { copyBtn.textContent = orig; }, 1200);
+            });
+        });
+    })();
+</script>
+</body>
+</html>
