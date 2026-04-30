@@ -820,14 +820,15 @@
         const cutoff = Math.max(2013, startYear || 0);
         const secFiltered = secondary.series.filter(d => parseInt(d.year, 10) >= cutoff);
 
+        const showLabels = window.innerWidth >= 850;
         const traces = [{
             type: 'scatter',
-            mode: 'lines+markers+text',
+            mode: showLabels ? 'lines+markers+text' : 'lines+markers',
             name: 'Försäljningar (median)',
             x: medians.map(m => `${m.year}-07-01`),
             y: medians.map(m => m.median),
             customdata: medians.map(m => [m.year, m.count]),
-            text: medians.map(m => fmtNum(m.median)),
+            text: showLabels ? medians.map(m => fmtNum(m.median)) : [],
             textposition: 'top center',
             cliponaxis: false,
             hovertemplate:
@@ -1011,15 +1012,16 @@
         const sik = sikvagenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const bb = bjorkbackenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const ty = tyresoMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const showLabels = window.innerWidth >= 850;
 
         const traces = [
             {
                 type: 'scatter',
-                mode: 'lines+markers+text',
+                mode: showLabels ? 'lines+markers+text' : 'lines+markers',
                 name: 'BRF Sjötungan',
                 x: years.map(y => `${y}-07-01`),
                 y: counts,
-                text: counts.map(String),
+                text: showLabels ? counts.map(String) : [],
                 textposition: 'top center',
                 cliponaxis: false,
                 hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>BRF Sjötungan</extra>',
