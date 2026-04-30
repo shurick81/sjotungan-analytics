@@ -70,8 +70,34 @@ CSV_COLUMNS = [
 ]
 
 
-def fetch_page(session: requests.Session, page: int, location_id: int,
+def _build_query_url(page: int, location_id: int,
+                     extra_params: Optional[dict] = None) -> str:
+    """Compose the slutpriser query URL — shared by requests + Playwright fetchers."""
+    from urllib.parse import urlencode
+    items = [
+        ("location_ids[]", str(location_id)),
+        ("item_types[]", ITEM_TYPE),
+        ("by", "sold_at"),
+        ("order", "desc"),
+        ("page", str(page)),
+    ]
+    if extra_params:
+        for k, v in extra_params.items():
+            items.append((k, str(v)))
+    return f"{BASE_URL}?{urlencode(items)}"
+
+
+def fetch_page(session, page: int, location_id: int,
                extra_params: Optional[dict] = None) -> str:
+    """Fetch one slutpriser page. Dispatches on session type:
+    - requests.Session → plain HTTP (fast, but blocked when Hemnet enables
+      Cloudflare's challenge mitigation).
+    - PlaywrightSession (see below) → headless Chromium with stealth tweaks,
+      which earns a cf_clearance cookie and proxies all subsequent fetches
+      through it. ~10× slower per page but works through Cloudflare.
+    """
+    if isinstance(session, PlaywrightSession):
+        return session.fetch(_build_query_url(page, location_id, extra_params))
     params = {
         "location_ids[]": location_id,
         "item_types[]": ITEM_TYPE,
@@ -84,6 +110,40 @@ def fetch_page(session: requests.Session, page: int, location_id: int,
     resp = session.get(BASE_URL, params=params, headers=HEADERS, timeout=30)
     resp.raise_for_status()
     return resp.text
+
+
+class PlaywrightSession:
+    """Headless-Chromium session with stealth, used as a drop-in for
+    requests.Session when Hemnet's Cloudflare challenge is active. The
+    browser/context are reused across all fetches so the cf_clearance
+    cookie persists for the lifetime of one scrape."""
+
+    def __init__(self):
+        from playwright.sync_api import sync_playwright
+        from playwright_stealth import Stealth
+        self._stealth_ctx = Stealth().use_sync(sync_playwright())
+        self._pw = self._stealth_ctx.__enter__()
+        self._browser = self._pw.chromium.launch(headless=True)
+        self._context = self._browser.new_context(
+            locale="sv-SE",
+            timezone_id="Europe/Stockholm",
+            viewport={"width": 1366, "height": 850},
+        )
+        self._page = self._context.new_page()
+
+    def fetch(self, url: str) -> str:
+        resp = self._page.goto(url, wait_until="domcontentloaded", timeout=45000)
+        if resp is None:
+            raise RuntimeError(f"Playwright returned no response for {url}")
+        # __NEXT_DATA__ is a <script> tag (not "visible"); wait for it attached.
+        self._page.wait_for_selector('script#__NEXT_DATA__', state="attached", timeout=30000)
+        return self._page.content()
+
+    def close(self):
+        try:
+            self._browser.close()
+        finally:
+            self._stealth_ctx.__exit__(None, None, None)
 
 
 def extract_next_data(html: str) -> dict:
@@ -255,20 +315,25 @@ ROOM_SHARDS = [
 ]
 
 
-def scrape_all(location_id: int, shard_by_rooms: bool = False) -> list:
-    session = requests.Session()
+def scrape_all(location_id: int, shard_by_rooms: bool = False,
+               use_playwright: bool = False) -> list:
+    session = PlaywrightSession() if use_playwright else requests.Session()
     seen_ids: set = set()
     all_raw_cards: list = []
 
-    if not shard_by_rooms:
-        return scrape_one_shard(session, location_id, None, seen_ids)
+    try:
+        if not shard_by_rooms:
+            return scrape_one_shard(session, location_id, None, seen_ids)
 
-    print("Sharding by room count to expand depth past Hemnet's 2,500-result cap.")
-    for params, label in ROOM_SHARDS:
-        cards = scrape_one_shard(session, location_id, params, seen_ids, label)
-        all_raw_cards.extend(cards)
-        print(f"  Shard {label}: +{len(cards)} new (total unique so far: {len(seen_ids)})\n")
-    return all_raw_cards
+        print("Sharding by room count to expand depth past Hemnet's 2,500-result cap.")
+        for params, label in ROOM_SHARDS:
+            cards = scrape_one_shard(session, location_id, params, seen_ids, label)
+            all_raw_cards.extend(cards)
+            print(f"  Shard {label}: +{len(cards)} new (total unique so far: {len(seen_ids)})\n")
+        return all_raw_cards
+    finally:
+        if isinstance(session, PlaywrightSession):
+            session.close()
 
 
 def parse_args():
@@ -281,8 +346,12 @@ def parse_args():
                    help="Lowest building number to keep (default: 6). Pass alongside --number-max.")
     p.add_argument("--number-max", type=int, default=122,
                    help="Highest building number to keep (default: 122). Pass alongside --number-min.")
+    p.add_argument("--number-set", default=None,
+                   help="Comma-separated explicit allow-list of building numbers, e.g. '29,31,33,38,40'. "
+                        "Use for BRFs whose addresses don't form a contiguous range. Overrides "
+                        "--number-min/--number-max when provided.")
     p.add_argument("--no-filter", action="store_true",
-                   help="Disable number-range filtering — keep every listing on the street.")
+                   help="Disable number filtering — keep every listing on the street.")
     p.add_argument("--output-csv", default="data/apartment_prices/sjotungan_sales.csv",
                    help="Path to the filtered CSV output (default: data/apartment_prices/sjotungan_sales.csv)")
     p.add_argument("--output-raw", default="data/apartment_prices/sjotungan_sales_raw.json",
@@ -297,6 +366,19 @@ def parse_args():
                    help="Run six separate queries (rooms 1, 2, 3, 4, 5, 6+) and union/dedup. "
                         "Useful for broad locations where a single query would hit Hemnet's "
                         "2,500-result cap. Multiplies request count ~6x.")
+    p.add_argument("--use-playwright", action="store_true",
+                   help="Fetch via headless Chromium (Playwright + stealth) instead of requests. "
+                        "Required when Hemnet has Cloudflare's challenge mitigation enabled — "
+                        "plain HTTP returns 403 in that mode. ~10× slower per page; reuses one "
+                        "browser context so cf_clearance is solved once and reused.")
+    p.add_argument("--source", action="append", default=None,
+                   help="Multi-source spec 'LOCATION_ID:STREET_NAME:NUMBER_SET' (repeatable). "
+                        "Use for BRFs that span multiple streets — e.g. BRF Björkbacken which "
+                        "covers part of Björkbacksvägen and part of Bollmoravägen. Each source "
+                        "is fetched separately with its own location_id, parsed with its own "
+                        "street-name regex, and filtered to its own number set; the unioned "
+                        "rows are then aggregated. Implies --aggregate-only and ignores the "
+                        "single-source --location-id / --street-name / --number-* args.")
     return p.parse_args()
 
 
@@ -322,8 +404,77 @@ def aggregate_annual_medians(rows: list) -> list:
     return out
 
 
+def parse_source_spec(spec: str) -> tuple:
+    """Parse 'LOCATION_ID:STREET_NAME:NUMBER_SET' into (loc_id, street, allowed-set)."""
+    parts = spec.split(":", 2)
+    if len(parts) != 3:
+        raise SystemExit(f"--source must be 'LOCATION_ID:STREET_NAME:NUMBER_SET'; got {spec!r}")
+    loc_str, street, numset = parts
+    try:
+        loc_id = int(loc_str)
+    except ValueError:
+        raise SystemExit(f"--source location_id must be an integer; got {loc_str!r}")
+    try:
+        allowed = {int(x) for x in numset.split(",") if x.strip()}
+    except ValueError as e:
+        raise SystemExit(f"--source number_set must be comma-separated integers: {e}")
+    if not allowed:
+        raise SystemExit(f"--source number_set is empty in {spec!r}")
+    return loc_id, street, allowed
+
+
+def run_multi_source(args) -> None:
+    """Fetch each --source separately, filter each by its own number set, union
+    the rows, and write the aggregated annual-medians CSV."""
+    if args.from_cache:
+        raise SystemExit("--source is incompatible with --from-cache (no per-source raw cache).")
+    if not args.aggregate_only:
+        raise SystemExit("--source currently requires --aggregate-only.")
+    if not args.output_aggregated:
+        raise SystemExit("--source requires --output-aggregated.")
+
+    sources = [parse_source_spec(s) for s in args.source]
+    print(f"Multi-source mode: {len(sources)} sources")
+
+    session = PlaywrightSession() if args.use_playwright else requests.Session()
+    combined: list = []
+    try:
+        for loc_id, street, allowed in sources:
+            print(f"\n=== Source: {street} (location_id={loc_id}, "
+                  f"{len(allowed)} numbers in scope) ===")
+            extractor = make_street_number_extractor(street)
+            seen_ids: set = set()
+            raw: list = []
+            if args.shard_by_rooms:
+                for params, label in ROOM_SHARDS:
+                    raw.extend(scrape_one_shard(session, loc_id, params, seen_ids, label))
+            else:
+                raw.extend(scrape_one_shard(session, loc_id, None, seen_ids))
+            rows = [card_to_row(c, extractor) for c in raw]
+            in_scope = [r for r in rows
+                        if r["street_number"] is not None and r["street_number"] in allowed]
+            print(f"  {street}: {len(raw)} raw cards → {len(in_scope)} in-scope listings")
+            combined.extend(in_scope)
+    finally:
+        if isinstance(session, PlaywrightSession):
+            session.close()
+
+    print(f"\nTotal in-scope listings across sources: {len(combined)}")
+    annual = aggregate_annual_medians(combined)
+    with open(args.output_aggregated, "w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=AGGREGATED_COLUMNS)
+        writer.writeheader()
+        writer.writerows(annual)
+    print(f"Aggregated CSV written to {args.output_aggregated} ({len(annual)} years)")
+
+
 def main():
     args = parse_args()
+
+    if args.source:
+        run_multi_source(args)
+        return
+
     extract_street_number = make_street_number_extractor(args.street_name)
 
     if args.from_cache:
@@ -334,7 +485,8 @@ def main():
             raw_cards = json.load(f)
     else:
         print(f"Scraping Hemnet slutpriser for {args.street_name} (location_id={args.location_id})…")
-        raw_cards = scrape_all(args.location_id, shard_by_rooms=args.shard_by_rooms)
+        raw_cards = scrape_all(args.location_id, shard_by_rooms=args.shard_by_rooms,
+                               use_playwright=args.use_playwright)
 
     print(f"\nTotal raw SaleCards collected: {len(raw_cards)}")
 
@@ -343,6 +495,16 @@ def main():
     if args.no_filter:
         filtered = [r for r in all_rows if r["street_number"] is not None]
         scope_label = f"all parseable {args.street_name} N"
+    elif args.number_set:
+        try:
+            allowed = {int(x) for x in args.number_set.split(",") if x.strip()}
+        except ValueError as e:
+            raise SystemExit(f"--number-set must be comma-separated integers: {e}")
+        filtered = [
+            r for r in all_rows
+            if r["street_number"] is not None and r["street_number"] in allowed
+        ]
+        scope_label = f"set of {len(allowed)} numbers"
     else:
         filtered = [
             r for r in all_rows

@@ -282,9 +282,62 @@
             <div id="scatter-container"></div>
 
             <p class="text-xs text-gray-500 mt-3 text-center">
-                Källa: <code>data/apartment_prices/sjotungan_sales.csv</code> – hämtat från Hemnet.
                 Storlek på punkten = boyta. Färg = antal rum.
             </p>
+
+            <details class="data-details">
+                <summary>Om datan: BRF Sjötungan (filtrerad ur Myggdalsvägen)</summary>
+                <div class="data-details-body">
+                    <p>
+                        Punkterna i grafen kommer från Hemnets <em>slutpriser</em> –
+                        alltså bekräftade försäljningar, inte utgångspriser eller pågående
+                        budgivningar. Hämtningen och filtreringen är gjord så här:
+                    </p>
+                    <ul>
+                        <li>
+                            <b>Källa:</b> Hemnets sökresultat för Myggdalsvägen, Tyresö
+                            (<code>location_ids[]=485045</code>), bostadstyp
+                            <em>bostadsrätt</em>, sorterat på säljdatum.
+                        </li>
+                        <li>
+                            <b>Adressfilter (BRF Sjötungan):</b> bara
+                            <code>Myggdalsvägen 6–122</code> (jämna nummer). Det utesluter
+                            <code>nr 4</code>, som tillhör en annan förening, och eventuella
+                            okynnesträffar från andra gator som råkar matcha samma plats-id.
+                        </li>
+                        <li>
+                            <b>Avduplicering:</b> varje annons har ett stabilt
+                            <code>listingId</code> i Hemnets data; samma annons räknas en gång.
+                        </li>
+                        <li>
+                            <b>Datumtäckning:</b> Hemnets publika slutprisarkiv börjar
+                            <code>2013-05-27</code> för den här gatan. Tidigare överlåtelser
+                            finns men är inte publikt tillgängliga via Hemnet.
+                        </li>
+                        <li>
+                            <b>kr/m²:</b> beräknas på sidan som
+                            <code>slutpris ÷ boyta</code> – den lagrade kolumnen i CSV:en
+                            används inte.
+                        </li>
+                        <li>
+                            <b>Avgift:</b> <code>monthly_fee_kr</code> är avgiften
+                            <em>vid säljtillfället</em>, inte dagens avgift.
+                        </li>
+                        <li>
+                            <b>Nuvarande omfattning:</b> ~351 råa kort hämtas, efter
+                            avduplicering och adressfilter blir det 334 rader.
+                            CSV: <code>data/apartment_prices/sjotungan_sales.csv</code>.
+                        </li>
+                    </ul>
+                    <p style="margin-top: 8px;">
+                        Fullständig metoddokumentation (inklusive fältmappning och kända
+                        kantfall) finns i
+                        <a href="extraction/methods/hemnet_sales.md" target="_blank" rel="noopener">
+                            extraction/methods/hemnet_sales.md
+                        </a>.
+                    </p>
+                </div>
+            </details>
 
             <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Årsmedian kr/m² vs. föreningens lån</h2>
             <p class="text-gray-600 mb-3">Median av kr/m² per försäljningsår överlagrad på föreningens totala lån per m².</p>
@@ -296,11 +349,107 @@
 
             <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Median kr/m² – jämförelse med närliggande områden</h2>
             <p class="text-gray-600 mb-3">
-                Årsmedian kr/m² för BRF Sjötungan jämfört med Sikvägen, Björkbacksvägen och Tyresö kommun,
-                samt Stockholms län och Sverige som helhet (Mäklarstatistik) som makro-referens.
-                Alla serier är i samma enhet (kr/m²).
+                Årsmedian kr/m² för BRF Sjötungan jämfört med HSB BRF Björkbacken,
+                BRF Gäddan, HSB BRF Siken och Tyresö kommun. Stockholms län och Sverige som helhet
+                (Mäklarstatistik) kan slås på som makro-referens. Alla serier är i samma enhet (kr/m²).
             </p>
+            <div style="margin: 0 0 8px 2px; font-size: 13px; color: var(--vm-text);">
+                <label style="cursor: pointer;">
+                    <input type="checkbox" id="show-macro" style="margin-right: 6px; accent-color: var(--vm-blue);">
+                    Visa Stockholms län &amp; Sverige (Mäklarstatistik)
+                </label>
+            </div>
             <div id="median-compare-container"></div>
+
+            <details class="data-details">
+                <summary>Om datan: BRF Gäddan &amp; HSB BRF Siken (filtrerade ur Sikvägen)</summary>
+                <div class="data-details-body">
+                    <p>
+                        BRF Gäddan och HSB BRF Siken ligger båda på Sikvägen i Tyresö men
+                        täcker olika husnummer. För att få förenings-specifika försäljningar
+                        hämtas Hemnets slutpriser för hela gatan och filtreras sedan med
+                        varsitt explicit nummerfilter (allow-list) härlett från respektive
+                        förenings egen adresslista.
+                    </p>
+                    <ul>
+                        <li>
+                            <b>Källa:</b> Hemnets slutpriser för Sikvägen, Tyresö
+                            (<code>location_ids[]=485023</code>), bostadstyp
+                            <em>bostadsrätt</em>.
+                        </li>
+                        <li>
+                            <b>BRF Gäddan:</b> <code>Sikvägen 29–55 udda</code> (utom 57),
+                            <code>Sikvägen 38–48 jämna</code> samt <code>Sikvägen 59</code>
+                            – 21 husnummer.
+                            CSV: <code>data/apartment_prices/gaddan_annual_medians.csv</code>.
+                        </li>
+                        <li>
+                            <b>HSB BRF Siken:</b> bara udda numren
+                            <code>Sikvägen 1–27</code> – 14 husnummer, 208 lägenheter
+                            byggda 1961–1963.
+                            CSV: <code>data/apartment_prices/siken_annual_medians.csv</code>.
+                        </li>
+                        <li>
+                            <b>Disjunkta:</b> de två allow-listorna överlappar inte, så
+                            serierna kan jämföras utan dubbelräkning. Övriga numren på
+                            Sikvägen (jämna 2–30, t.ex. BRF Laken) ingår i
+                            <em>varken</em> Gäddan- eller Siken-serien.
+                        </li>
+                        <li>
+                            <b>Aggregering:</b> per år beräknas median, snitt, min och max
+                            kr/m².
+                        </li>
+                    </ul>
+                    <p style="margin-top: 8px;">
+                        Fullständig metoddokumentation – inklusive numrens härledning från
+                        respektive förenings adresslista – finns i
+                        <a href="extraction/methods/hemnet_sales.md" target="_blank" rel="noopener">
+                            extraction/methods/hemnet_sales.md
+                        </a> (sektionerna "BRF Gäddan filter" och "HSB BRF Siken filter").
+                    </p>
+                </div>
+            </details>
+
+            <details class="data-details">
+                <summary>Om datan: HSB BRF Björkbacken (två gator)</summary>
+                <div class="data-details-body">
+                    <p>
+                        HSB BRF Björkbacken sträcker sig över <em>två</em> gator i Tyresö
+                        (postnummer 135 40). För att fånga föreningens egna försäljningar
+                        körs två separata Hemnet-frågor – en per gata – och resultaten
+                        sammanfogas innan medianberäkningen.
+                    </p>
+                    <ul>
+                        <li>
+                            <b>Källa 1 (Björkbacksvägen):</b> Hemnets slutpriser för
+                            Björkbacksvägen, Tyresö (<code>location_ids[]=484982</code>),
+                            bostadstyp <em>bostadsrätt</em>, filtrerat till udda nummer
+                            <code>9–83</code>. Dessa är små byggår-1964-hus på den udda
+                            sidan; föreningssätet ligger på #83.
+                        </li>
+                        <li>
+                            <b>Källa 2 (Bollmoravägen):</b> Hemnets slutpriser för
+                            Bollmoravägen, Tyresö (<code>location_ids[]=484985</code>),
+                            filtrerat till jämna nummer <code>36–58</code>. Andra BRF:er
+                            ligger på samma gata (Gösen, Solhöjden, Pluto m.fl.) så
+                            filtret är strikt på det här intervallet.
+                        </li>
+                        <li>
+                            <b>Sammanfogning:</b> de två gatornas <code>location_ids</code>
+                            är disjunkta, så ingen annons räknas dubbelt. Resultaten unioneras
+                            innan årsmedian, snitt, min och max kr/m² beräknas.
+                            CSV: <code>data/apartment_prices/bjorkbacken_annual_medians.csv</code>.
+                        </li>
+                    </ul>
+                    <p style="margin-top: 8px;">
+                        Fullständig metoddokumentation – inklusive härledningen av
+                        nummerintervallen från föreningens adresslista – finns i
+                        <a href="extraction/methods/hemnet_sales.md" target="_blank" rel="noopener">
+                            extraction/methods/hemnet_sales.md
+                        </a> (sektionen "HSB BRF Björkbacken filter").
+                    </p>
+                </div>
+            </details>
 
             <details class="data-details">
                 <summary>Om datan: Stockholms län &amp; Sverige (Mäklarstatistik)</summary>
@@ -353,63 +502,12 @@
 
             <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Antal försäljningar per år</h2>
             <p class="text-gray-600 mb-3">
-                Antal sålda lägenheter per år för BRF Sjötungan jämfört med Sikvägen och Björkbacksvägen.
-                Tyresö kommun (höger axel) visas som referens – volymen är ca tio gånger större.
+                Antal sålda lägenheter per år för BRF Sjötungan jämfört med HSB BRF Björkbacken,
+                BRF Gäddan och HSB BRF Siken. Tyresö kommun (höger axel) visas som referens –
+                volymen är ca tio gånger större.
             </p>
             <div id="count-container"></div>
 
-            <details class="data-details">
-                <summary>Om datan: hur affärerna är hämtade och filtrerade</summary>
-                <div class="data-details-body">
-                    <p>
-                        Punkterna i grafen kommer från Hemnets <em>slutpriser</em> –
-                        alltså bekräftade försäljningar, inte utgångspriser eller pågående
-                        budgivningar. Hämtningen och filtreringen är gjord så här:
-                    </p>
-                    <ul>
-                        <li>
-                            <b>Källa:</b> Hemnets sökresultat för Myggdalsvägen, Tyresö
-                            (<code>location_ids[]=485045</code>), bostadstyp
-                            <em>bostadsrätt</em>, sorterat på säljdatum.
-                        </li>
-                        <li>
-                            <b>Adressfilter (BRF Sjötungan):</b> bara
-                            <code>Myggdalsvägen 6–122</code> (jämna nummer). Det utesluter
-                            <code>nr 4</code>, som tillhör en annan förening, och eventuella
-                            okynnesträffar från andra gator som råkar matcha samma plats-id.
-                        </li>
-                        <li>
-                            <b>Avduplicering:</b> varje annons har ett stabilt
-                            <code>listingId</code> i Hemnets data; samma annons räknas en gång.
-                        </li>
-                        <li>
-                            <b>Datumtäckning:</b> Hemnets publika slutprisarkiv börjar
-                            <code>2013-05-27</code> för den här gatan. Tidigare överlåtelser
-                            finns men är inte publikt tillgängliga via Hemnet.
-                        </li>
-                        <li>
-                            <b>kr/m²:</b> beräknas på sidan som
-                            <code>slutpris ÷ boyta</code> – den lagrade kolumnen i CSV:en
-                            används inte.
-                        </li>
-                        <li>
-                            <b>Avgift:</b> <code>monthly_fee_kr</code> är avgiften
-                            <em>vid säljtillfället</em>, inte dagens avgift.
-                        </li>
-                        <li>
-                            <b>Nuvarande omfattning:</b> ~351 råa kort hämtas, efter
-                            avduplicering och adressfilter blir det 334 rader.
-                        </li>
-                    </ul>
-                    <p style="margin-top: 8px;">
-                        Fullständig metoddokumentation (inklusive fältmappning och kända
-                        kantfall) finns i
-                        <a href="extraction/methods/hemnet_sales.md" target="_blank" rel="noopener">
-                            extraction/methods/hemnet_sales.md
-                        </a>.
-                    </p>
-                </div>
-            </details>
         </div>
     </section>
 </main>
@@ -547,8 +645,9 @@
     let highlightDeal = null; // deal currently pinpointed by URL lookup
     let debtPerM2 = []; // [{year:'2013', kr_per_m2: 2622}, ...]
     let feePerM2 = [];  // årsavgift per m² per year
-    let sikvagenMedians = [];      // [{year, n, median}, ...]
-    let bjorkbackenMedians = [];   // [{year, n, median}, ...]
+    let bjorkbackenMedians = [];   // [{year, n, median}, ...] – HSB BRF Björkbacken
+    let gaddanMedians = [];        // [{year, n, median}, ...] – BRF Gäddan
+    let sikenMedians = [];         // [{year, n, median}, ...] – HSB BRF Siken
     let tyresoMedians = [];        // [{year, n, median}, ...] – Tyresö kommun
     let stockholmsLanAnnual = [];  // [{year, median (kr/m²)}, ...] – Mäklarstatistik
     let sverigeAnnual = [];        // [{year, median (kr/m²)}, ...] – Mäklarstatistik
@@ -894,9 +993,9 @@
         });
     }
 
-    /* ── Render comparison median chart (3 areas) ────── */
+    /* ── Render comparison median chart ──────────────── */
     // Sjötungan honors the rooms + start-year filter (its data comes from
-    // `deals`). Sikvägen and Björkbacksvägen lack a rooms breakdown, so they
+    // `deals`). The other reference series lack a rooms breakdown, so they
     // only respect the start-year cutoff.
     function renderMedianComparison(deals) {
         const slider = document.getElementById('start-slider');
@@ -904,8 +1003,9 @@
         const cutoff = Math.max(2013, startYear || 0);
 
         const sj = yearlyMedians(deals);
-        const sik = sikvagenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const bb = bjorkbackenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const gad = gaddanMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const sikb = sikenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const ty = tyresoMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const sthlm = stockholmsLanAnnual.filter(d => parseInt(d.year, 10) >= cutoff);
         const se = sverigeAnnual.filter(d => parseInt(d.year, 10) >= cutoff);
@@ -923,23 +1023,33 @@
             },
             {
                 type: 'scatter', mode: 'lines+markers',
-                name: 'Sikvägen',
-                x: sik.map(d => `${d.year}-07-01`),
-                y: sik.map(d => d.median),
-                customdata: sik.map(d => [d.year, d.n]),
-                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>Sikvägen</extra>',
-                line: { color: '#1f3f95', width: 2.5 },
-                marker: { size: 8, color: '#1f3f95', symbol: 'square', line: { width: 1, color: 'white' } },
-            },
-            {
-                type: 'scatter', mode: 'lines+markers',
-                name: 'Björkbacksvägen',
+                name: 'HSB BRF Björkbacken',
                 x: bb.map(d => `${d.year}-07-01`),
                 y: bb.map(d => d.median),
                 customdata: bb.map(d => [d.year, d.n]),
-                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>Björkbacksvägen</extra>',
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>HSB BRF Björkbacken</extra>',
                 line: { color: '#10b981', width: 2.5 },
                 marker: { size: 8, color: '#10b981', symbol: 'triangle-up', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'BRF Gäddan',
+                x: gad.map(d => `${d.year}-07-01`),
+                y: gad.map(d => d.median),
+                customdata: gad.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>BRF Gäddan</extra>',
+                line: { color: '#db2777', width: 2.5 },
+                marker: { size: 8, color: '#db2777', symbol: 'star', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'HSB BRF Siken',
+                x: sikb.map(d => `${d.year}-07-01`),
+                y: sikb.map(d => d.median),
+                customdata: sikb.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>HSB BRF Siken</extra>',
+                line: { color: '#0891b2', width: 2.5 },
+                marker: { size: 8, color: '#0891b2', symbol: 'hexagram', line: { width: 1, color: 'white' } },
             },
             {
                 type: 'scatter', mode: 'lines+markers',
@@ -951,7 +1061,11 @@
                 line: { color: '#ea580c', width: 2.5 },
                 marker: { size: 8, color: '#ea580c', symbol: 'triangle-down', line: { width: 1, color: 'white' } },
             },
-            {
+        ];
+
+        const showMacro = document.getElementById('show-macro').checked;
+        if (showMacro) {
+            traces.push({
                 type: 'scatter', mode: 'lines+markers',
                 name: 'Stockholms län',
                 x: sthlm.map(d => `${d.year}-07-01`),
@@ -960,8 +1074,8 @@
                 hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<extra>Stockholms län</extra>',
                 line: { color: '#9333ea', width: 2, dash: 'dash' },
                 marker: { size: 7, color: '#9333ea', symbol: 'circle', line: { width: 1, color: 'white' } },
-            },
-            {
+            });
+            traces.push({
                 type: 'scatter', mode: 'lines+markers',
                 name: 'Sverige',
                 x: se.map(d => `${d.year}-07-01`),
@@ -970,8 +1084,8 @@
                 hovertemplate: '<b>%{customdata[0]}</b><br>Median: %{y:,.0f} kr/m²<extra>Sverige</extra>',
                 line: { color: '#6b7280', width: 2, dash: 'dot' },
                 marker: { size: 7, color: '#6b7280', symbol: 'cross', line: { width: 1, color: 'white' } },
-            },
-        ];
+            });
+        }
 
         const layout = {
             margin: { l: 70, r: 20, t: 30, b: 60 },
@@ -1009,8 +1123,9 @@
         const years = [...buckets.keys()].sort();
         const counts = years.map(y => buckets.get(y));
 
-        const sik = sikvagenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const bb = bjorkbackenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const gad = gaddanMedians.filter(d => parseInt(d.year, 10) >= cutoff);
+        const sikb = sikenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const ty = tyresoMedians.filter(d => parseInt(d.year, 10) >= cutoff);
         const showLabels = window.innerWidth >= 850;
 
@@ -1031,22 +1146,32 @@
             {
                 type: 'scatter',
                 mode: 'lines+markers',
-                name: 'Sikvägen',
-                x: sik.map(d => `${d.year}-07-01`),
-                y: sik.map(d => d.n),
-                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>Sikvägen</extra>',
-                line: { color: '#1f3f95', width: 2.5 },
-                marker: { size: 8, color: '#1f3f95', symbol: 'square', line: { width: 1, color: 'white' } },
+                name: 'HSB BRF Björkbacken',
+                x: bb.map(d => `${d.year}-07-01`),
+                y: bb.map(d => d.n),
+                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>HSB BRF Björkbacken</extra>',
+                line: { color: '#10b981', width: 2.5 },
+                marker: { size: 8, color: '#10b981', symbol: 'triangle-up', line: { width: 1, color: 'white' } },
             },
             {
                 type: 'scatter',
                 mode: 'lines+markers',
-                name: 'Björkbacksvägen',
-                x: bb.map(d => `${d.year}-07-01`),
-                y: bb.map(d => d.n),
-                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>Björkbacksvägen</extra>',
-                line: { color: '#10b981', width: 2.5 },
-                marker: { size: 8, color: '#10b981', symbol: 'triangle-up', line: { width: 1, color: 'white' } },
+                name: 'BRF Gäddan',
+                x: gad.map(d => `${d.year}-07-01`),
+                y: gad.map(d => d.n),
+                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>BRF Gäddan</extra>',
+                line: { color: '#db2777', width: 2.5 },
+                marker: { size: 8, color: '#db2777', symbol: 'star', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'HSB BRF Siken',
+                x: sikb.map(d => `${d.year}-07-01`),
+                y: sikb.map(d => d.n),
+                hovertemplate: '<b>%{x|%Y}</b><br>Antal: %{y}<extra>HSB BRF Siken</extra>',
+                line: { color: '#0891b2', width: 2.5 },
+                marker: { size: 8, color: '#0891b2', symbol: 'hexagram', line: { width: 1, color: 'white' } },
             },
             {
                 type: 'scatter',
@@ -1064,7 +1189,7 @@
             margin: { l: 60, r: 70, t: 30, b: 50 },
             xaxis: { title: 'År', type: 'date', gridcolor: '#e5e7eb' },
             yaxis: {
-                title: 'Antal (Sjötungan, Sikvägen, Björkbacksvägen)',
+                title: 'Antal (Sjötungan, Björkbacken, Gäddan, Siken)',
                 gridcolor: '#e5e7eb',
                 rangemode: 'tozero',
                 tickformat: 'd',
@@ -1170,12 +1295,13 @@
     /* ── Init ────────────────────────────────────────── */
     (async function init() {
         try {
-            const [rows, debt, fee, sik, bb, ty, sthlm, se] = await Promise.all([
+            const [rows, debt, fee, bb, gad, sik_brf, ty, sthlm, se] = await Promise.all([
                 loadCSV('data/apartment_prices/sjotungan_sales.csv'),
                 loadDebtPerM2().catch(() => []),
                 loadFeePerM2().catch(() => []),
-                loadAreaMedians('data/apartment_prices/sikvagen_annual_medians.csv').catch(() => []),
-                loadAreaMedians('data/apartment_prices/bjorkbacksvagen_annual_medians.csv').catch(() => []),
+                loadAreaMedians('data/apartment_prices/bjorkbacken_annual_medians.csv').catch(() => []),
+                loadAreaMedians('data/apartment_prices/gaddan_annual_medians.csv').catch(() => []),
+                loadAreaMedians('data/apartment_prices/siken_annual_medians.csv').catch(() => []),
                 loadAreaMedians('data/apartment_prices/tyreso_kommun_annual_medians.csv').catch(() => []),
                 loadMaklarAnnual('data/apartment_prices/maklarstatistik_stockholms_lan_brf_annual.csv').catch(() => []),
                 loadMaklarAnnual('data/apartment_prices/maklarstatistik_sverige_brf_annual.csv').catch(() => []),
@@ -1183,8 +1309,9 @@
             allDeals = buildDeals(rows);
             debtPerM2 = debt;
             feePerM2 = fee;
-            sikvagenMedians = sik;
             bjorkbackenMedians = bb;
+            gaddanMedians = gad;
+            sikenMedians = sik_brf;
             tyresoMedians = ty;
             stockholmsLanAnnual = sthlm;
             sverigeAnnual = se;
@@ -1214,6 +1341,7 @@
 
             sel.addEventListener('change', applyAndRender);
             document.getElementById('trendline').addEventListener('change', applyAndRender);
+            document.getElementById('show-macro').addEventListener('change', applyAndRender);
             slider.addEventListener('input', applyAndRender);
 
             const urlInput = document.getElementById('url-input');

@@ -262,6 +262,36 @@ Tyresö kommun → `data/apartment_prices/tyreso_kommun_annual_medians.csv` (use
     --aggregate-only --output-aggregated data/apartment_prices/tyreso_kommun_annual_medians.csv
 ```
 
+BRF Gäddan i Tyresö → `data/apartment_prices/gaddan_annual_medians.csv`. Same Sikvägen query as the Sikvägen aggregate above, but with `--number-set` to restrict to the föreningens own addresses (see `methods/hemnet_sales.md#brf-gäddan-filter` for the allow-list rationale). Add `--use-playwright` while Hemnet's Cloudflare challenge is active (see `methods/hemnet_sales.md#cloudflare-and---use-playwright`):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
+    --location-id 485023 --street-name Sikvägen \
+    --number-set "29,31,33,35,37,38,39,40,41,42,43,44,45,46,47,48,49,51,53,55,59" \
+    --aggregate-only --output-aggregated data/apartment_prices/gaddan_annual_medians.csv \
+    --use-playwright
+```
+
+HSB BRF Siken i Tyresö → `data/apartment_prices/siken_annual_medians.csv`. Same Sikvägen query, restricted to the odd side 1–27 (see `methods/hemnet_sales.md#hsb-brf-siken-filter`):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
+    --location-id 485023 --street-name Sikvägen \
+    --number-set "1,3,5,7,9,11,13,15,17,19,21,23,25,27" \
+    --aggregate-only --output-aggregated data/apartment_prices/siken_annual_medians.csv \
+    --use-playwright
+```
+
+HSB BRF Björkbacken i Tyresö → `data/apartment_prices/bjorkbacken_annual_medians.csv`. Spans two streets (Björkbacksvägen odd 9–83 and Bollmoravägen 36–58), fetched in multi-source mode with one `--source` per street; rows are unioned before aggregation (see `methods/hemnet_sales.md#hsb-brf-björkbacken-filter`):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
+    --aggregate-only --output-aggregated data/apartment_prices/bjorkbacken_annual_medians.csv \
+    --use-playwright \
+    --source "484982:Björkbacksvägen:9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73,75,77,79,81,83" \
+    --source "484985:Bollmoravägen:36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58"
+```
+
 ## National BRF price reference (SCB)
 
 Annual sold-tenant-owned-flats (BRF) prices for Sweden from the official SCB PxWeb API. Total median/average price in SEK thousands, 2000–2024. See `methods/sweden_brf_prices.md` — note that this is a **total price** series, not kr/m², so it is not directly unit-comparable to the per-m² Hemnet medians; normalize to an index before plotting alongside.

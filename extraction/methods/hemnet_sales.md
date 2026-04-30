@@ -102,11 +102,91 @@ Reference streets currently maintained in this mode:
 | Sikvägen, Tyresö       | 485023      | `data/apartment_prices/sikvagen_annual_medians.csv`           |
 | Björkbacksvägen, Tyresö | 484982     | `data/apartment_prices/bjorkbacksvagen_annual_medians.csv`    |
 | Tyresö kommun          | 17792       | `data/apartment_prices/tyreso_kommun_annual_medians.csv`      |
+| BRF Gäddan i Tyresö    | 485023      | `data/apartment_prices/gaddan_annual_medians.csv`             |
+| HSB BRF Siken i Tyresö | 485023      | `data/apartment_prices/siken_annual_medians.csv`              |
+| HSB BRF Björkbacken i Tyresö | 484982 + 484985 | `data/apartment_prices/bjorkbacken_annual_medians.csv` |
 
 Street-level files are not BRF-filtered (they cover every `<street> N`
 sale Hemnet exposes and span multiple BRFs — used as neighborhood
 market references). The kommun-level file is the broader Tyresö
-market reference.
+market reference. The BRF Gäddan and BRF Siken files both use the
+Sikvägen street query (same `location_id` as the Sikvägen aggregate)
+but apply disjoint building-number allow-lists to isolate each
+föreningens own addresses (see the per-BRF filter sections below).
+BRF Björkbacken spans **two** streets and is fetched via the
+`--source` multi-source mode (one query per street, results unioned
+before aggregation).
+
+## BRF Gäddan filter
+
+BRF Gäddan i Tyresö occupies a non-contiguous subset of Sikvägen
+(postnummer 135 41 Tyresö). The remaining numbers on Sikvägen belong
+to BRF Siken or other föreningar and must be excluded. The script's
+`--number-set` flag takes a comma-separated explicit allow-list; for
+Gäddan the rule is:
+
+> Address is on Sikvägen AND number is in
+> `{29, 31, 33, 35, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 55, 59}`.
+
+Source ranges this set encodes (from the föreningens own address list):
+
+- Sikvägen 29–33, 35–39, 41–45, 47–55 odd (excludes 57)
+- Sikvägen 59
+- Sikvägen 38–42, 44–48 even
+
+Excluded as not part of BRF Gäddan: Sikvägen 1–27, Sikvägen 30–36
+even, and any address not on Sikvägen. The street-name regex already
+discards non-Sikvägen results that may match the location ID.
+
+## HSB BRF Siken filter
+
+HSB BRF Siken i Tyresö covers the odd side of Sikvägen at the lower
+end of the street (postnummer 135 41 Tyresö), 208 apartments built
+1961–1963. The allow-list is:
+
+> Address is on Sikvägen AND number is in
+> `{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27}`.
+
+Excluded as not part of BRF Siken: every even number on Sikvägen
+(2–30 belongs to BRF Laken), Sikvägen 29 and higher on either side
+(BRF Gäddan), and any address not on Sikvägen. The Siken and Gäddan
+allow-lists are disjoint by construction so the two output files can
+safely be summed or compared without double-counting.
+
+## HSB BRF Björkbacken filter
+
+HSB BRF Björkbacken i Tyresö (postnummer 135 40 Tyresö) spans two
+streets and is fetched via the `--source` multi-source mode — one
+query per street, each with its own `location_id` and number set, and
+results unioned before computing annual medians. Sources:
+
+| Street            | location_id | Allow-list                                                    |
+|-------------------|------------:|---------------------------------------------------------------|
+| Björkbacksvägen   | 484982      | All odd numbers from 9 through 83 (i.e. 9, 11, 13, …, 81, 83) |
+| Bollmoravägen     | 484985      | 36–58 inclusive                                               |
+
+Why these ranges:
+
+- **Björkbacksvägen 9–83 odd.** Individual lookups confirm at least
+  9, 11, 17, 23, 25, 31, 33, 37, 49, 69, 75, 77, 83 as Björkbacken
+  addresses (small 6-apt buildings, byggår 1964, all on the odd
+  side). The registered föreningssäte is at #83. The pattern (small
+  byggår-1964 buildings on the odd side, all in this number range)
+  indicates the BRF covers the full odd run from 9 through 83.
+  Björkbacksvägen 2 and 4 are explicitly excluded — they are a
+  kommun-run stödboende, not part of the BRF — and so are all even
+  numbers on the street.
+- **Bollmoravägen 36–58.** Three energy declarations cover the
+  buildings at 36–40, 42–46, and 54–58, and the styrelselokal is at
+  #52. Bollmoravägen has many other BRFs (Gösen at 2/4/10/12,
+  Solhöjden, Pluto at 154, plus 90 and 102 in unrelated listings),
+  so the filter is strict: only 36–58 inclusive on Bollmoravägen
+  belongs to Björkbacken.
+
+The Björkbacksvägen and Bollmoravägen sources have disjoint
+`location_id`s, so listings cannot be double-counted across sources.
+Within each source the per-street number filter excludes neighbouring
+BRFs sharing the same street.
 
 ### Hemnet's 2,500-result cap
 
@@ -178,3 +258,30 @@ No script for Booli is committed yet. When added, it should write to
 The script is idempotent — re-running fetches Hemnet again and
 overwrites both files. Use `--from-cache` to skip the network and
 re-derive the CSV from `data/apartment_prices/sjotungan_sales_raw.json`.
+
+## Cloudflare and `--use-playwright`
+
+As of April 2026 Hemnet runs Cloudflare's challenge mitigation
+("Vänta..." / "Just a moment...") on every request that doesn't carry
+a valid `cf_clearance` cookie. Plain `requests` returns HTTP 403 on
+all paths — including `robots.txt` — regardless of headers, IP, or
+ASN. The block is path-, header-, and IP-agnostic; the only signal
+Cloudflare accepts is completing the JS challenge.
+
+Pass `--use-playwright` to fetch via headless Chromium with stealth
+tweaks. This earns a `cf_clearance` cookie on the first request and
+reuses it across all subsequent pages in the same browser context, so
+the JS challenge is paid once per scrape, not once per page. Costs:
+~10× slower per page (Chromium overhead), and one-time install of
+`playwright` + `playwright-stealth` + the Chromium binary (~150 MB).
+
+Setup:
+
+```bash
+.venv/bin/pip install playwright playwright-stealth
+.venv/bin/python -m playwright install chromium
+```
+
+If Hemnet later eases the policy back to header-only checks, the
+plain-HTTP path will work again and `--use-playwright` becomes
+optional.
