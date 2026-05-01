@@ -179,8 +179,11 @@
             '#db2777', // 8: pink
         ];
         const fallbackColor = '#6b7280';
-        const colorForMain = (n) =>
-            Number.isFinite(n) && n >= 1 && palette[n - 1] ? palette[n - 1] : fallbackColor;
+        const isNumericKey = (k) => /^\d+$/.test(k);
+        const colorByMain = new Map();
+        const colorForMain = (key) =>
+            (key != null && colorByMain.get(key)) || fallbackColor;
+        const titleForMain = (k) => (isNumericKey(k) ? 'Huvuddel ' + k : k);
         const setMarkerColor = (el, hex) => {
             el.style.setProperty('--port-color', hex);
             el.style.setProperty('--port-bg', hexToRgba(hex, 0.45));
@@ -207,12 +210,25 @@
             }
         }
 
-        const [portsText, partsText] = await Promise.all([
+        const [portsText, partsText, apartmentsText] = await Promise.all([
             loadCsv('maps/ports.csv'),
             loadCsv('data/stambyte/parts.csv'),
+            loadCsv('data/apartments.csv'),
         ]);
 
-        // port -> main_part, and groups: main -> phase -> [ports]
+        // port -> apartment count
+        const apartmentsPerPort = new Map();
+        if (apartmentsText) {
+            apartmentsText.split(/\r?\n/).forEach((line, idx) => {
+                if (!line.trim() || idx === 0) return;
+                const [, portStr] = line.split(',');
+                const port = parseInt(portStr, 10);
+                if (!Number.isFinite(port)) return;
+                apartmentsPerPort.set(port, (apartmentsPerPort.get(port) || 0) + 1);
+            });
+        }
+
+        // port -> main_part (string key), and groups: main -> phase -> [ports]
         const portToMain = new Map();
         const groups = new Map();
         if (partsText) {
@@ -220,9 +236,9 @@
                 if (!line.trim() || idx === 0) return;
                 const [portStr, mainStr, phaseStr] = line.split(',');
                 const port = parseInt(portStr, 10);
-                const main = parseInt(mainStr, 10);
+                const main = (mainStr || '').trim();
                 const phase = parseInt(phaseStr, 10);
-                if (![port, main, phase].every(Number.isFinite)) return;
+                if (!main || !Number.isFinite(port) || !Number.isFinite(phase)) return;
                 portToMain.set(port, main);
                 if (!groups.has(main)) groups.set(main, new Map());
                 const phaseMap = groups.get(main);
@@ -230,6 +246,21 @@
                 phaseMap.get(phase).push(port);
             });
         }
+
+        // assign palette: numeric mains use palette[n-1]; named (exceptional) mains use dark/black
+        const namedPalette = ['#111827', '#374151'];
+        const numericMains = [...groups.keys()]
+            .filter(isNumericKey)
+            .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+        const namedMains = [...groups.keys()].filter(k => !isNumericKey(k)).sort();
+        numericMains.forEach(k => {
+            const n = parseInt(k, 10);
+            colorByMain.set(k, palette[n - 1] || fallbackColor);
+        });
+        namedMains.forEach((k, i) => {
+            colorByMain.set(k, namedPalette[i] || namedPalette[namedPalette.length - 1]);
+        });
+        const sortedMains = [...namedMains, ...numericMains];
 
         if (layer && portsText) {
             portsText.split(/\r?\n/).forEach((line, idx) => {
@@ -248,8 +279,8 @@
             });
         }
 
-        if (list && groups.size) {
-            [...groups.keys()].sort((a, b) => a - b).forEach(main => {
+        if (list && sortedMains.length) {
+            sortedMains.forEach(main => {
                 const color = colorForMain(main);
                 const block = document.createElement('div');
                 block.className = 'bg-white rounded-xl shadow p-4 border border-gray-200';
@@ -262,18 +293,27 @@
                 swatch.className = 'part-color-swatch';
                 swatch.style.setProperty('--port-bg', hexToRgba(color, 0.45));
                 h3.appendChild(swatch);
-                h3.appendChild(document.createTextNode('Huvuddel ' + main));
+                h3.appendChild(document.createTextNode(titleForMain(main)));
                 block.appendChild(h3);
 
                 const ul = document.createElement('ul');
                 ul.className = 'space-y-1 text-gray-800';
                 const phases = [...groups.get(main).keys()].sort((a, b) => a - b);
+                const singlePhase = phases.length === 1;
                 phases.forEach(phase => {
                     const ports = groups.get(main).get(phase).sort((a, b) => a - b);
+                    const apartmentCount = ports.reduce(
+                        (sum, p) => sum + (apartmentsPerPort.get(p) || 0),
+                        0
+                    );
                     const li = document.createElement('li');
+                    const phaseLabel = singlePhase
+                        ? ''
+                        : '<span class="font-medium">Fas ' + phase + ':</span> ';
                     li.innerHTML =
-                        '<span class="font-medium">Fas ' + phase + ':</span> ' +
-                        '<span>Portar ' + ports.join(', ') + '</span>';
+                        phaseLabel +
+                        '<span>Portar ' + ports.join(', ') + '</span> ' +
+                        '<span class="text-gray-500">(' + apartmentCount + ' lägenheter)</span>';
                     ul.appendChild(li);
                 });
                 block.appendChild(ul);
