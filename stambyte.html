@@ -111,6 +111,171 @@
             background: var(--vm-blue);
             color: white;
         }
+
+        .port-marker .port-badge {
+            position: absolute;
+            top: -8%;
+            right: -8%;
+            width: 50%;
+            height: 50%;
+            min-width: 16px;
+            min-height: 16px;
+            max-width: 26px;
+            max-height: 26px;
+            border-radius: 50%;
+            border: 2px solid white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(9px, 1.3vw, 14px);
+            line-height: 1;
+            text-shadow: none;
+            font-weight: 700;
+            color: white;
+            box-sizing: border-box;
+        }
+        .port-marker.state-in-progress .port-badge,
+        .port-marker.state-completed .port-badge {
+            display: flex;
+        }
+        .port-marker.state-in-progress .port-badge { background: #f59e0b; }
+        .port-marker.state-completed   .port-badge { background: #16a34a; }
+
+        .part-port {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .part-port-icon,
+        .legend-icon {
+            display: inline-flex;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .part-port-icon:empty { display: none; }
+        .part-port-icon.state-in-progress,
+        .legend-progress { background: #f59e0b; }
+        .part-port-icon.state-completed,
+        .legend-done     { background: #16a34a; }
+
+        .time-slider-card {
+            background: white;
+            border: 1px solid var(--vm-border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 14px 18px;
+        }
+        .time-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .time-slider-row input[type="range"] {
+            flex: 1;
+            accent-color: var(--vm-blue);
+        }
+        .time-display {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: var(--vm-blue);
+            min-width: 7.5em;
+            text-align: center;
+        }
+        .play-btn {
+            background: var(--vm-blue);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+        }
+        .play-btn:hover { background: #16327a; }
+        .now-btn {
+            background: white;
+            color: var(--vm-blue);
+            border: 1px solid var(--vm-border);
+            border-radius: 9999px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .now-btn:hover { background: var(--vm-card); }
+        .time-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--vm-muted);
+        }
+        .time-legend .legend-icon {
+            margin-right: 6px;
+            vertical-align: -3px;
+        }
+
+        .slider-wrap {
+            position: relative;
+            flex: 1;
+            padding-top: 18px;
+            display: flex;
+            align-items: center;
+        }
+        .slider-wrap input[type="range"] {
+            flex: 1;
+            margin: 0;
+        }
+        .today-tick {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .today-tick::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            bottom: 0;
+            left: 0;
+            width: 2px;
+            background: #ef4444;
+            transform: translateX(-50%);
+        }
+        .today-tick-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            background: #ef4444;
+            padding: 1px 6px;
+            border-radius: 4px;
+            line-height: 1.2;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+            pointer-events: auto;
+            font-family: inherit;
+        }
+        .today-tick-label:hover { background: #dc2626; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -142,6 +307,26 @@
                 <button type="button" data-opacity="0">0%</button>
                 <button type="button" data-opacity="0.5" class="active">50%</button>
                 <button type="button" data-opacity="1">100%</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="time-slider-section max-w-6xl mx-auto mt-6">
+        <div class="time-slider-card">
+            <div class="time-slider-row">
+                <button id="play-button" type="button" class="play-btn" aria-label="Spela upp">▶</button>
+                <button id="now-button" type="button" class="now-btn" aria-label="Återställ till idag">Idag</button>
+                <span id="time-display" class="time-display">2026-05-01</span>
+                <div class="slider-wrap">
+                    <input id="time-slider" type="range" min="0" max="100" value="0" step="1" aria-label="Tidslinje">
+                    <div id="today-tick" class="today-tick" aria-hidden="true">
+                        <button id="today-tick-label" type="button" class="today-tick-label" aria-label="Hoppa till idag" title="Hoppa till idag">Idag</button>
+                    </div>
+                </div>
+            </div>
+            <div class="time-legend">
+                <span><span class="legend-icon legend-progress">⚒</span>Pågående</span>
+                <span><span class="legend-icon legend-done">✓</span>Klar</span>
             </div>
         </div>
     </section>
@@ -210,10 +395,11 @@
             }
         }
 
-        const [portsText, partsText, apartmentsText] = await Promise.all([
+        const [portsText, partsText, apartmentsText, progressText] = await Promise.all([
             loadCsv('maps/ports.csv'),
             loadCsv('data/stambyte/parts.csv'),
             loadCsv('data/apartments.csv'),
+            loadCsv('data/stambyte/progress.csv'),
         ]);
 
         // port -> apartment count
@@ -262,6 +448,45 @@
         });
         const sortedMains = [...namedMains, ...numericMains];
 
+        // port -> sorted list of {date, event} (event 0 = started, 1 = completed)
+        const portEvents = new Map();
+        if (progressText) {
+            progressText.split(/\r?\n/).forEach((line, idx) => {
+                if (!line.trim() || idx === 0) return;
+                const [dateStr, portStr, eventStr] = line.split(',');
+                const port = parseInt(portStr, 10);
+                const event = parseInt(eventStr, 10);
+                const date = new Date(dateStr.trim());
+                if (!Number.isFinite(port) || !Number.isFinite(event) || isNaN(date.getTime())) return;
+                if (!portEvents.has(port)) portEvents.set(port, []);
+                portEvents.get(port).push({ time: date.getTime(), event });
+            });
+            portEvents.forEach(arr => arr.sort((a, b) => a.time - b.time));
+        }
+
+        function portStateAt(port, t) {
+            const events = portEvents.get(port);
+            if (!events || !events.length) return 'idle';
+            let state = 'idle';
+            for (const e of events) {
+                if (e.time <= t) state = e.event === 1 ? 'completed' : 'in-progress';
+                else break;
+            }
+            return state;
+        }
+
+        const ICON_PROGRESS = '⚒';
+        const ICON_DONE = '✓';
+
+        const markers = []; // {el, badge, port}
+        function applyMarkerState(m, state) {
+            m.el.classList.remove('state-idle', 'state-in-progress', 'state-completed');
+            m.el.classList.add('state-' + state);
+            if (state === 'in-progress')      m.badge.textContent = ICON_PROGRESS;
+            else if (state === 'completed')   m.badge.textContent = ICON_DONE;
+            else                              m.badge.textContent = '';
+        }
+
         if (layer && portsText) {
             portsText.split(/\r?\n/).forEach((line, idx) => {
                 if (!line.trim() || idx === 0) return;
@@ -271,12 +496,32 @@
                 if (!Number.isFinite(num) || !Number.isFinite(x) || !Number.isFinite(y)) return;
                 const el = document.createElement('div');
                 el.className = 'port-marker';
-                el.textContent = num;
                 el.style.left = x + '%';
                 el.style.top = y + '%';
-                setMarkerColor(el, colorForMain(portToMain.get(num)));
+                const color = colorForMain(portToMain.get(num));
+                setMarkerColor(el, color);
+
+                const numEl = document.createElement('span');
+                numEl.className = 'port-num';
+                numEl.textContent = num;
+                el.appendChild(numEl);
+
+                const badge = document.createElement('span');
+                badge.className = 'port-badge';
+                el.appendChild(badge);
+
                 layer.appendChild(el);
+                markers.push({ el, badge, port: num });
             });
+        }
+
+        // Parts list (rendered before slider so its icons can be updated by update())
+        const partsListIcons = []; // {port, el}
+        function applyPartsListIcon(el, state) {
+            el.classList.remove('state-in-progress', 'state-completed');
+            if (state === 'in-progress')    { el.classList.add('state-in-progress'); el.textContent = ICON_PROGRESS; }
+            else if (state === 'completed') { el.classList.add('state-completed');   el.textContent = ICON_DONE; }
+            else                            { el.textContent = ''; }
         }
 
         if (list && sortedMains.length) {
@@ -307,18 +552,109 @@
                         0
                     );
                     const li = document.createElement('li');
-                    const phaseLabel = singlePhase
-                        ? ''
-                        : '<span class="font-medium">Fas ' + phase + ':</span> ';
-                    li.innerHTML =
-                        phaseLabel +
-                        '<span>Portar ' + ports.join(', ') + '</span> ' +
-                        '<span class="text-gray-500">(' + apartmentCount + ' lägenheter)</span>';
+                    if (!singlePhase) {
+                        const phaseSpan = document.createElement('span');
+                        phaseSpan.className = 'font-medium';
+                        phaseSpan.textContent = 'Fas ' + phase + ': ';
+                        li.appendChild(phaseSpan);
+                    }
+                    li.appendChild(document.createTextNode('Portar '));
+                    ports.forEach((p, i) => {
+                        if (i > 0) li.appendChild(document.createTextNode(', '));
+                        const portWrap = document.createElement('span');
+                        portWrap.className = 'part-port';
+                        portWrap.appendChild(document.createTextNode(p));
+                        const iconEl = document.createElement('span');
+                        iconEl.className = 'part-port-icon';
+                        portWrap.appendChild(iconEl);
+                        li.appendChild(portWrap);
+                        partsListIcons.push({ port: p, el: iconEl });
+                    });
+                    li.appendChild(document.createTextNode(' '));
+                    const aptSpan = document.createElement('span');
+                    aptSpan.className = 'text-gray-500';
+                    aptSpan.textContent = '(' + apartmentCount + ' lägenheter)';
+                    li.appendChild(aptSpan);
                     ul.appendChild(li);
                 });
                 block.appendChild(ul);
                 list.appendChild(block);
             });
+        }
+
+        // Time slider + playback
+        const slider = document.getElementById('time-slider');
+        const display = document.getElementById('time-display');
+        const playBtn = document.getElementById('play-button');
+        if (slider && display && playBtn) {
+            const dayMs = 86400000;
+            const startMs = Date.UTC(2018, 0, 1);
+            const endMs = Date.UTC(2030, 11, 31);
+            const totalDays = Math.round((endMs - startMs) / dayMs);
+            const now = new Date();
+            const todayMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+            const defaultIdx = Math.max(0, Math.min(totalDays, Math.round((todayMs - startMs) / dayMs)));
+
+            slider.min = '0';
+            slider.max = String(totalDays);
+            slider.step = '1';
+            slider.value = String(defaultIdx);
+
+            const fmt = (ms) => new Date(ms).toISOString().slice(0, 10);
+
+            function update() {
+                const idx = parseInt(slider.value, 10);
+                const t = startMs + idx * dayMs;
+                display.textContent = fmt(t);
+                markers.forEach(m => applyMarkerState(m, portStateAt(m.port, t)));
+                partsListIcons.forEach(p => applyPartsListIcon(p.el, portStateAt(p.port, t)));
+            }
+
+            const todayTick = document.getElementById('today-tick');
+            if (todayTick) {
+                todayTick.style.left = (defaultIdx / totalDays * 100) + '%';
+            }
+            const todayTickLabel = document.getElementById('today-tick-label');
+
+            slider.addEventListener('input', update);
+            update();
+
+            let timer = null;
+            const stepDays = 7;
+            const tickMs = 80;
+            function setPlaying(on) {
+                if (on) {
+                    playBtn.textContent = '❚❚';
+                    playBtn.setAttribute('aria-label', 'Pausa');
+                    timer = setInterval(() => {
+                        let v = parseInt(slider.value, 10) + stepDays;
+                        if (v >= totalDays) {
+                            v = totalDays;
+                            slider.value = String(v);
+                            update();
+                            setPlaying(false);
+                            return;
+                        }
+                        slider.value = String(v);
+                        update();
+                    }, tickMs);
+                } else {
+                    playBtn.textContent = '▶';
+                    playBtn.setAttribute('aria-label', 'Spela upp');
+                    if (timer) { clearInterval(timer); timer = null; }
+                }
+            }
+            playBtn.addEventListener('click', () => setPlaying(!timer));
+
+            function snapToToday() {
+                if (timer) setPlaying(false);
+                slider.value = String(defaultIdx);
+                update();
+            }
+
+            const nowBtn = document.getElementById('now-button');
+            if (nowBtn) nowBtn.addEventListener('click', snapToToday);
+            if (todayTickLabel) todayTickLabel.addEventListener('click', snapToToday);
         }
     })();
 </script>
