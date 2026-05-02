@@ -258,6 +258,14 @@
                     </select>
                 </div>
                 <div class="ctrl-group">
+                    <label for="stambyte-filter">Stambyte:</label>
+                    <select id="stambyte-filter">
+                        <option value="all">Alla affärer</option>
+                        <option value="before">Före stambyte</option>
+                        <option value="after">Efter stambyte</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
                     <label for="trendline">
                         <input type="checkbox" id="trendline" checked>
                         Visa trendlinje
@@ -282,7 +290,10 @@
             <div id="scatter-container"></div>
 
             <p class="text-xs text-gray-500 mt-3 text-center">
-                Storlek på punkten = boyta. Färg = antal rum.
+                Storlek på punkten = boyta. Färg = antal rum. Fyrkant = stambyte klart vid
+                säljtillfället, cirkel = inte ännu klart för den porten.
+                Se <a href="stambyte.html" class="text-blue-700 underline hover:text-blue-900">stambyte-sidan</a>
+                för full historik och tidsplan per port.
             </p>
 
             <details class="data-details">
@@ -651,8 +662,39 @@
     let tyresoMedians = [];        // [{year, n, median}, ...] – Tyresö kommun
     let stockholmsLanAnnual = [];  // [{year, median (kr/m²)}, ...] – Mäklarstatistik
     let sverigeAnnual = [];        // [{year, median (kr/m²)}, ...] – Mäklarstatistik
+    let stambyteEvents = new Map(); // port (street number) -> [{time, event}, ...] asc; event 1 = klart, 0 = påbörjat
 
     const TOTAL_KVM = 51666; // BRF Sjötungan's total living area
+
+    /* ── Load stambyte progress events ───────────────── */
+    // progress.csv: date, port, event (0 = påbörjat, 1 = klart). Same convention
+    // as stambyte.html; we only need the "klart" state at the time of each sale.
+    async function loadStambyteProgress() {
+        const rows = await loadCSV('data/stambyte/progress.csv');
+        const map = new Map();
+        rows.forEach(r => {
+            const port = parseInt(r.port, 10);
+            const event = parseInt(r.event, 10);
+            const time = new Date(r.date).getTime();
+            if (!Number.isFinite(port) || !Number.isFinite(event) || !Number.isFinite(time)) return;
+            if (!map.has(port)) map.set(port, []);
+            map.get(port).push({ time, event });
+        });
+        map.forEach(arr => arr.sort((a, b) => a.time - b.time));
+        return map;
+    }
+
+    function stambyteCompleteAt(port, dateStr) {
+        const events = stambyteEvents.get(port);
+        if (!events || !events.length) return false;
+        const t = new Date(dateStr).getTime();
+        let completed = false;
+        for (const e of events) {
+            if (e.time > t) break;
+            completed = e.event === 1;
+        }
+        return completed;
+    }
 
     /* ── Build deal records ──────────────────────────── */
     function buildDeals(rows) {
@@ -664,6 +706,7 @@
             return {
                 date: r.sold_date,
                 address: r.address,
+                street_number: parseInt(r.street_number, 10),
                 rooms,
                 area,
                 price,
@@ -776,7 +819,10 @@
                 name: `${rooms} rum`,
                 x: list.map(d => d.date),
                 y: list.map(d => d.kr_per_m2),
-                customdata: list.map(d => [d.address, d.area, d.price, d.fee, rooms, d.url || '']),
+                customdata: list.map(d => [
+                    d.address, d.area, d.price, d.fee, rooms, d.url || '',
+                    stambyteCompleteAt(d.street_number, d.date) ? 'Ja' : 'Nej',
+                ]),
                 hovertemplate:
                     '<b>%{customdata[0]}</b><br>' +
                     'Datum: %{x}<br>' +
@@ -785,10 +831,12 @@
                     'Boyta: %{customdata[1]} m²<br>' +
                     'Slutpris: %{customdata[2]:,.0f} kr<br>' +
                     'Avgift/mån: %{customdata[3]:,.0f} kr<br>' +
+                    'Stambyte klart: %{customdata[6]}<br>' +
                     '<i>Klicka för Hemnet-annons</i>' +
                     '<extra></extra>',
                 marker: {
                     size: list.map(d => Math.max(6, Math.sqrt(d.area) * 1.6)),
+                    symbol: list.map(d => stambyteCompleteAt(d.street_number, d.date) ? 'square' : 'circle'),
                     color: colorForRooms(rooms),
                     opacity: 0.75,
                     line: { width: 1, color: 'white' },
@@ -813,6 +861,32 @@
                 line: { color: '#dc2626', width: 2.5 },
                 marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
             });
+        }
+
+        // Post-stambyte yearly median — only meaningful when the stambyte filter
+        // is on "Alla" (otherwise the line above already represents this subset
+        // or there are no post-stambyte deals to show).
+        const stambSel = document.getElementById('stambyte-filter').value;
+        if (stambSel === 'all') {
+            const postDeals = deals.filter(d => stambyteCompleteAt(d.street_number, d.date));
+            const postMedians = yearlyMedians(postDeals);
+            if (postMedians.length) {
+                traces.push({
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Årsmedian (efter stambyte)',
+                    x: postMedians.map(m => `${m.year}-07-01`),
+                    y: postMedians.map(m => m.median),
+                    customdata: postMedians.map(m => [m.year, m.count]),
+                    hovertemplate:
+                        '<b>%{customdata[0]}</b> (efter stambyte)<br>' +
+                        'Median kr/m²: %{y:,.0f}<br>' +
+                        'Antal affärer: %{customdata[1]}' +
+                        '<extra></extra>',
+                    line: { color: '#7c3aed', width: 2.5, dash: 'dash' },
+                    marker: { size: 10, color: '#7c3aed', symbol: 'square', line: { width: 1, color: 'white' } },
+                });
+            }
         }
 
         if (showTrend && deals.length >= 2) {
@@ -1242,6 +1316,7 @@
     /* ── Apply filters and (re)render ────────────────── */
     function applyAndRender() {
         const roomsSel = document.getElementById('rooms-filter').value;
+        const stambSel = document.getElementById('stambyte-filter').value;
         const slider = document.getElementById('start-slider');
         const startIdx = parseInt(slider.value, 10);
         const startDate = sliderDates[startIdx] || '';
@@ -1250,6 +1325,11 @@
         let filtered = allDeals.filter(d => d.date >= startDate);
         if (roomsSel !== 'all') {
             filtered = filtered.filter(d => Math.round(d.rooms) === parseInt(roomsSel));
+        }
+        if (stambSel === 'after') {
+            filtered = filtered.filter(d => stambyteCompleteAt(d.street_number, d.date));
+        } else if (stambSel === 'before') {
+            filtered = filtered.filter(d => !stambyteCompleteAt(d.street_number, d.date));
         }
         renderStats(filtered);
         renderScatter(filtered);
@@ -1277,6 +1357,7 @@
         highlightDeal = deal;
         // Reset filters so the highlighted deal is visible
         document.getElementById('rooms-filter').value = 'all';
+        document.getElementById('stambyte-filter').value = 'all';
         document.getElementById('start-slider').value = 0;
         document.getElementById('url-clear-btn').style.display = '';
         setStatus(`Träff: ${deal.address} (${deal.date})`, 'ok');
@@ -1295,7 +1376,7 @@
     /* ── Init ────────────────────────────────────────── */
     (async function init() {
         try {
-            const [rows, debt, fee, bb, gad, sik_brf, ty, sthlm, se] = await Promise.all([
+            const [rows, debt, fee, bb, gad, sik_brf, ty, sthlm, se, stamb] = await Promise.all([
                 loadCSV('data/apartment_prices/sjotungan_sales.csv'),
                 loadDebtPerM2().catch(() => []),
                 loadFeePerM2().catch(() => []),
@@ -1305,7 +1386,9 @@
                 loadAreaMedians('data/apartment_prices/tyreso_kommun_annual_medians.csv').catch(() => []),
                 loadMaklarAnnual('data/apartment_prices/maklarstatistik_stockholms_lan_brf_annual.csv').catch(() => []),
                 loadMaklarAnnual('data/apartment_prices/maklarstatistik_sverige_brf_annual.csv').catch(() => []),
+                loadStambyteProgress().catch(() => new Map()),
             ]);
+            stambyteEvents = stamb;
             allDeals = buildDeals(rows);
             debtPerM2 = debt;
             feePerM2 = fee;
@@ -1340,6 +1423,7 @@
             document.getElementById('content').style.display = 'block';
 
             sel.addEventListener('change', applyAndRender);
+            document.getElementById('stambyte-filter').addEventListener('change', applyAndRender);
             document.getElementById('trendline').addEventListener('change', applyAndRender);
             document.getElementById('show-macro').addEventListener('change', applyAndRender);
             slider.addEventListener('input', applyAndRender);
