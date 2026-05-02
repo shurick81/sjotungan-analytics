@@ -297,6 +297,13 @@
             width: 0%;
             transition: width 0.2s ease;
         }
+        .phase-dates:empty { display: none; }
+        .phase-dates {
+            display: block;
+            font-size: 0.85em;
+            color: var(--vm-muted);
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -669,8 +676,20 @@
                     aptSpan.className = 'text-gray-500';
                     aptSpan.textContent = '(' + apartmentCount + ' lägenheter)';
                     li.appendChild(aptSpan);
+
+                    let startTime = null, endTime = null;
+                    ports.forEach(p => {
+                        (planEvents.get(p) || []).forEach(e => {
+                            if (e.event === 0) startTime = startTime === null ? e.time : Math.min(startTime, e.time);
+                            if (e.event === 1) endTime   = endTime   === null ? e.time : Math.max(endTime,   e.time);
+                        });
+                    });
+                    const datesEl = document.createElement('span');
+                    datesEl.className = 'phase-dates';
+                    li.appendChild(datesEl);
+
                     ul.appendChild(li);
-                    phaseEntries.push({ li, ports: [...ports] });
+                    phaseEntries.push({ li, ports: [...ports], datesEl, startTime, endTime });
                 });
                 block.appendChild(ul);
                 list.appendChild(block);
@@ -737,15 +756,29 @@
         }
 
         const hideDoneToggle = document.getElementById('hide-done-toggle');
+        const HORIZON_MS = 180 * 86400000;
+        const fmtIso = (ms) => new Date(ms).toISOString().slice(0, 10);
         function applyEtapperFilter(t) {
             const hideDone = hideDoneToggle ? hideDoneToggle.checked : false;
             blockEntries.forEach(({ block, phases }) => {
                 let anyVisible = false;
-                phases.forEach(({ li, ports }) => {
+                phases.forEach(({ li, ports, datesEl, startTime, endTime }) => {
                     const allDone = ports.every(p => portStateAt(p, t) === 'completed');
                     const hidden = hideDone && allDone;
                     li.style.display = hidden ? 'none' : '';
                     if (!hidden) anyVisible = true;
+
+                    if (datesEl) {
+                        const showDates = !allDone
+                            && startTime != null
+                            && startTime <= t + HORIZON_MS;
+                        if (showDates) {
+                            const endStr = endTime != null ? fmtIso(endTime) : '?';
+                            datesEl.textContent = 'Planerat ' + fmtIso(startTime) + ' – ' + endStr;
+                        } else {
+                            datesEl.textContent = '';
+                        }
+                    }
                 });
                 block.style.display = anyVisible ? '' : 'none';
             });
