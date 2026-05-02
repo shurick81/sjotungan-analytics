@@ -271,6 +271,12 @@
                         Visa trendlinje
                     </label>
                 </div>
+                <div class="ctrl-group">
+                    <label for="inflation-toggle">
+                        <input type="checkbox" id="inflation-toggle">
+                        Inflationsjusterat (<span id="inflation-base-year">2024</span> kr)
+                    </label>
+                </div>
                 <div class="ctrl-group" style="flex: 1 1 280px; min-width: 240px;">
                     <label for="start-slider" style="white-space: nowrap;">Från:&nbsp;<span id="start-label">—</span></label>
                     <input type="range" id="start-slider" min="0" max="0" value="0" step="1" style="flex:1; margin-left: 10px;">
@@ -663,8 +669,50 @@
     let stockholmsLanAnnual = [];  // [{year, median (kr/m²)}, ...] – Mäklarstatistik
     let sverigeAnnual = [];        // [{year, median (kr/m²)}, ...] – Mäklarstatistik
     let stambyteEvents = new Map(); // port (street number) -> [{time, event}, ...] asc; event 1 = klart, 0 = påbörjat
+    let priceIndexByYear = new Map(); // 'YYYY' -> price index (base year = 100)
+    let inflationBaseYear = 2024;
 
     const TOTAL_KVM = 51666; // BRF Sjötungan's total living area
+
+    /* ── Inflation: load macro_sweden.json and build price index ─ */
+    // Mirrors changing_over_time.html: priceIndex(base_year) = 100, then
+    // compounds forward with each year's inflation_yoy_pct. Years not
+    // present in the data (e.g. 2025+) default to the base index, i.e.
+    // no extra adjustment beyond what the dataset covers.
+    async function loadInflationIndex() {
+        const ts = Date.now();
+        const resp = await fetch(`data/macro_sweden.json?t=${ts}`, { cache: 'no-store' });
+        const payload = await resp.json();
+        const rows = (payload.data || [])
+            .map(r => ({ year: String(r.year), inflationYoY: Number(r.inflation_yoy_pct) }))
+            .filter(r => Number.isFinite(r.inflationYoY))
+            .sort((a, b) => a.year.localeCompare(b.year));
+        if (!rows.length) return { baseYear: 2024, map: new Map() };
+        const baseYear = String(payload.base_year || 2024);
+        const baseIdx = Math.max(0, rows.findIndex(r => r.year === baseYear));
+        const enriched = rows.map(r => ({ ...r, priceIndex: null }));
+        enriched[baseIdx].priceIndex = 100;
+        for (let i = baseIdx + 1; i < enriched.length; i++) {
+            enriched[i].priceIndex = enriched[i - 1].priceIndex * (1 + enriched[i].inflationYoY / 100);
+        }
+        for (let i = baseIdx - 1; i >= 0; i--) {
+            enriched[i].priceIndex = enriched[i + 1].priceIndex / (1 + enriched[i + 1].inflationYoY / 100);
+        }
+        const map = new Map();
+        enriched.forEach(r => map.set(r.year, r.priceIndex));
+        return { baseYear: parseInt(baseYear, 10), map };
+    }
+
+    function adjAmount(value, year) {
+        if (!document.getElementById('inflation-toggle').checked) return value;
+        if (!Number.isFinite(value)) return value;
+        const idx = priceIndexByYear.get(String(year));
+        if (!idx || idx <= 0) return value;
+        return value * (100 / idx);
+    }
+    const dealYear = d => (d.date || '').slice(0, 4);
+    const isAdjusting = () => document.getElementById('inflation-toggle').checked;
+    const krSuffix = () => isAdjusting() ? ` (${inflationBaseYear} kr)` : '';
 
     /* ── Load stambyte progress events ───────────────── */
     // progress.csv: date, port, event (0 = påbörjat, 1 = klart). Same convention
@@ -746,14 +794,15 @@
     function renderStats(deals) {
         const stats = document.getElementById('stats');
         if (!deals.length) { stats.innerHTML = ''; return; }
-        const ppm = deals.map(d => d.kr_per_m2);
+        const ppm = deals.map(d => adjAmount(d.kr_per_m2, dealYear(d)));
         const avg = ppm.reduce((a, b) => a + b, 0) / ppm.length;
         const sorted = [...ppm].sort((a, b) => a - b);
         const median = sorted[Math.floor(sorted.length / 2)];
+        const suffix = krSuffix();
         stats.innerHTML = `
             <div class="stat-card"><div class="stat-label">Antal affärer</div><div class="stat-value">${deals.length}</div></div>
-            <div class="stat-card"><div class="stat-label">Snitt kr/m²</div><div class="stat-value">${fmtNum(avg)}</div></div>
-            <div class="stat-card"><div class="stat-label">Median kr/m²</div><div class="stat-value">${fmtNum(median)}</div></div>
+            <div class="stat-card"><div class="stat-label">Snitt kr/m²${suffix}</div><div class="stat-value">${fmtNum(avg)}</div></div>
+            <div class="stat-card"><div class="stat-label">Median kr/m²${suffix}</div><div class="stat-value">${fmtNum(median)}</div></div>
         `;
     }
 
@@ -763,7 +812,7 @@
         deals.forEach(d => {
             const y = parseInt(d.date.slice(0, 4), 10);
             if (!buckets.has(y)) buckets.set(y, []);
-            buckets.get(y).push(d.kr_per_m2);
+            buckets.get(y).push(adjAmount(d.kr_per_m2, y));
         });
         return [...buckets.entries()]
             .sort((a, b) => a[0] - b[0])
@@ -778,7 +827,7 @@
     /* ── Linear regression on date (epoch ms) → kr/m² ── */
     function linearTrend(deals) {
         const xs = deals.map(d => new Date(d.date).getTime());
-        const ys = deals.map(d => d.kr_per_m2);
+        const ys = deals.map(d => adjAmount(d.kr_per_m2, dealYear(d)));
         const n = xs.length;
         if (n < 2) return null;
         const meanX = xs.reduce((a, b) => a + b, 0) / n;
@@ -818,19 +867,22 @@
                 mode: 'markers',
                 name: `${rooms} rum`,
                 x: list.map(d => d.date),
-                y: list.map(d => d.kr_per_m2),
+                y: list.map(d => adjAmount(d.kr_per_m2, dealYear(d))),
                 customdata: list.map(d => [
-                    d.address, d.area, d.price, d.fee, rooms, d.url || '',
+                    d.address, d.area,
+                    adjAmount(d.price, dealYear(d)),
+                    d.fee == null ? null : adjAmount(d.fee, dealYear(d)),
+                    rooms, d.url || '',
                     stambyteCompleteAt(d.street_number, d.date) ? 'Ja' : 'Nej',
                 ]),
                 hovertemplate:
                     '<b>%{customdata[0]}</b><br>' +
                     'Datum: %{x}<br>' +
                     'Antal rum: %{customdata[4]}<br>' +
-                    'kr/m²: %{y:,.0f}<br>' +
+                    `kr/m²${krSuffix()}: %{y:,.0f}<br>` +
                     'Boyta: %{customdata[1]} m²<br>' +
-                    'Slutpris: %{customdata[2]:,.0f} kr<br>' +
-                    'Avgift/mån: %{customdata[3]:,.0f} kr<br>' +
+                    `Slutpris${krSuffix()}: %{customdata[2]:,.0f} kr<br>` +
+                    `Avgift/mån${krSuffix()}: %{customdata[3]:,.0f} kr<br>` +
                     'Stambyte klart: %{customdata[6]}<br>' +
                     '<i>Klicka för Hemnet-annons</i>' +
                     '<extra></extra>',
@@ -908,12 +960,13 @@
         // Highlight ring for the URL-pinpointed deal
         const annotations = [];
         if (highlightDeal && deals.includes(highlightDeal)) {
+            const hY = adjAmount(highlightDeal.kr_per_m2, dealYear(highlightDeal));
             traces.push({
                 type: 'scatter',
                 mode: 'markers',
                 name: 'Vald annons',
                 x: [highlightDeal.date],
-                y: [highlightDeal.kr_per_m2],
+                y: [hY],
                 marker: {
                     size: 28,
                     color: 'rgba(0,0,0,0)',
@@ -925,8 +978,8 @@
             });
             annotations.push({
                 x: highlightDeal.date,
-                y: highlightDeal.kr_per_m2,
-                text: `<b>${highlightDeal.address}</b><br>${highlightDeal.date} · ${fmtNum(highlightDeal.kr_per_m2)} kr/m²`,
+                y: hY,
+                text: `<b>${highlightDeal.address}</b><br>${highlightDeal.date} · ${fmtNum(hY)} kr/m²${krSuffix()}`,
                 showarrow: true,
                 arrowhead: 3,
                 arrowsize: 1.2,
@@ -950,7 +1003,7 @@
                 gridcolor: '#e5e7eb',
             },
             yaxis: {
-                title: 'kr / m²',
+                title: `kr / m²${krSuffix()}`,
                 gridcolor: '#e5e7eb',
                 tickformat: ',d',
                 separatethousands: true,
@@ -991,7 +1044,9 @@
         const slider = document.getElementById('start-slider');
         const startYear = parseInt((sliderDates[parseInt(slider.value, 10)] || '0000').slice(0, 4), 10);
         const cutoff = Math.max(2013, startYear || 0);
-        const secFiltered = secondary.series.filter(d => parseInt(d.year, 10) >= cutoff);
+        const secFiltered = secondary.series
+            .filter(d => parseInt(d.year, 10) >= cutoff)
+            .map(d => ({ ...d, kr_per_m2: adjAmount(d.kr_per_m2, d.year), total: adjAmount(d.total, d.year) }));
 
         const showLabels = window.innerWidth >= 850;
         const traces = [{
@@ -1036,7 +1091,7 @@
             margin: { l: 70, r: 70, t: 30, b: 60 },
             xaxis: { title: 'År', type: 'date', gridcolor: '#e5e7eb' },
             yaxis: {
-                title: 'Median kr/m² (försäljning)',
+                title: `Median kr/m² (försäljning)${krSuffix()}`,
                 gridcolor: '#e5e7eb',
                 tickformat: ',d',
                 separatethousands: true,
@@ -1044,7 +1099,7 @@
                 tickfont: { color: '#dc2626' },
             },
             yaxis2: {
-                title: secondary.axisTitle,
+                title: `${secondary.axisTitle}${krSuffix()}`,
                 overlaying: 'y',
                 side: 'right',
                 tickformat: ',d',
@@ -1076,13 +1131,17 @@
         const startYear = parseInt((sliderDates[parseInt(slider.value, 10)] || '0000').slice(0, 4), 10);
         const cutoff = Math.max(2013, startYear || 0);
 
+        const adjSeries = arr => arr
+            .filter(d => parseInt(d.year, 10) >= cutoff)
+            .map(d => ({ ...d, median: adjAmount(d.median, d.year) }));
+
         const sj = yearlyMedians(deals);
-        const bb = bjorkbackenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
-        const gad = gaddanMedians.filter(d => parseInt(d.year, 10) >= cutoff);
-        const sikb = sikenMedians.filter(d => parseInt(d.year, 10) >= cutoff);
-        const ty = tyresoMedians.filter(d => parseInt(d.year, 10) >= cutoff);
-        const sthlm = stockholmsLanAnnual.filter(d => parseInt(d.year, 10) >= cutoff);
-        const se = sverigeAnnual.filter(d => parseInt(d.year, 10) >= cutoff);
+        const bb = adjSeries(bjorkbackenMedians);
+        const gad = adjSeries(gaddanMedians);
+        const sikb = adjSeries(sikenMedians);
+        const ty = adjSeries(tyresoMedians);
+        const sthlm = adjSeries(stockholmsLanAnnual);
+        const se = adjSeries(sverigeAnnual);
 
         const traces = [
             {
@@ -1165,7 +1224,7 @@
             margin: { l: 70, r: 20, t: 30, b: 60 },
             xaxis: { title: 'År', type: 'date', gridcolor: '#e5e7eb' },
             yaxis: {
-                title: 'Median kr/m²',
+                title: `Median kr/m²${krSuffix()}`,
                 gridcolor: '#e5e7eb',
                 tickformat: ',d',
                 separatethousands: true,
@@ -1376,7 +1435,7 @@
     /* ── Init ────────────────────────────────────────── */
     (async function init() {
         try {
-            const [rows, debt, fee, bb, gad, sik_brf, ty, sthlm, se, stamb] = await Promise.all([
+            const [rows, debt, fee, bb, gad, sik_brf, ty, sthlm, se, stamb, infl] = await Promise.all([
                 loadCSV('data/apartment_prices/sjotungan_sales.csv'),
                 loadDebtPerM2().catch(() => []),
                 loadFeePerM2().catch(() => []),
@@ -1387,8 +1446,13 @@
                 loadMaklarAnnual('data/apartment_prices/maklarstatistik_stockholms_lan_brf_annual.csv').catch(() => []),
                 loadMaklarAnnual('data/apartment_prices/maklarstatistik_sverige_brf_annual.csv').catch(() => []),
                 loadStambyteProgress().catch(() => new Map()),
+                loadInflationIndex().catch(() => ({ baseYear: 2024, map: new Map() })),
             ]);
             stambyteEvents = stamb;
+            priceIndexByYear = infl.map;
+            inflationBaseYear = infl.baseYear;
+            const baseLabel = document.getElementById('inflation-base-year');
+            if (baseLabel) baseLabel.textContent = String(inflationBaseYear);
             allDeals = buildDeals(rows);
             debtPerM2 = debt;
             feePerM2 = fee;
@@ -1425,6 +1489,7 @@
             sel.addEventListener('change', applyAndRender);
             document.getElementById('stambyte-filter').addEventListener('change', applyAndRender);
             document.getElementById('trendline').addEventListener('change', applyAndRender);
+            document.getElementById('inflation-toggle').addEventListener('change', applyAndRender);
             document.getElementById('show-macro').addEventListener('change', applyAndRender);
             slider.addEventListener('input', applyAndRender);
 
