@@ -127,6 +127,10 @@
             white-space: nowrap;
         }
         .cost-table th.number { text-align: right; }
+        .cost-table thead th.group-header {
+            text-align: center;
+            border-bottom: 1px solid var(--vm-border);
+        }
         .cost-table td {
             padding: 9px 14px;
             border-bottom: 1px solid #dde6f4;
@@ -244,28 +248,42 @@
 
     <div id="costChart" style="margin:20px 0 8px; width:100%; min-height:340px; background:#fff; border:1px solid var(--vm-border); border-radius:10px; padding:8px;"></div>
 
+    <label class="inflation-toggle" style="margin-top:0;">
+        <input type="checkbox" id="trendToggle" checked>
+        Visa trendlinje och total förändring i grafen
+    </label>
+
     <div class="window-row">
         <label for="windowSlider">Tidsfönster:</label>
         <input type="range" id="windowSlider" min="3" max="15" value="15" step="1">
         <span id="windowLabel" class="window-label">senaste 15 åren</span>
     </div>
 
+    <label class="inflation-toggle">
+        <input type="checkbox" id="percentOfParentToggle">
+        Visa som andel av överordnad kategori
+    </label>
+
     <div class="window-row" style="margin-top:6px;">
         <label>Sortera efter:</label>
         <div class="norm-toggle" id="sortToggle" style="margin:0;">
-            <label><input type="radio" name="sortBy" value="growth" checked><span>Förändring</span></label>
-            <label><input type="radio" name="sortBy" value="avg"><span>Snitt</span></label>
+            <label><input type="radio" name="sortBy" value="avg" checked><span>Snitt per år</span></label>
+            <label><input type="radio" name="sortBy" value="growth"><span>Förändring</span></label>
         </div>
     </div>
 
     <table class="cost-table" id="costTable">
         <thead>
             <tr>
-                <th style="width:32px;"></th>
-                <th>Kategori</th>
-                <th class="number col-amount">Senaste året</th>
-                <th class="number col-amount">Snitt</th>
-                <th class="number col-change">Förändring</th>
+                <th rowspan="2" style="width:32px;"></th>
+                <th rowspan="2">Kategori</th>
+                <th colspan="2" class="group-header col-amount">Kostnad</th>
+                <th colspan="2" class="group-header col-change">Förändring</th>
+            </tr>
+            <tr>
+                <th class="number col-amount" id="lastYearHeader">Senaste året</th>
+                <th class="number col-amount">Snitt per år</th>
+                <th class="number col-change">Totalt över perioden</th>
                 <th class="number col-change">Per år</th>
             </tr>
         </thead>
@@ -294,6 +312,7 @@
     let adjustForInflation = false;
     let normDivisor = 1;
     let normSuffix = '';
+    let showAsPercentOfParent = false;
 
     const TOTAL_COSTS_ID = -1; // synthetic root that sums all top-level cost categories
 
@@ -542,7 +561,7 @@
 
     function getSortMode() {
         const el = document.querySelector('input[name="sortBy"]:checked');
-        return el ? el.value : 'growth';
+        return el ? el.value : 'avg';
     }
 
     function sortSiblings(catIds, windowYears) {
@@ -578,7 +597,8 @@
     function renderTable() {
         const tbody = document.getElementById('costTbody');
         const windowYears = parseInt(document.getElementById('windowSlider').value);
-        document.getElementById('windowLabel').textContent = `senaste ${windowYears} åren`;
+        const minWindow = maxYear - windowYears + 1;
+        document.getElementById('windowLabel').textContent = `senaste ${windowYears} åren (${minWindow}–${maxYear})`;
 
         const tbl = document.getElementById('costTable');
         if (tbl) tbl.dataset.sort = getSortMode();
@@ -592,7 +612,7 @@
             tbody.innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center; padding:24px;">Inga kostnadsposter.</td></tr>';
             return;
         }
-        renderBranch(tbody, rootIds, 0, windowYears);
+        renderBranch(tbody, rootIds, 0, windowYears, null);
     }
 
     function siblingBarKey(row, mode) {
@@ -600,21 +620,37 @@
         return Math.abs(row.totalGrowth || 0);
     }
 
-    function renderBranch(tbody, catIds, depth, windowYears) {
+    function renderBranch(tbody, catIds, depth, windowYears, parentRow) {
         const mode = getSortMode();
         const sorted = sortSiblings(catIds, windowYears);
         const siblingMaxAbs = Math.max(1, ...sorted.map(s => siblingBarKey(s.row, mode)));
 
         for (const { id, row } of sorted) {
-            renderRow(tbody, row, depth, siblingMaxAbs, mode);
+            renderRow(tbody, row, depth, siblingMaxAbs, mode, parentRow);
             if (expanded.has(id)) {
                 const kids = childrenByParent[String(id)] || [];
-                if (kids.length) renderBranch(tbody, kids, depth + 1, windowYears);
+                if (kids.length) renderBranch(tbody, kids, depth + 1, windowYears, row);
             }
         }
     }
 
-    function renderRow(tbody, row, depth, siblingMaxAbs, mode) {
+    function formatShareOfParent(childVal, parentVal) {
+        if (childVal === null || parentVal === null || !parentVal || !isFinite(parentVal)) return null;
+        const pct = (childVal / parentVal) * 100;
+        if (!isFinite(pct)) return null;
+        return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(pct) + ' %';
+    }
+
+    function formatSignedPct(num, den) {
+        if (num === null || num === undefined || den === null || den === undefined || !den || !isFinite(den)) return null;
+        const pct = (num / den) * 100;
+        if (!isFinite(pct)) return null;
+        const sign = pct > 0 ? '+' : (pct < 0 ? '−' : '');
+        const abs = Math.abs(pct);
+        return sign + new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(abs) + ' %';
+    }
+
+    function renderRow(tbody, row, depth, siblingMaxAbs, mode, parentRow) {
         const tr = document.createElement('tr');
         const isInsufficient = row.totalGrowth === null;
         if (isInsufficient) tr.classList.add('insufficient');
@@ -628,32 +664,53 @@
             : `<span class="expand-spacer"></span>`;
         const nameClass = isTopLevel ? 'top-level' : '';
 
+        const usePct = showAsPercentOfParent;
+
+        const formatAmount = (childVal, parentVal) => {
+            if (usePct) {
+                if (parentRow) {
+                    const s = formatShareOfParent(childVal, parentVal);
+                    if (s !== null) return s;
+                } else if (childVal !== null) {
+                    return '100,0 %';
+                }
+            }
+            if (childVal === null) return '<span class="growth-flat">–</span>';
+            return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(childVal)) + ' kr' + normSuffix;
+        };
+        const lastValHtml = formatAmount(row.lastVal, parentRow ? parentRow.lastVal : null);
+        const avgHtml = formatAmount(row.avg, parentRow ? parentRow.avg : null);
+
         let growthHtml = '<span class="growth-flat">–</span>';
         let perYearHtml = '<span class="growth-flat">–</span>';
         if (!isInsufficient) {
             const cls = row.totalGrowth > 0 ? 'growth-up' : (row.totalGrowth < 0 ? 'growth-down' : 'growth-flat');
-            const sign = row.totalGrowth > 0 ? '+' : (row.totalGrowth < 0 ? '−' : '');
-            const abs = Math.abs(row.totalGrowth);
-            const absSlope = Math.abs(row.slope);
-            growthHtml = `<span class="${cls}">${sign}${new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(abs))} kr${normSuffix}</span>`;
-            perYearHtml = `<span class="${cls}">${sign}${new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(absSlope))} kr${normSuffix}/år</span>`;
+            if (usePct) {
+                if (parentRow) {
+                    const gStr = formatSignedPct(row.totalGrowth, parentRow.totalGrowth);
+                    const sStr = formatSignedPct(row.slope, parentRow.slope);
+                    if (gStr !== null) growthHtml = `<span class="${cls}">${gStr}</span>`;
+                    if (sStr !== null) perYearHtml = `<span class="${cls}">${sStr}</span>`;
+                } else {
+                    growthHtml = `<span class="${cls}">100,0 %</span>`;
+                    perYearHtml = `<span class="${cls}">100,0 %</span>`;
+                }
+            } else {
+                const sign = row.totalGrowth > 0 ? '+' : (row.totalGrowth < 0 ? '−' : '');
+                const abs = Math.abs(row.totalGrowth);
+                const absSlope = Math.abs(row.slope);
+                growthHtml = `<span class="${cls}">${sign}${new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(abs))} kr${normSuffix}</span>`;
+                perYearHtml = `<span class="${cls}">${sign}${new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(absSlope))} kr${normSuffix}/år</span>`;
+            }
         }
-
-        const lastValHtml = row.lastVal !== null
-            ? new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(row.lastVal)) + ' kr' + normSuffix
-            : '<span class="growth-flat">–</span>';
-
-        const avgHtml = row.avg !== null
-            ? new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(row.avg)) + ' kr' + normSuffix
-            : '<span class="growth-flat">–</span>';
 
         // Bar visualization lives in whichever column we're sorting on.
         let avgCell, growthCell;
         if (mode === 'avg') {
-            const avgPct = row.avg !== null
+            const avgBarPct = row.avg !== null
                 ? Math.min(100, (Math.abs(row.avg) / Math.max(1, siblingMaxAbs)) * 100)
                 : 0;
-            avgCell = `<td class="number bar-cell col-amount"><div class="bar avg" style="width:${avgPct}%; right:0;"></div><span class="val">${avgHtml}</span></td>`;
+            avgCell = `<td class="number bar-cell col-amount"><div class="bar avg" style="width:${avgBarPct}%; right:0;"></div><span class="val">${avgHtml}</span></td>`;
             growthCell = `<td class="number col-change"><span class="val">${growthHtml}</span></td>`;
         } else {
             const growthPct = isInsufficient ? 0 : Math.min(100, (Math.abs(row.totalGrowth) / Math.max(1, siblingMaxAbs)) * 100);
@@ -700,18 +757,24 @@
 
         const windowYears = parseInt(document.getElementById('windowSlider').value);
         const minWindowYear = maxYear - windowYears + 1;
+        const trendToggleEl = document.getElementById('trendToggle');
+        const showTrend = trendToggleEl ? trendToggleEl.checked : true;
 
         const traces = [];
+        const trendAnnotations = [];
         let i = 0;
         for (const id of selected) {
             const xs = [];
             const ys = [];
+            const winPoints = [];
             for (let y = minDataYear; y <= maxYear; y++) {
                 if (!isFinite(y)) break;
                 const raw = getYearAmount(id, y);
                 if (raw === undefined) continue;
+                const tv = transform(raw, y);
                 xs.push(y);
-                ys.push(transform(raw, y));
+                ys.push(tv);
+                if (y >= minWindowYear) winPoints.push({ x: y, y: tv });
             }
             if (!xs.length) continue;
             const color = CHART_COLORS[i % CHART_COLORS.length];
@@ -726,6 +789,42 @@
                 marker: { color, size: 6 },
                 hovertemplate: '%{x}: %{y:,.0f} kr' + normSuffix + '<extra>%{fullData.name}</extra>',
             });
+
+            if (showTrend && winPoints.length >= 3) {
+                const reg = linearRegression(winPoints);
+                if (reg) {
+                    const x0 = minWindowYear, x1 = maxYear;
+                    const y0 = reg.slope * x0 + reg.intercept;
+                    const y1 = reg.slope * x1 + reg.intercept;
+                    const totalGrowth = reg.slope * (windowYears - 1);
+                    traces.push({
+                        x: [x0, x1],
+                        y: [y0, y1],
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color, width: 2, dash: 'dash' },
+                        showlegend: false,
+                        hoverinfo: 'skip',
+                    });
+                    const sign = totalGrowth > 0 ? '+' : (totalGrowth < 0 ? '−' : '');
+                    const absStr = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(Math.abs(totalGrowth)));
+                    trendAnnotations.push({
+                        xref: 'x',
+                        yref: 'y',
+                        x: (x0 + x1) / 2,
+                        y: (y0 + y1) / 2,
+                        text: `${sign}${absStr} kr${normSuffix}`,
+                        showarrow: false,
+                        xanchor: 'center',
+                        yanchor: 'bottom',
+                        font: { color, size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.85)',
+                        bordercolor: color,
+                        borderwidth: 1,
+                        borderpad: 3,
+                    });
+                }
+            }
         }
 
         if (!traces.length) {
@@ -759,15 +858,18 @@
                 line: { color: 'rgba(31, 63, 149, 0.35)', width: 1, dash: 'dot' },
                 layer: 'below',
             }],
-            annotations: [{
-                xref: 'x',
-                yref: 'paper',
-                x: (minWindowYear + maxYear) / 2,
-                y: 1.04,
-                text: `Tidsfönster (${windowYears} år: ${minWindowYear}–${maxYear})`,
-                showarrow: false,
-                font: { size: 11, color: '#1f3f95' },
-            }],
+            annotations: [
+                {
+                    xref: 'x',
+                    yref: 'paper',
+                    x: (minWindowYear + maxYear) / 2,
+                    y: 1.04,
+                    text: `Tidsfönster (${windowYears} år: ${minWindowYear}–${maxYear})`,
+                    showarrow: false,
+                    font: { size: 11, color: '#1f3f95' },
+                },
+                ...trendAnnotations,
+            ],
         };
         window.Plotly.newPlot(div, traces, layout, { displayModeBar: false, responsive: true });
     }
@@ -775,6 +877,9 @@
     async function init() {
         await loadData();
         updateInflationNote();
+
+        const lastYearHeader = document.getElementById('lastYearHeader');
+        if (lastYearHeader && maxYear) lastYearHeader.textContent = `Senaste året (${maxYear})`;
 
         // Stretch the window slider to cover everything we actually have data for.
         const slider = document.getElementById('windowSlider');
@@ -784,7 +889,9 @@
             const desired = 15;
             const start = Math.min(desired, totalYears);
             slider.value = String(Math.max(parseInt(slider.min), start));
-            document.getElementById('windowLabel').textContent = `senaste ${slider.value} åren`;
+            const initWindow = parseInt(slider.value);
+            const initFirstYear = maxYear - initWindow + 1;
+            document.getElementById('windowLabel').textContent = `senaste ${initWindow} åren (${initFirstYear}–${maxYear})`;
         }
 
         document.getElementById('inflationToggle').addEventListener('change', (e) => {
@@ -793,6 +900,13 @@
             renderTable();
             renderChart();
         });
+
+        document.getElementById('percentOfParentToggle').addEventListener('change', (e) => {
+            showAsPercentOfParent = e.target.checked;
+            renderTable();
+        });
+
+        document.getElementById('trendToggle').addEventListener('change', renderChart);
 
         document.querySelectorAll('input[name="norm"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
