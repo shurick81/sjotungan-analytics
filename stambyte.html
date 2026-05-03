@@ -563,15 +563,35 @@
         const progressEvents = parseEvents(progressText);
         const planEvents = parseEvents(planText);
 
+        // Per-port window: reality where known, plan as fallback.
+        // End falls back to plan only if today hasn't already passed planned end with no
+        // real completion — otherwise port stays in-progress (overdue) until reality lands.
+        const portWindow = new Map();
+        const allPortIds = new Set([...progressEvents.keys(), ...planEvents.keys()]);
+        allPortIds.forEach(port => {
+            const prog = progressEvents.get(port) || [];
+            const plan = planEvents.get(port) || [];
+            const pickTime = (arr, ev) => {
+                const hit = arr.find(e => e.event === ev);
+                return hit ? hit.time : null;
+            };
+            const realStart = pickTime(prog, 0);
+            const realEnd   = pickTime(prog, 1);
+            const planStart = pickTime(plan, 0);
+            const planEnd   = pickTime(plan, 1);
+            const start = realStart != null ? realStart : planStart;
+            const end = realEnd != null
+                ? realEnd
+                : (planEnd != null && todayMs < planEnd ? planEnd : null);
+            portWindow.set(port, { start, end, planStart, planEnd, realStart, realEnd });
+        });
+
         function portStateAt(port, t) {
-            const events = (t > todayMs ? planEvents : progressEvents).get(port);
-            if (!events || !events.length) return 'idle';
-            let state = 'idle';
-            for (const e of events) {
-                if (e.time <= t) state = e.event === 1 ? 'completed' : 'in-progress';
-                else break;
-            }
-            return state;
+            const w = portWindow.get(port);
+            if (!w) return 'idle';
+            if (w.end != null && t >= w.end) return 'completed';
+            if (w.start != null && t >= w.start) return 'in-progress';
+            return 'idle';
         }
 
         const ICON_PROGRESS = '⚒';
@@ -677,19 +697,25 @@
                     aptSpan.textContent = '(' + apartmentCount + ' lägenheter)';
                     li.appendChild(aptSpan);
 
-                    let startTime = null, endTime = null;
+                    let phasePlanStart = null, phasePlanEnd = null;
                     ports.forEach(p => {
-                        (planEvents.get(p) || []).forEach(e => {
-                            if (e.event === 0) startTime = startTime === null ? e.time : Math.min(startTime, e.time);
-                            if (e.event === 1) endTime   = endTime   === null ? e.time : Math.max(endTime,   e.time);
-                        });
+                        const w = portWindow.get(p);
+                        if (!w) return;
+                        if (w.planStart != null) {
+                            phasePlanStart = phasePlanStart == null
+                                ? w.planStart : Math.min(phasePlanStart, w.planStart);
+                        }
+                        if (w.planEnd != null) {
+                            phasePlanEnd = phasePlanEnd == null
+                                ? w.planEnd : Math.max(phasePlanEnd, w.planEnd);
+                        }
                     });
                     const datesEl = document.createElement('span');
                     datesEl.className = 'phase-dates';
                     li.appendChild(datesEl);
 
                     ul.appendChild(li);
-                    phaseEntries.push({ li, ports: [...ports], datesEl, startTime, endTime });
+                    phaseEntries.push({ li, ports: [...ports], datesEl, phasePlanStart, phasePlanEnd });
                 });
                 block.appendChild(ul);
                 list.appendChild(block);
@@ -756,25 +782,56 @@
         }
 
         const hideDoneToggle = document.getElementById('hide-done-toggle');
-        const HORIZON_MS = 180 * 86400000;
+        const DAY_MS = 86400000;
+        const HORIZON_MS = 180 * DAY_MS;
         const fmtIso = (ms) => new Date(ms).toISOString().slice(0, 10);
         function applyEtapperFilter(t) {
             const hideDone = hideDoneToggle ? hideDoneToggle.checked : false;
             blockEntries.forEach(({ block, phases }) => {
                 let anyVisible = false;
-                phases.forEach(({ li, ports, datesEl, startTime, endTime }) => {
-                    const allDone = ports.every(p => portStateAt(p, t) === 'completed');
+                phases.forEach(({ li, ports, datesEl, phasePlanStart, phasePlanEnd }) => {
+                    const states = ports.map(p => portStateAt(p, t));
+                    const allDone = states.every(s => s === 'completed');
+                    const anyInProgress = states.some(s => s === 'in-progress');
                     const hidden = hideDone && allDone;
                     li.style.display = hidden ? 'none' : '';
                     if (!hidden) anyVisible = true;
 
-                    if (datesEl) {
-                        const showDates = !allDone
-                            && startTime != null
-                            && startTime <= t + HORIZON_MS;
+                    if (!datesEl) return;
+                    if (allDone) {
+                        const realEnds = ports.map(p => portWindow.get(p)?.realEnd);
+                        const allReal = realEnds.every(v => v != null);
+                        if (allReal) {
+                            const phaseRealEnd = Math.max(...realEnds);
+                            const delta = phasePlanEnd != null
+                                ? Math.round((phaseRealEnd - phasePlanEnd) / DAY_MS)
+                                : 0;
+                            datesEl.textContent = delta > 0
+                                ? 'Klar ' + fmtIso(phaseRealEnd) + ' (' + delta + ' dagar försenad)'
+                                : 'Klar ' + fmtIso(phaseRealEnd);
+                        } else if (phasePlanEnd != null) {
+                            datesEl.textContent = 'Beräknas klart ' + fmtIso(phasePlanEnd);
+                        } else {
+                            datesEl.textContent = '';
+                        }
+                    } else if (anyInProgress) {
+                        const overdue = phasePlanEnd != null
+                            && todayMs > phasePlanEnd
+                            && t >= todayMs;
+                        if (overdue) {
+                            const delay = Math.round((todayMs - phasePlanEnd) / DAY_MS);
+                            datesEl.textContent = 'Pågår – försenad ' + delay + ' dagar';
+                        } else if (phasePlanEnd != null) {
+                            datesEl.textContent = 'Pågår – planerat klart ' + fmtIso(phasePlanEnd);
+                        } else {
+                            datesEl.textContent = 'Pågår';
+                        }
+                    } else {
+                        const showDates = phasePlanStart != null
+                            && phasePlanStart <= t + HORIZON_MS;
                         if (showDates) {
-                            const endStr = endTime != null ? fmtIso(endTime) : '?';
-                            datesEl.textContent = 'Planerat ' + fmtIso(startTime) + ' – ' + endStr;
+                            const endStr = phasePlanEnd != null ? fmtIso(phasePlanEnd) : '?';
+                            datesEl.textContent = 'Planerat ' + fmtIso(phasePlanStart) + ' – ' + endStr;
                         } else {
                             datesEl.textContent = '';
                         }
