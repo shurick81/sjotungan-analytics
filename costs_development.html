@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Myggan – Kostnadsutveckling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <style>
+        body { font-size: 1rem; }
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.25rem; }
+            p { font-size: 0.875rem; }
+        }
+        h1 { font-size: 2.25rem; }
+        h2 { font-size: 1.5rem; }
+
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-blue-light: #7daef2;
+            --vm-bg: #d9dbe1;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        /* ── Inflation toggle ────────────────────────── */
+        .inflation-toggle {
+            margin: 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #33486f;
+            font-size: 13px;
+        }
+        .inflation-toggle input { transform: translateY(1px); }
+        .inflation-help {
+            margin: 8px 0 18px;
+            font-size: 12px;
+            color: #4b5b75;
+            line-height: 1.45;
+            max-width: 900px;
+        }
+        .inflation-help a {
+            color: var(--vm-blue);
+            text-decoration: underline;
+        }
+
+        /* ── Normalization toggle ─────────────────────── */
+        .norm-toggle {
+            display: inline-flex;
+            border: 1px solid var(--vm-border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0 4px;
+        }
+        .norm-toggle label {
+            padding: 5px 14px;
+            font-size: 13px;
+            color: #33486f;
+            cursor: pointer;
+            border-right: 1px solid var(--vm-border);
+            user-select: none;
+            transition: background .15s, color .15s;
+        }
+        .norm-toggle label:last-child { border-right: none; }
+        .norm-toggle input { display: none; }
+        .norm-toggle input:checked + span {
+            background: var(--vm-blue);
+            color: #fff;
+        }
+        .norm-toggle label span {
+            display: block;
+            padding: 5px 14px;
+            margin: -5px -14px;
+            border-radius: 0;
+        }
+
+        /* ── Window slider ─────────────────────────────── */
+        .window-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0 8px;
+            flex-wrap: wrap;
+        }
+        .window-row label {
+            font-weight: 600;
+            color: var(--vm-blue);
+            font-size: 14px;
+        }
+        .window-row input[type="range"] {
+            flex: 1;
+            min-width: 140px;
+            max-width: 320px;
+            accent-color: var(--vm-blue);
+        }
+        .window-row .window-label {
+            font-weight: 600;
+            color: var(--vm-text);
+            font-size: 14px;
+            min-width: 110px;
+        }
+
+        /* ── Cost table ────────────────────────────────── */
+        .cost-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .cost-table thead { background: #eef3fb; }
+        .cost-table th {
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #33486f;
+            border-bottom: 2px solid var(--vm-border);
+            white-space: nowrap;
+        }
+        .cost-table th.number { text-align: right; }
+        .cost-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #dde6f4;
+            color: var(--vm-text);
+        }
+        .cost-table td.number {
+            text-align: right;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+        }
+        .cost-table td.muted { color: var(--vm-muted); }
+        .cost-table tbody tr:hover { background: #eef3fb; }
+        .cost-table tbody tr:last-child td { border-bottom: none; }
+        .cost-table .top-level { font-weight: 600; }
+        .cost-table .insufficient { opacity: 0.55; }
+        .cost-table .name-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cost-table .expand-btn {
+            width: 18px;
+            height: 18px;
+            border: 1px solid var(--vm-border);
+            border-radius: 4px;
+            background: #fff;
+            color: var(--vm-blue);
+            font-size: 12px;
+            line-height: 1;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cost-table .expand-btn:hover { background: #eef3fb; }
+        .cost-table .expand-spacer {
+            display: inline-block;
+            width: 18px;
+            flex-shrink: 0;
+        }
+
+        .growth-up { color: #dc2626; font-weight: 600; }   /* cost increased */
+        .growth-down { color: #16a34a; font-weight: 600; } /* cost decreased */
+        .growth-flat { color: #6b7280; }
+
+        .bar-cell {
+            position: relative;
+            min-width: 110px;
+        }
+        .bar-cell .bar {
+            position: absolute;
+            top: 0; bottom: 0;
+            background: rgba(220, 38, 38, 0.10);
+            z-index: 0;
+        }
+        .bar-cell .bar.neg { background: rgba(22, 163, 74, 0.10); }
+        .bar-cell .bar.avg { background: rgba(31, 63, 149, 0.10); }
+
+        /* Tight layouts: drop the columns that aren't currently being sorted on */
+        @media (max-width: 759px) {
+            .cost-table[data-sort="growth"] .col-amount { display: none; }
+            .cost-table[data-sort="avg"] .col-change { display: none; }
+        }
+        .bar-cell .val {
+            position: relative;
+            z-index: 1;
+        }
+
+        .legend-box {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border: 1px solid var(--vm-border);
+            border-radius: 8px;
+            background: #f7f9fd;
+            color: var(--vm-muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .legend-box a {
+            color: var(--vm-blue);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+<header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+<nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+<button onclick="location.href='https://visionmyggan.se/#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+<button onclick="location.href='https://visionmyggan.se/#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+<button onclick="location.href='https://visionmyggan.se/#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+<button onclick="location.href='https://visionmyggan.se/#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+</nav>
+</header>
+
+<main class="container mx-auto mt-8 p-4">
+
+<section id="start" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+    <h1 class="text-blue-900 font-extrabold text-3xl mb-3 border-b-4 border-blue-300 pb-2">Kostnadsutveckling</h1>
+    <p class="text-gray-600 mb-4">Vilka kostnadsposter har vuxit mest över tid? Tabellen visar varje kostnadskategori med dess uppskattade förändring i kronor över valt antal år, beräknad med <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares" target="_blank" rel="noopener" class="text-blue-700 underline">linjär regression</a> – inte bara differensen mellan första och sista året, för att jämna ut enskilda topp- och bottenår.</p>
+
+    <label class="inflation-toggle">
+        <input type="checkbox" id="inflationToggle">
+        Visa inflationsjusterade belopp
+    </label>
+    <p id="inflationHelp" class="inflation-help"></p>
+
+    <div class="norm-toggle" id="normToggle">
+        <label><input type="radio" name="norm" value="1" checked><span>Totalt</span></label>
+        <label><input type="radio" name="norm" value="kvm"><span>Per m² (51 666)</span></label>
+        <label><input type="radio" name="norm" value="apt"><span>Per lägenhet (613)</span></label>
+    </div>
+
+    <div id="costChart" style="margin:20px 0 8px; width:100%; min-height:340px; background:#fff; border:1px solid var(--vm-border); border-radius:10px; padding:8px;"></div>
+
+    <div class="window-row">
+        <label for="windowSlider">Tidsfönster:</label>
+        <input type="range" id="windowSlider" min="3" max="15" value="15" step="1">
+        <span id="windowLabel" class="window-label">senaste 15 åren</span>
+    </div>
+
+    <div class="window-row" style="margin-top:6px;">
+        <label>Sortera efter:</label>
+        <div class="norm-toggle" id="sortToggle" style="margin:0;">
+            <label><input type="radio" name="sortBy" value="growth" checked><span>Förändring</span></label>
+            <label><input type="radio" name="sortBy" value="avg"><span>Snitt</span></label>
+        </div>
+    </div>
+
+    <table class="cost-table" id="costTable">
+        <thead>
+            <tr>
+                <th style="width:32px;"></th>
+                <th>Kategori</th>
+                <th class="number col-amount">Senaste året</th>
+                <th class="number col-amount">Snitt</th>
+                <th class="number col-change">Förändring</th>
+                <th class="number col-change">Per år</th>
+            </tr>
+        </thead>
+        <tbody id="costTbody">
+            <tr><td colspan="6" class="muted" style="text-align:center; padding:24px;">Laddar…</td></tr>
+        </tbody>
+    </table>
+
+    <div class="legend-box">
+        Förändringen är beräknad som regressionslinjens värde i sista året minus i första året i fönstret (= lutning × antal år). En post visas blekt om den har färre än tre datapunkter i fönstret – då går det inte att räkna ut en meningsfull trend. Vid sortering på <em>förändring</em> visas största ökningar överst och största minskningar nederst; vid sortering på <em>snittbelopp</em> visas största snitt först. Röda värden = kostnaden har stigit, gröna värden = kostnaden har minskat.
+    </div>
+</section>
+
+</main>
+
+<footer class="text-center text-gray-500 text-sm py-4 mt-8">
+&copy; 2026 Vision Myggan – En medlemsrörelse i BRF Sjötungan
+</footer>
+
+<script>
+    const TOTAL_AREA_SQM = 51666;
+    const TOTAL_APARTMENTS = 613;
+
+    let macroBaseYear = '';
+    let macroPriceIndexByYear = {};
+    let adjustForInflation = false;
+    let normDivisor = 1;
+    let normSuffix = '';
+
+    const TOTAL_COSTS_ID = -1; // synthetic root that sums all top-level cost categories
+
+    let categories = {};       // id -> { name, parent, depth }
+    let childrenByParent = {}; // parentId (string "null" for roots) -> [childId, ...]
+    let eventsByCategory = {}; // catId -> { year: amount }
+    let maxYear = 0;
+    let minDataYear = Infinity;
+    const expanded = new Set(); // catIds whose children are visible
+    const selected = new Set(); // catIds whose lines are plotted in the chart
+
+    function updateInflationNote() {
+        const help = document.getElementById('inflationHelp');
+        if (!help) return;
+        const baseYear = macroBaseYear || '2024';
+        const sectionLink = `<a href="changing_over_time.html#inflation-section">"Inflation och kronans köpkraft"</a>`;
+        if (adjustForInflation) {
+            help.innerHTML = `Alla belopp i tabellen räknas om med KPI till ${baseYear} års kronvärde. Detta gör år-till-år-jämförelser mer rättvisa, men siffrorna skiljer sig då från de nominella originalbeloppen i källan. Se avsnittet ${sectionLink} på sidan Ekonomisk utveckling för metod och underlag.`;
+        } else {
+            help.innerHTML = `Belopp visas exakt som nominella årssiffror (löpande priser) från underlagen. Aktivera valet ovan för att se samma belopp omräknade till ett gemensamt penningvärde (${baseYear} års kronvärde). Se avsnittet ${sectionLink} på sidan Ekonomisk utveckling för metod och underlag.`;
+        }
+    }
+
+    function adjustForInflationValue(value, year) {
+        if (!adjustForInflation) return value;
+        const idx = macroPriceIndexByYear[year];
+        if (!idx || idx <= 0) return value;
+        return value * (100 / idx);
+    }
+
+    function applyNorm(value) {
+        return normDivisor === 1 ? value : value / normDivisor;
+    }
+
+    function transform(amount, year) {
+        // costs are negative in the source; flip sign so we work in positive cost-kronor
+        const positive = -amount;
+        return applyNorm(adjustForInflationValue(positive, year));
+    }
+
+    function formatKr(v) {
+        if (v === null || v === undefined || !isFinite(v)) return '–';
+        const abs = Math.abs(v);
+        const s = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(abs));
+        return (v < 0 ? '−' : '') + s + (normSuffix ? ' ' + 'kr' + normSuffix : ' kr');
+    }
+
+    function linearRegression(points) {
+        const n = points.length;
+        if (n < 2) return null;
+        const sumX = points.reduce((s, p) => s + p.x, 0);
+        const sumY = points.reduce((s, p) => s + p.y, 0);
+        const sumXY = points.reduce((s, p) => s + p.x * p.y, 0);
+        const sumX2 = points.reduce((s, p) => s + p.x * p.x, 0);
+        const denom = n * sumX2 - sumX * sumX;
+        if (denom === 0) return null;
+        const slope = (n * sumXY - sumX * sumY) / denom;
+        const intercept = (sumY - slope * sumX) / n;
+        return { slope, intercept };
+    }
+
+    function bumpDescendantDepth(catId, delta) {
+        const stack = [...(childrenByParent[String(catId)] || [])];
+        while (stack.length) {
+            const id = stack.pop();
+            if (categories[id]) categories[id].depth += delta;
+            const kids = childrenByParent[String(id)] || [];
+            stack.push(...kids);
+        }
+    }
+
+    async function loadData() {
+        const cacheBust = '?v=' + Date.now();
+
+        // Categories
+        const catResp = await fetch('data/event_categories.csv' + cacheBust);
+        const catText = await catResp.text();
+        const catLines = catText.trim().split('\n');
+        for (let i = 1; i < catLines.length; i++) {
+            const line = catLines[i].trim();
+            if (!line) continue;
+            const parts = line.split(',');
+            const id = parseInt(parts[0]);
+            const name = parts[1];
+            const parent = parts[2] && parts[2].trim() !== '' ? parseInt(parts[2]) : null;
+            categories[id] = { name, parent, depth: 0 };
+        }
+        // Compute depth + index children by parent
+        for (const id of Object.keys(categories)) {
+            let d = 0;
+            let cur = categories[id];
+            while (cur.parent !== null && categories[cur.parent] && d < 5) {
+                d++;
+                cur = categories[cur.parent];
+            }
+            categories[id].depth = d;
+
+            const parentKey = categories[id].parent === null ? 'root' : String(categories[id].parent);
+            if (!childrenByParent[parentKey]) childrenByParent[parentKey] = [];
+            childrenByParent[parentKey].push(parseInt(id));
+        }
+
+        // Events
+        const evResp = await fetch('data/financial_events.csv' + cacheBust);
+        const evText = await evResp.text();
+        const evLines = evText.trim().split('\n');
+        for (let i = 1; i < evLines.length; i++) {
+            const line = evLines[i].trim();
+            if (!line) continue;
+            const vals = line.split(',');
+            const year = parseInt(vals[0]);
+            const catId = parseInt(vals[1]);
+            const amount = parseInt(vals[2]);
+            if (!eventsByCategory[catId]) eventsByCategory[catId] = {};
+            eventsByCategory[catId][year] = amount;
+            if (year > maxYear) maxYear = year;
+            if (year < minDataYear) minDataYear = year;
+        }
+
+        // Insert synthetic "Totala kostnader" root above all top-level cost categories.
+        // Existing roots that look like costs become its children (depth 1); their
+        // descendants get bumped one deeper. Non-cost roots stay at the top so they're
+        // still filtered out by the regular sort path.
+        categories[TOTAL_COSTS_ID] = { name: 'Totala kostnader', parent: null, depth: 0 };
+        const previousRoots = childrenByParent['root'] || [];
+        const reRooted = [];
+        const remainingRoots = [];
+        for (const id of previousRoots) {
+            if (isCostCategory(id)) {
+                categories[id].parent = TOTAL_COSTS_ID;
+                categories[id].depth = 1;
+                bumpDescendantDepth(id, +1);
+                reRooted.push(id);
+            } else {
+                remainingRoots.push(id);
+            }
+        }
+        childrenByParent['root'] = [TOTAL_COSTS_ID, ...remainingRoots];
+        childrenByParent[String(TOTAL_COSTS_ID)] = reRooted;
+
+        // Macro for inflation indexing
+        try {
+            const macroResp = await fetch('data/macro_sweden.json' + cacheBust);
+            const macroPayload = await macroResp.json();
+            const rows = (macroPayload.data || [])
+                .map(r => ({ year: String(r.year), inflationYoY: Number(r.inflation_yoy_pct) }))
+                .sort((a, b) => a.year.localeCompare(b.year));
+            if (rows.length) {
+                const macroYears = new Set(rows.map(r => r.year));
+                const dataYears = Object.keys(eventsByCategory)
+                    .flatMap(c => Object.keys(eventsByCategory[c]))
+                    .map(String);
+                const common = [...new Set(dataYears)].filter(y => macroYears.has(y)).sort();
+                macroBaseYear = common.length ? common[common.length - 1] : rows[rows.length - 1].year;
+
+                const baseIdx = Math.max(0, rows.findIndex(r => r.year === macroBaseYear));
+                const idx = rows.map(r => ({ ...r, priceIndex: null }));
+                idx[baseIdx].priceIndex = 100;
+                for (let i = baseIdx + 1; i < idx.length; i++) {
+                    idx[i].priceIndex = idx[i - 1].priceIndex * (1 + idx[i].inflationYoY / 100);
+                }
+                for (let i = baseIdx - 1; i >= 0; i--) {
+                    idx[i].priceIndex = idx[i + 1].priceIndex / (1 + idx[i + 1].inflationYoY / 100);
+                }
+                idx.forEach(r => { macroPriceIndexByYear[r.year] = r.priceIndex; });
+            }
+        } catch (err) {
+            console.warn('Macro data unavailable, inflation toggle disabled:', err);
+        }
+    }
+
+    function isCostCategory(catId) {
+        const yearMap = eventsByCategory[catId];
+        if (yearMap) {
+            const values = Object.values(yearMap);
+            if (values.length) {
+                const negCount = values.filter(v => v < 0).length;
+                return negCount > values.length / 2;
+            }
+        }
+        // No own data: treat as cost if any descendant is a cost category
+        const kids = childrenByParent[String(catId)] || [];
+        return kids.some(id => isCostCategory(id));
+    }
+
+    // Returns the raw kr amount for a category in a given year. Falls back to
+    // the sum of direct children when the parent has no own value (e.g. cat 2
+    // Fastighetsskötsel reports 2003-2023 directly, then switches to per-child
+    // breakdown from 2024). Returns undefined when nothing is available.
+    function getYearAmount(catId, year) {
+        const own = eventsByCategory[catId];
+        if (own && own[year] !== undefined) return own[year];
+
+        const kids = childrenByParent[String(catId)] || [];
+        if (!kids.length) return undefined;
+
+        let sum = 0;
+        let any = false;
+        for (const kidId of kids) {
+            const v = getYearAmount(kidId, year);
+            if (v !== undefined) {
+                sum += v;
+                any = true;
+            }
+        }
+        return any ? sum : undefined;
+    }
+
+    function computeRow(catId, windowYears) {
+        const minWindowYear = maxYear - windowYears + 1;
+
+        const points = [];
+        for (let y = minWindowYear; y <= maxYear; y++) {
+            const raw = getYearAmount(catId, y);
+            if (raw !== undefined) {
+                points.push({ x: y, y: transform(raw, y) });
+            }
+        }
+
+        const lastRaw = getYearAmount(catId, maxYear);
+        const lastVal = lastRaw !== undefined ? transform(lastRaw, maxYear) : null;
+
+        const avg = points.length ? points.reduce((s, p) => s + p.y, 0) / points.length : null;
+
+        let slope = null, totalGrowth = null;
+        if (points.length >= 3) {
+            const reg = linearRegression(points);
+            if (reg) {
+                slope = reg.slope;
+                totalGrowth = slope * (windowYears - 1);
+            }
+        }
+
+        const cat = categories[catId];
+        return {
+            catId,
+            name: cat ? cat.name : `#${catId}`,
+            depth: cat ? cat.depth : 0,
+            lastVal,
+            avg,
+            slope,
+            totalGrowth,
+            n: points.length,
+        };
+    }
+
+    function getSortMode() {
+        const el = document.querySelector('input[name="sortBy"]:checked');
+        return el ? el.value : 'growth';
+    }
+
+    function sortSiblings(catIds, windowYears) {
+        const mode = getSortMode();
+        // Growth: signed descending — biggest cost increases on top, decreases at the bottom.
+        // Avg:    magnitude descending — biggest average cost first.
+        const keyFor = mode === 'avg'
+            ? (r) => Math.abs(r.avg || 0)
+            : (r) => (r.totalGrowth || 0);
+        const hasKey = mode === 'avg'
+            ? (r) => r.avg !== null
+            : (r) => r.totalGrowth !== null;
+
+        return catIds
+            .filter(id => isCostCategory(id))
+            .map(id => ({ id, row: computeRow(id, windowYears) }))
+            .filter(x => x.row !== null)
+            .sort((a, b) => {
+                const aHas = hasKey(a.row);
+                const bHas = hasKey(b.row);
+                if (aHas && bHas) return keyFor(b.row) - keyFor(a.row);
+                if (aHas) return -1;
+                if (bHas) return 1;
+                return Math.abs(b.row.lastVal || 0) - Math.abs(a.row.lastVal || 0);
+            });
+    }
+
+    function hasCostChildren(catId) {
+        const kids = childrenByParent[String(catId)] || [];
+        return kids.some(id => isCostCategory(id));
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('costTbody');
+        const windowYears = parseInt(document.getElementById('windowSlider').value);
+        document.getElementById('windowLabel').textContent = `senaste ${windowYears} åren`;
+
+        const tbl = document.getElementById('costTable');
+        if (tbl) tbl.dataset.sort = getSortMode();
+
+        if (!Object.keys(categories).length) return;
+
+        tbody.innerHTML = '';
+        const rootIds = childrenByParent['root'] || [];
+        const sortedRoots = sortSiblings(rootIds, windowYears);
+        if (!sortedRoots.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center; padding:24px;">Inga kostnadsposter.</td></tr>';
+            return;
+        }
+        renderBranch(tbody, rootIds, 0, windowYears);
+    }
+
+    function siblingBarKey(row, mode) {
+        if (mode === 'avg') return Math.abs(row.avg || 0);
+        return Math.abs(row.totalGrowth || 0);
+    }
+
+    function renderBranch(tbody, catIds, depth, windowYears) {
+        const mode = getSortMode();
+        const sorted = sortSiblings(catIds, windowYears);
+        const siblingMaxAbs = Math.max(1, ...sorted.map(s => siblingBarKey(s.row, mode)));
+
+        for (const { id, row } of sorted) {
+            renderRow(tbody, row, depth, siblingMaxAbs, mode);
+            if (expanded.has(id)) {
+                const kids = childrenByParent[String(id)] || [];
+                if (kids.length) renderBranch(tbody, kids, depth + 1, windowYears);
+            }
+        }
+    }
+
+    function renderRow(tbody, row, depth, siblingMaxAbs, mode) {
+        const tr = document.createElement('tr');
+        const isInsufficient = row.totalGrowth === null;
+        if (isInsufficient) tr.classList.add('insufficient');
+
+        const isTopLevel = depth === 0;
+        const hasChildren = hasCostChildren(row.catId);
+        const isExpanded = expanded.has(row.catId);
+        const indentPx = depth * 22;
+        const expandHtml = hasChildren
+            ? `<button class="expand-btn" data-expand-id="${row.catId}" aria-label="Visa underkategorier">${isExpanded ? '−' : '+'}</button>`
+            : `<span class="expand-spacer"></span>`;
+        const nameClass = isTopLevel ? 'top-level' : '';
+
+        let growthHtml = '<span class="growth-flat">–</span>';
+        let perYearHtml = '<span class="growth-flat">–</span>';
+        if (!isInsufficient) {
+            const cls = row.totalGrowth > 0 ? 'growth-up' : (row.totalGrowth < 0 ? 'growth-down' : 'growth-flat');
+            const sign = row.totalGrowth > 0 ? '+' : (row.totalGrowth < 0 ? '−' : '');
+            const abs = Math.abs(row.totalGrowth);
+            const absSlope = Math.abs(row.slope);
+            growthHtml = `<span class="${cls}">${sign}${new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(abs))} kr${normSuffix}</span>`;
+            perYearHtml = `<span class="${cls}">${sign}${new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(absSlope))} kr${normSuffix}/år</span>`;
+        }
+
+        const lastValHtml = row.lastVal !== null
+            ? new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(row.lastVal)) + ' kr' + normSuffix
+            : '<span class="growth-flat">–</span>';
+
+        const avgHtml = row.avg !== null
+            ? new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(row.avg)) + ' kr' + normSuffix
+            : '<span class="growth-flat">–</span>';
+
+        // Bar visualization lives in whichever column we're sorting on.
+        let avgCell, growthCell;
+        if (mode === 'avg') {
+            const avgPct = row.avg !== null
+                ? Math.min(100, (Math.abs(row.avg) / Math.max(1, siblingMaxAbs)) * 100)
+                : 0;
+            avgCell = `<td class="number bar-cell col-amount"><div class="bar avg" style="width:${avgPct}%; right:0;"></div><span class="val">${avgHtml}</span></td>`;
+            growthCell = `<td class="number col-change"><span class="val">${growthHtml}</span></td>`;
+        } else {
+            const growthPct = isInsufficient ? 0 : Math.min(100, (Math.abs(row.totalGrowth) / Math.max(1, siblingMaxAbs)) * 100);
+            const barCls = (row.totalGrowth || 0) < 0 ? 'bar neg' : 'bar';
+            avgCell = `<td class="number col-amount">${avgHtml}</td>`;
+            growthCell = `<td class="number bar-cell col-change"><div class="${barCls}" style="width:${growthPct}%; right:0;"></div><span class="val">${growthHtml}</span></td>`;
+        }
+
+        const isChecked = selected.has(row.catId);
+        tr.innerHTML = `
+            <td style="text-align:center;"><input type="checkbox" class="row-check" data-check-id="${row.catId}" ${isChecked ? 'checked' : ''} aria-label="Visa i grafen"></td>
+            <td class="${nameClass}"><div class="name-cell" style="padding-left:${indentPx}px;">${expandHtml}<span>${row.name}</span></div></td>
+            <td class="number col-amount">${lastValHtml}</td>
+            ${avgCell}
+            ${growthCell}
+            <td class="number col-change">${perYearHtml}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function handleExpandClick(e) {
+        const btn = e.target.closest('.expand-btn');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.expandId);
+        if (expanded.has(id)) expanded.delete(id);
+        else expanded.add(id);
+        renderTable();
+    }
+
+    function handleCheckboxChange(e) {
+        const cb = e.target.closest('.row-check');
+        if (!cb) return;
+        const id = parseInt(cb.dataset.checkId);
+        if (cb.checked) selected.add(id);
+        else selected.delete(id);
+        renderChart();
+    }
+
+    const CHART_COLORS = ['#1f3f95', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#9333ea', '#ea580c'];
+
+    function renderChart() {
+        const div = document.getElementById('costChart');
+        if (!div || !window.Plotly) return;
+
+        const windowYears = parseInt(document.getElementById('windowSlider').value);
+        const minWindowYear = maxYear - windowYears + 1;
+
+        const traces = [];
+        let i = 0;
+        for (const id of selected) {
+            const xs = [];
+            const ys = [];
+            for (let y = minDataYear; y <= maxYear; y++) {
+                if (!isFinite(y)) break;
+                const raw = getYearAmount(id, y);
+                if (raw === undefined) continue;
+                xs.push(y);
+                ys.push(transform(raw, y));
+            }
+            if (!xs.length) continue;
+            const color = CHART_COLORS[i % CHART_COLORS.length];
+            i++;
+            traces.push({
+                x: xs,
+                y: ys,
+                name: categories[id] ? categories[id].name : '#' + id,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color, width: 2 },
+                marker: { color, size: 6 },
+                hovertemplate: '%{x}: %{y:,.0f} kr' + normSuffix + '<extra>%{fullData.name}</extra>',
+            });
+        }
+
+        if (!traces.length) {
+            window.Plotly.purge(div);
+            div.innerHTML = '<p style="color:var(--vm-muted); font-size:13px; text-align:center; padding:48px 16px;">Markera kategorier i tabellen nedan för att se deras utveckling över tid.</p>';
+            return;
+        }
+
+        // Plotly.purge resets the container, so clear any placeholder content first
+        div.innerHTML = '';
+        const yTitle = adjustForInflation
+            ? 'kr' + normSuffix + ' (' + (macroBaseYear || '2024') + ' års penningvärde)'
+            : 'kr' + normSuffix;
+        const layout = {
+            margin: { l: 80, r: 16, t: 36, b: 56 },
+            xaxis: { title: '', tickmode: 'linear', dtick: 1, tickformat: 'd' },
+            yaxis: { title: yTitle, tickformat: ',.0f', rangemode: 'tozero' },
+            hovermode: 'closest',
+            legend: { orientation: 'h', y: -0.18 },
+            plot_bgcolor: '#fff',
+            paper_bgcolor: '#fff',
+            shapes: [{
+                type: 'rect',
+                xref: 'x',
+                yref: 'paper',
+                x0: minWindowYear - 0.5,
+                x1: maxYear + 0.5,
+                y0: 0,
+                y1: 1,
+                fillcolor: 'rgba(31, 63, 149, 0.08)',
+                line: { color: 'rgba(31, 63, 149, 0.35)', width: 1, dash: 'dot' },
+                layer: 'below',
+            }],
+            annotations: [{
+                xref: 'x',
+                yref: 'paper',
+                x: (minWindowYear + maxYear) / 2,
+                y: 1.04,
+                text: `Tidsfönster (${windowYears} år: ${minWindowYear}–${maxYear})`,
+                showarrow: false,
+                font: { size: 11, color: '#1f3f95' },
+            }],
+        };
+        window.Plotly.newPlot(div, traces, layout, { displayModeBar: false, responsive: true });
+    }
+
+    async function init() {
+        await loadData();
+        updateInflationNote();
+
+        // Stretch the window slider to cover everything we actually have data for.
+        const slider = document.getElementById('windowSlider');
+        if (isFinite(minDataYear) && maxYear) {
+            const totalYears = maxYear - minDataYear + 1;
+            slider.max = String(totalYears);
+            const desired = 15;
+            const start = Math.min(desired, totalYears);
+            slider.value = String(Math.max(parseInt(slider.min), start));
+            document.getElementById('windowLabel').textContent = `senaste ${slider.value} åren`;
+        }
+
+        document.getElementById('inflationToggle').addEventListener('change', (e) => {
+            adjustForInflation = e.target.checked;
+            updateInflationNote();
+            renderTable();
+            renderChart();
+        });
+
+        document.querySelectorAll('input[name="norm"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const v = e.target.value;
+                if (v === 'kvm') { normDivisor = TOTAL_AREA_SQM; normSuffix = '/m²'; }
+                else if (v === 'apt') { normDivisor = TOTAL_APARTMENTS; normSuffix = '/lgh'; }
+                else { normDivisor = 1; normSuffix = ''; }
+                renderTable();
+                renderChart();
+            });
+        });
+
+        document.getElementById('windowSlider').addEventListener('input', () => {
+            renderTable();
+            renderChart();
+        });
+        document.querySelectorAll('input[name="sortBy"]').forEach(r => r.addEventListener('change', renderTable));
+        document.getElementById('costTbody').addEventListener('click', handleExpandClick);
+        document.getElementById('costTbody').addEventListener('change', handleCheckboxChange);
+
+        // Default selection: the synthetic "Totala kostnader" root
+        if (categories[TOTAL_COSTS_ID]) selected.add(TOTAL_COSTS_ID);
+
+        renderTable();
+        renderChart();
+    }
+
+    init();
+</script>
+
+</body>
+</html>
