@@ -131,6 +131,9 @@
             text-align: center;
             border-bottom: 1px solid var(--vm-border);
         }
+        .cost-table .col-amount + .col-change {
+            border-left: 2px solid var(--vm-border);
+        }
         .cost-table td {
             padding: 9px 14px;
             border-bottom: 1px solid #dde6f4;
@@ -193,9 +196,10 @@
         .bar-cell .bar.avg { background: rgba(31, 63, 149, 0.10); }
 
         /* Tight layouts: drop the columns that aren't currently being sorted on */
-        @media (max-width: 759px) {
+        @media (max-width: 1023px) {
             .cost-table[data-sort="growth"] .col-amount { display: none; }
             .cost-table[data-sort="avg"] .col-change { display: none; }
+            .cost-table .col-amount + .col-change { border-left: none; }
         }
         .bar-cell .val {
             position: relative;
@@ -268,7 +272,7 @@
         <label>Sortera efter:</label>
         <div class="norm-toggle" id="sortToggle" style="margin:0;">
             <label><input type="radio" name="sortBy" value="avg" checked><span>Snitt per år</span></label>
-            <label><input type="radio" name="sortBy" value="growth"><span>Förändring</span></label>
+            <label><input type="radio" name="sortBy" value="growth"><span>Förändring över perioden</span></label>
         </div>
     </div>
 
@@ -278,12 +282,12 @@
                 <th rowspan="2" style="width:32px;"></th>
                 <th rowspan="2">Kategori</th>
                 <th colspan="2" class="group-header col-amount">Kostnad</th>
-                <th colspan="2" class="group-header col-change">Förändring</th>
+                <th colspan="2" class="group-header col-change">Förändring över perioden</th>
             </tr>
             <tr>
                 <th class="number col-amount" id="lastYearHeader">Senaste året</th>
                 <th class="number col-amount">Snitt per år</th>
-                <th class="number col-change">Totalt över perioden</th>
+                <th class="number col-change">Totalt</th>
                 <th class="number col-change">Per år</th>
             </tr>
         </thead>
