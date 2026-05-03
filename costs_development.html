@@ -236,7 +236,7 @@
 
 <section id="start" class="block bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
     <h1 class="text-blue-900 font-extrabold text-3xl mb-3 border-b-4 border-blue-300 pb-2">Kostnadsutveckling</h1>
-    <p class="text-gray-600 mb-4">Vilka kostnadsposter har vuxit mest över tid? Tabellen visar varje kostnadskategori med dess uppskattade förändring i kronor över valt antal år, beräknad med <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares" target="_blank" rel="noopener" class="text-blue-700 underline">linjär regression</a> – inte bara differensen mellan första och sista året, för att jämna ut enskilda topp- och bottenår.</p>
+    <p class="text-gray-600 mb-4">Vilka kostnadsposter har vuxit mest över tid? Tabellen visar varje kostnadskategori med dess uppskattade förändring i kronor över valt antal år, beräknad med <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares" target="_blank" rel="noopener" class="text-blue-700 underline">linjär regression</a> – inte bara differensen mellan första och sista året, för att jämna ut enskilda topp- och bottenår. För detaljgranskning av ett enskilt år (med PDF-källor), se <a href="annual_details.html" class="text-blue-700 underline">Årsdetaljer</a>.</p>
 
     <label class="inflation-toggle">
         <input type="checkbox" id="inflationToggle">
@@ -299,6 +299,15 @@
     <div class="legend-box">
         Förändringen är beräknad som regressionslinjens värde i sista året minus i första året i fönstret (= lutning × antal år). En post visas blekt om den har färre än tre datapunkter i fönstret – då går det inte att räkna ut en meningsfull trend. Vid sortering på <em>förändring</em> visas största ökningar överst och största minskningar nederst; vid sortering på <em>snittbelopp</em> visas största snitt först. Röda värden = kostnaden har stigit, gröna värden = kostnaden har minskat.
     </div>
+
+    <div style="margin: 28px 0 8px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <label for="treemapMode" style="font-weight:600; color:var(--vm-blue); font-size:14px;">Kostnadsfördelning för:</label>
+        <select id="treemapMode" style="padding:5px 10px; border:1px solid var(--vm-border); border-radius:6px; font-size:13px; background:#fff; color:var(--vm-text); cursor:pointer;">
+            <option value="avg">Snitt över perioden</option>
+        </select>
+        <span id="treemapTotal" style="font-size:13px; color:var(--vm-muted);"></span>
+    </div>
+    <div id="costsTreemap" style="width:100%; height:480px; background:#fff; border:1px solid var(--vm-border); border-radius:10px; padding:8px;"></div>
 </section>
 
 </main>
@@ -878,12 +887,165 @@
         window.Plotly.newPlot(div, traces, layout, { displayModeBar: false, responsive: true });
     }
 
+    /* ── Treemap ────────────────────────────────────── */
+
+    // Color palette keyed off the top-level cost categories so children inherit a
+    // family hue (Plotly auto-shades within a parent when colors aren't explicit).
+    const TREEMAP_COLOR_BY_ROOT = {
+        1:  '#dc2626', // Driftkostnader
+        5:  '#f97316', // Övriga externa kostnader
+        6:  '#d97706', // Personalkostnader
+        7:  '#b91c1c', // Räntekostnader
+        8:  '#9333ea', // Investeringar
+        16: '#ea580c', // Planerat underhåll
+    };
+
+    function rootAncestor(catId) {
+        let cur = catId;
+        let guard = 0;
+        while (categories[cur] && categories[cur].parent !== null && categories[cur].parent !== TOTAL_COSTS_ID && guard++ < 6) {
+            cur = categories[cur].parent;
+        }
+        return cur;
+    }
+
+    function getValueForTreemap(catId, mode, windowYears) {
+        if (mode === 'avg') {
+            const minWindowYear = maxYear - windowYears + 1;
+            let sum = 0;
+            let n = 0;
+            for (let y = minWindowYear; y <= maxYear; y++) {
+                const raw = getYearAmount(catId, y);
+                if (raw === undefined) continue;
+                sum += transform(raw, y);
+                n++;
+            }
+            if (!n) return null;
+            return Math.abs(sum / n);
+        } else {
+            const year = parseInt(mode);
+            const raw = getYearAmount(catId, year);
+            if (raw === undefined) return null;
+            return Math.abs(transform(raw, year));
+        }
+    }
+
+    function renderTreemap() {
+        const div = document.getElementById('costsTreemap');
+        if (!div || !window.Plotly) return;
+
+        const select = document.getElementById('treemapMode');
+        const mode = select ? select.value : 'avg';
+        const windowYears = parseInt(document.getElementById('windowSlider').value);
+
+        const ids = [], labels = [], parents = [], values = [], colors = [];
+
+        // Walk the tree, only emit nodes that have a positive value (own or summed from kids).
+        function walk(catId, parentId) {
+            if (!isCostCategory(catId)) return null;
+            const cat = categories[catId];
+            if (!cat) return null;
+            const kids = (childrenByParent[String(catId)] || []).filter(isCostCategory);
+
+            let nodeValue;
+            if (kids.length) {
+                const childTotals = [];
+                for (const k of kids) {
+                    const v = walk(k, String(catId));
+                    if (v !== null) childTotals.push(v);
+                }
+                if (!childTotals.length) {
+                    // No usable children for this slice — fall through and try own value
+                    const own = getValueForTreemap(catId, mode, windowYears);
+                    if (own === null || own <= 0) return null;
+                    nodeValue = own;
+                } else {
+                    nodeValue = childTotals.reduce((s, v) => s + v, 0);
+                }
+            } else {
+                const own = getValueForTreemap(catId, mode, windowYears);
+                if (own === null || own <= 0) return null;
+                nodeValue = own;
+            }
+
+            const root = rootAncestor(catId);
+            const baseColor = TREEMAP_COLOR_BY_ROOT[root] || '#64748b';
+            ids.push(String(catId));
+            labels.push(cat.name);
+            parents.push(parentId);
+            values.push(nodeValue);
+            colors.push(baseColor);
+            return nodeValue;
+        }
+
+        walk(TOTAL_COSTS_ID, '');
+
+        const totalEl = document.getElementById('treemapTotal');
+
+        if (!values.length) {
+            window.Plotly.purge(div);
+            div.innerHTML = '<p style="color:var(--vm-muted); font-size:13px; text-align:center; padding:48px 16px;">Ingen data för vald period.</p>';
+            if (totalEl) totalEl.textContent = '';
+            return;
+        }
+        div.innerHTML = '';
+
+        const rootIdx = ids.indexOf(String(TOTAL_COSTS_ID));
+        const totalValue = rootIdx >= 0 ? values[rootIdx] : values[0];
+        if (totalEl) {
+            const fmt = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(Math.round(totalValue));
+            const periodTxt = mode === 'avg'
+                ? `snitt ${maxYear - windowYears + 1}–${maxYear}`
+                : mode;
+            totalEl.textContent = `Totalt: ${fmt} kr${normSuffix} (${periodTxt})`;
+        }
+
+        const trace = {
+            type: 'treemap',
+            ids,
+            labels,
+            parents,
+            values,
+            branchvalues: 'total',
+            maxdepth: -1, // render the whole hierarchy at once instead of click-to-drill
+            marker: { colors, line: { color: '#fff', width: 2 } },
+            textinfo: 'label+value+percent parent',
+            texttemplate: '<b>%{label}</b><br>%{value:,.0f} kr<br>%{percentParent}',
+            hovertemplate: '<b>%{label}</b><br>%{value:,.0f} kr' + normSuffix + '<br>%{percentParent} av %{parent}<extra></extra>',
+            pathbar: { visible: false },
+            tiling: { pad: 3, packing: 'squarify' },
+        };
+
+        const layout = {
+            margin: { l: 4, r: 4, t: 8, b: 4 },
+            paper_bgcolor: '#fff',
+            plot_bgcolor: '#fff',
+        };
+
+        window.Plotly.newPlot(div, [trace], layout, { displayModeBar: false, responsive: true });
+
+        // Block click-to-zoom — the treemap is informational only.
+        div.removeAllListeners && div.removeAllListeners('plotly_treemapclick');
+        div.on('plotly_treemapclick', () => false);
+    }
+
     async function init() {
         await loadData();
         updateInflationNote();
 
         const lastYearHeader = document.getElementById('lastYearHeader');
         if (lastYearHeader && maxYear) lastYearHeader.textContent = `Senaste året (${maxYear})`;
+
+        // Populate treemap year dropdown (newest first), keeping "Snitt" as the first option.
+        const tmSelect = document.getElementById('treemapMode');
+        if (tmSelect && isFinite(minDataYear) && maxYear) {
+            for (let y = maxYear; y >= minDataYear; y--) {
+                const opt = document.createElement('option');
+                opt.value = String(y);
+                opt.textContent = String(y);
+                tmSelect.appendChild(opt);
+            }
+        }
 
         // Stretch the window slider to cover everything we actually have data for.
         const slider = document.getElementById('windowSlider');
@@ -903,6 +1065,7 @@
             updateInflationNote();
             renderTable();
             renderChart();
+            renderTreemap();
         });
 
         document.getElementById('percentOfParentToggle').addEventListener('change', (e) => {
@@ -920,13 +1083,16 @@
                 else { normDivisor = 1; normSuffix = ''; }
                 renderTable();
                 renderChart();
+                renderTreemap();
             });
         });
 
         document.getElementById('windowSlider').addEventListener('input', () => {
             renderTable();
             renderChart();
+            if (document.getElementById('treemapMode').value === 'avg') renderTreemap();
         });
+        document.getElementById('treemapMode').addEventListener('change', renderTreemap);
         document.querySelectorAll('input[name="sortBy"]').forEach(r => r.addEventListener('change', renderTable));
         document.getElementById('costTbody').addEventListener('click', handleExpandClick);
         document.getElementById('costTbody').addEventListener('change', handleCheckboxChange);
@@ -936,6 +1102,7 @@
 
         renderTable();
         renderChart();
+        renderTreemap();
     }
 
     init();
