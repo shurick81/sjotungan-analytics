@@ -204,6 +204,7 @@
         #median-loan-container,
         #median-fee-container,
         #median-compare-container,
+        #mean-compare-container,
         #count-container {
             width: 100%;
             height: 380px;
@@ -224,6 +225,7 @@
             #median-loan-container,
             #median-fee-container,
             #median-compare-container,
+            #mean-compare-container,
             #count-container { height: 320px; }
         }
     </style>
@@ -377,6 +379,15 @@
                 </label>
             </div>
             <div id="median-compare-container"></div>
+
+            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Snitt kr/m² – jämförelse med närliggande områden</h2>
+            <p class="text-gray-600 mb-3">
+                Samma jämförelse som ovan, men baserad på årssnitt i stället för median.
+                Snittet är känsligare för enstaka högre eller lägre affärer och avslöjar år
+                med skev fördelning. Mäklarstatistik (Stockholms län &amp; Sverige) publicerar
+                endast median och saknas därför här.
+            </p>
+            <div id="mean-compare-container"></div>
 
             <details class="data-details">
                 <summary>Om datan: BRF Gäddan &amp; HSB BRF Siken (filtrerade ur Sikvägen)</summary>
@@ -614,6 +625,7 @@
             year: r.year,
             n: parseInt(r.n, 10),
             median: parseFloat(r.median_kr_per_m2),
+            mean: parseFloat(r.mean_kr_per_m2),
         })).filter(d => Number.isFinite(d.median)).sort((a, b) => a.year.localeCompare(b.year));
     }
 
@@ -820,7 +832,8 @@
                 const s = [...vals].sort((a, b) => a - b);
                 const mid = Math.floor(s.length / 2);
                 const median = s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-                return { year, median, count: vals.length };
+                const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+                return { year, median, avg, count: vals.length };
             });
     }
 
@@ -912,6 +925,22 @@
                     '<extra></extra>',
                 line: { color: '#dc2626', width: 2.5 },
                 marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
+            });
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Årssnitt',
+                x: medians.map(m => `${m.year}-07-01`),
+                y: medians.map(m => m.avg),
+                customdata: medians.map(m => [m.year, m.count]),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    'Snitt kr/m²: %{y:,.0f}<br>' +
+                    'Antal affärer: %{customdata[1]}' +
+                    '<extra></extra>',
+                line: { color: '#dc2626', width: 1.6, dash: 'dash' },
+                marker: { size: 7, color: '#dc2626', symbol: 'circle-open', line: { width: 1.5, color: '#dc2626' } },
+                opacity: 0.8,
             });
         }
 
@@ -1049,6 +1078,7 @@
             .map(d => ({ ...d, kr_per_m2: adjAmount(d.kr_per_m2, d.year), total: adjAmount(d.total, d.year) }));
 
         const showLabels = window.innerWidth >= 850;
+        const showAvg = secondary.showAverage;
         const traces = [{
             type: 'scatter',
             mode: showLabels ? 'lines+markers+text' : 'lines+markers',
@@ -1067,6 +1097,25 @@
             line: { color: '#dc2626', width: 2.5 },
             marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
         }];
+
+        if (showAvg && medians.length) {
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Försäljningar (snitt)',
+                x: medians.map(m => `${m.year}-07-01`),
+                y: medians.map(m => m.avg),
+                customdata: medians.map(m => [m.year, m.count]),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    'Snitt kr/m²: %{y:,.0f}<br>' +
+                    'Antal affärer: %{customdata[1]}' +
+                    '<extra></extra>',
+                line: { color: '#dc2626', width: 1.6, dash: 'dash' },
+                marker: { size: 6, color: '#dc2626', symbol: 'circle-open', line: { width: 1.5, color: '#dc2626' } },
+                opacity: 0.75,
+            });
+        }
 
         if (secFiltered.length) {
             traces.push({
@@ -1242,6 +1291,99 @@
         });
     }
 
+    /* ── Render comparison MEAN chart ─────────────────── */
+    // Same shape as renderMedianComparison but uses mean. Mäklarstatistik
+    // (Stockholms län/Sverige) only publishes median, so they are omitted.
+    function renderMeanComparison(deals) {
+        const slider = document.getElementById('start-slider');
+        const startYear = parseInt((sliderDates[parseInt(slider.value, 10)] || '0000').slice(0, 4), 10);
+        const cutoff = Math.max(2013, startYear || 0);
+
+        const adjSeries = arr => arr
+            .filter(d => parseInt(d.year, 10) >= cutoff && Number.isFinite(d.mean))
+            .map(d => ({ ...d, mean: adjAmount(d.mean, d.year) }));
+
+        const sj = yearlyMedians(deals);
+        const bb = adjSeries(bjorkbackenMedians);
+        const gad = adjSeries(gaddanMedians);
+        const sikb = adjSeries(sikenMedians);
+        const ty = adjSeries(tyresoMedians);
+
+        const traces = [
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'BRF Sjötungan',
+                x: sj.map(m => `${m.year}-07-01`),
+                y: sj.map(m => m.avg),
+                customdata: sj.map(m => [m.year, m.count]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Snitt: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>BRF Sjötungan</extra>',
+                line: { color: '#dc2626', width: 2.5 },
+                marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'HSB BRF Björkbacken',
+                x: bb.map(d => `${d.year}-07-01`),
+                y: bb.map(d => d.mean),
+                customdata: bb.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Snitt: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>HSB BRF Björkbacken</extra>',
+                line: { color: '#10b981', width: 2.5 },
+                marker: { size: 8, color: '#10b981', symbol: 'triangle-up', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'BRF Gäddan',
+                x: gad.map(d => `${d.year}-07-01`),
+                y: gad.map(d => d.mean),
+                customdata: gad.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Snitt: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>BRF Gäddan</extra>',
+                line: { color: '#db2777', width: 2.5 },
+                marker: { size: 8, color: '#db2777', symbol: 'star', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'HSB BRF Siken',
+                x: sikb.map(d => `${d.year}-07-01`),
+                y: sikb.map(d => d.mean),
+                customdata: sikb.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Snitt: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>HSB BRF Siken</extra>',
+                line: { color: '#0891b2', width: 2.5 },
+                marker: { size: 8, color: '#0891b2', symbol: 'hexagram', line: { width: 1, color: 'white' } },
+            },
+            {
+                type: 'scatter', mode: 'lines+markers',
+                name: 'Tyresö kommun',
+                x: ty.map(d => `${d.year}-07-01`),
+                y: ty.map(d => d.mean),
+                customdata: ty.map(d => [d.year, d.n]),
+                hovertemplate: '<b>%{customdata[0]}</b><br>Snitt: %{y:,.0f} kr/m²<br>Antal: %{customdata[1]}<extra>Tyresö kommun</extra>',
+                line: { color: '#ea580c', width: 2.5 },
+                marker: { size: 8, color: '#ea580c', symbol: 'triangle-down', line: { width: 1, color: 'white' } },
+            },
+        ];
+
+        const layout = {
+            margin: { l: 70, r: 20, t: 30, b: 60 },
+            xaxis: { title: 'År', type: 'date', gridcolor: '#e5e7eb' },
+            yaxis: {
+                title: `Snitt kr/m²${krSuffix()}`,
+                gridcolor: '#e5e7eb',
+                tickformat: ',d',
+                separatethousands: true,
+            },
+            plot_bgcolor: '#f7f9fd',
+            paper_bgcolor: '#f7f9fd',
+            font: { family: 'system-ui, sans-serif', color: '#2f3d52' },
+            legend: { orientation: 'h', y: -0.2 },
+            hovermode: 'x unified',
+        };
+        Plotly.newPlot('mean-compare-container', traces, layout, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        });
+    }
+
     /* ── Render yearly count chart ───────────────────── */
     function renderCountChart(deals) {
         const slider = document.getElementById('start-slider');
@@ -1360,6 +1502,7 @@
             dash: 'dash',
             symbol: 'square',
             axisTitle: 'Lån kr/m²',
+            showAverage: true,
         });
         renderMedianWithSecondary('median-fee-container', deals, {
             series: feePerM2,
@@ -1369,6 +1512,7 @@
             dash: 'dot',
             symbol: 'triangle-up',
             axisTitle: 'Årsavgift kr/m²',
+            showAverage: true,
         });
     }
 
@@ -1394,6 +1538,7 @@
         renderScatter(filtered);
         renderMedianCharts(filtered);
         renderMedianComparison(filtered);
+        renderMeanComparison(filtered);
         renderCountChart(filtered);
     }
 
