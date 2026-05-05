@@ -192,7 +192,8 @@
             margin-top: 4px;
         }
 
-        #scatter-container {
+        #scatter-container,
+        #seasonal-container {
             width: 100%;
             height: 640px;
             background: #f7f9fd;
@@ -205,7 +206,8 @@
         #median-fee-container,
         #median-compare-container,
         #mean-compare-container,
-        #count-container {
+        #count-container,
+        #month-count-container {
             width: 100%;
             height: 380px;
             background: #f7f9fd;
@@ -221,12 +223,14 @@
         }
 
         @media (max-width: 640px) {
-            #scatter-container { height: 460px; }
+            #scatter-container,
+            #seasonal-container { height: 460px; }
             #median-loan-container,
             #median-fee-container,
             #median-compare-container,
             #mean-compare-container,
-            #count-container { height: 320px; }
+            #count-container,
+            #month-count-container { height: 320px; }
         }
     </style>
 </head>
@@ -358,7 +362,22 @@
                 </div>
             </details>
 
-            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Årsmedian kr/m² vs. föreningens lån</h2>
+            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Säsongsvariation – försäljningar per månad</h2>
+            <p class="text-gray-600 mb-3">
+                Samma punkter som ovan, men x-axeln visar enbart månad/dag (oavsett år)
+                så att alla år läggs ovanpå varandra. Den röda linjen är
+                <em>månadsmedian</em> och den streckade är <em>månadssnitt</em>, båda
+                beräknade över alla år sammantaget. Filtren ovanför första grafen
+                (rum, stambyte, från-datum, inflationsjustering) gäller även här.
+            </p>
+            <div id="seasonal-container"></div>
+            <p class="text-xs text-gray-500 mt-3 text-center">
+                Markörerna har samma kodning som första grafen – storlek = boyta,
+                färg = antal rum, fyrkant = stambyte klart, cirkel = inte ännu.
+                Klicka på en punkt för att öppna Hemnet-annonsen.
+            </p>
+
+
             <p class="text-gray-600 mb-3">Median av kr/m² per försäljningsår överlagrad på föreningens totala lån per m².</p>
             <div id="median-loan-container"></div>
 
@@ -535,6 +554,14 @@
                 volymen är ca tio gånger större.
             </p>
             <div id="count-container"></div>
+
+            <h2 class="text-blue-700 font-semibold text-2xl mt-10 mb-2">Antal försäljningar per månad</h2>
+            <p class="text-gray-600 mb-3">
+                Totalt antal sålda lägenheter i BRF Sjötungan per kalendermånad,
+                summerat över alla år. Visar säsongsmönstret i försäljningsvolymen.
+                Filtren ovanför första grafen (rum, stambyte, från-datum) gäller även här.
+            </p>
+            <div id="month-count-container"></div>
 
         </div>
     </section>
@@ -837,6 +864,25 @@
             });
     }
 
+    /* ── Median kr/m² per calendar month, across all years ─ */
+    function monthlyMedians(deals) {
+        const buckets = new Map();
+        deals.forEach(d => {
+            const m = parseInt(d.date.slice(5, 7), 10);
+            if (!buckets.has(m)) buckets.set(m, []);
+            buckets.get(m).push(adjAmount(d.kr_per_m2, dealYear(d)));
+        });
+        return [...buckets.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([month, vals]) => {
+                const s = [...vals].sort((a, b) => a - b);
+                const mid = Math.floor(s.length / 2);
+                const median = s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+                const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+                return { month, median, avg, count: vals.length };
+            });
+    }
+
     /* ── Linear regression on date (epoch ms) → kr/m² ── */
     function linearTrend(deals) {
         const xs = deals.map(d => new Date(d.date).getTime());
@@ -1053,6 +1099,135 @@
 
         // Click a marker to open the Hemnet listing
         const el = document.getElementById('scatter-container');
+        el.removeAllListeners && el.removeAllListeners('plotly_click');
+        el.on('plotly_click', evt => {
+            const p = evt.points && evt.points[0];
+            if (!p) return;
+            const m = /^(\d+)\s+rum$/.exec(p.data.name || '');
+            if (!m) return;
+            const list = byRooms.get(parseInt(m[1], 10));
+            const deal = list && list[p.pointIndex];
+            if (deal && deal.url) window.open(deal.url, '_blank', 'noopener');
+        });
+    }
+
+    /* ── Render seasonal (day-of-year) scatter ───────── */
+    // Maps the actual sale date into a fixed reference year (2000, leap)
+    // so every sale lands on its calendar position regardless of year.
+    function renderSeasonal(deals) {
+        const SV_MONTHS = ['januari', 'februari', 'mars', 'april', 'maj', 'juni',
+                           'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
+        const toSeasonalX = dateStr => `2000-${dateStr.slice(5)}`;
+
+        const byRooms = new Map();
+        deals.forEach(d => {
+            const k = Math.round(d.rooms);
+            if (!byRooms.has(k)) byRooms.set(k, []);
+            byRooms.get(k).push(d);
+        });
+
+        const traces = [...byRooms.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([rooms, list]) => ({
+                type: 'scatter',
+                mode: 'markers',
+                name: `${rooms} rum`,
+                x: list.map(d => toSeasonalX(d.date)),
+                y: list.map(d => adjAmount(d.kr_per_m2, dealYear(d))),
+                customdata: list.map(d => [
+                    d.address, d.area,
+                    adjAmount(d.price, dealYear(d)),
+                    d.fee == null ? null : adjAmount(d.fee, dealYear(d)),
+                    rooms, d.url || '',
+                    d.date,
+                    stambyteCompleteAt(d.street_number, d.date) ? 'Ja' : 'Nej',
+                ]),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    'Datum: %{customdata[6]}<br>' +
+                    'Antal rum: %{customdata[4]}<br>' +
+                    `kr/m²${krSuffix()}: %{y:,.0f}<br>` +
+                    'Boyta: %{customdata[1]} m²<br>' +
+                    `Slutpris${krSuffix()}: %{customdata[2]:,.0f} kr<br>` +
+                    `Avgift/mån${krSuffix()}: %{customdata[3]:,.0f} kr<br>` +
+                    'Stambyte klart: %{customdata[7]}<br>' +
+                    '<i>Klicka för Hemnet-annons</i>' +
+                    '<extra></extra>',
+                marker: {
+                    size: list.map(d => Math.max(6, Math.sqrt(d.area) * 1.6)),
+                    symbol: list.map(d => stambyteCompleteAt(d.street_number, d.date) ? 'square' : 'circle'),
+                    color: colorForRooms(rooms),
+                    opacity: 0.65,
+                    line: { width: 1, color: 'white' },
+                },
+            }));
+
+        const months = monthlyMedians(deals);
+        if (months.length) {
+            const monthAnchor = m => `2000-${String(m).padStart(2, '0')}-15`;
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Månadsmedian',
+                x: months.map(m => monthAnchor(m.month)),
+                y: months.map(m => m.median),
+                customdata: months.map(m => [SV_MONTHS[m.month - 1], m.count]),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    'Median kr/m²: %{y:,.0f}<br>' +
+                    'Antal affärer: %{customdata[1]}' +
+                    '<extra></extra>',
+                line: { color: '#dc2626', width: 2.5 },
+                marker: { size: 9, color: '#dc2626', symbol: 'diamond', line: { width: 1, color: 'white' } },
+            });
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Månadssnitt',
+                x: months.map(m => monthAnchor(m.month)),
+                y: months.map(m => m.avg),
+                customdata: months.map(m => [SV_MONTHS[m.month - 1], m.count]),
+                hovertemplate:
+                    '<b>%{customdata[0]}</b><br>' +
+                    'Snitt kr/m²: %{y:,.0f}<br>' +
+                    'Antal affärer: %{customdata[1]}' +
+                    '<extra></extra>',
+                line: { color: '#dc2626', width: 1.6, dash: 'dash' },
+                marker: { size: 7, color: '#dc2626', symbol: 'circle-open', line: { width: 1.5, color: '#dc2626' } },
+                opacity: 0.85,
+            });
+        }
+
+        const layout = {
+            margin: { l: 70, r: 20, t: 20, b: 60 },
+            xaxis: {
+                title: 'Månad (alla år sammanslagna)',
+                type: 'date',
+                tickformat: '%b',
+                dtick: 'M1',
+                range: ['2000-01-01', '2000-12-31'],
+                gridcolor: '#e5e7eb',
+            },
+            yaxis: {
+                title: `kr / m²${krSuffix()}`,
+                gridcolor: '#e5e7eb',
+                tickformat: ',d',
+                separatethousands: true,
+            },
+            legend: { orientation: 'h', y: -0.18 },
+            hovermode: 'closest',
+            plot_bgcolor: '#f7f9fd',
+            paper_bgcolor: '#f7f9fd',
+            font: { family: 'system-ui, sans-serif', color: '#2f3d52' },
+        };
+
+        Plotly.newPlot('seasonal-container', traces, layout, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        });
+
+        const el = document.getElementById('seasonal-container');
         el.removeAllListeners && el.removeAllListeners('plotly_click');
         el.on('plotly_click', evt => {
             const p = evt.points && evt.points[0];
@@ -1493,6 +1668,60 @@
         });
     }
 
+    /* ── Sales count per calendar month, all years pooled ── */
+    function renderMonthCountChart(deals) {
+        const SV_MONTHS = ['januari', 'februari', 'mars', 'april', 'maj', 'juni',
+                           'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
+        const counts = new Array(12).fill(0);
+        deals.forEach(d => {
+            const m = parseInt(d.date.slice(5, 7), 10);
+            if (m >= 1 && m <= 12) counts[m - 1] += 1;
+        });
+        const total = counts.reduce((a, b) => a + b, 0);
+        const showLabels = window.innerWidth >= 850;
+
+        const traces = [{
+            type: 'bar',
+            name: 'Antal försäljningar',
+            x: SV_MONTHS,
+            y: counts,
+            text: showLabels ? counts.map(String) : [],
+            textposition: 'outside',
+            cliponaxis: false,
+            customdata: counts.map(c => total ? c / total : 0),
+            hovertemplate:
+                '<b>%{x}</b><br>' +
+                'Antal: %{y}<br>' +
+                'Andel: %{customdata:.1%}' +
+                '<extra></extra>',
+            marker: {
+                color: '#dc2626',
+                line: { color: 'white', width: 1 },
+            },
+        }];
+
+        const layout = {
+            margin: { l: 60, r: 20, t: 30, b: 60 },
+            xaxis: { title: 'Månad', gridcolor: '#e5e7eb' },
+            yaxis: {
+                title: 'Antal försäljningar',
+                gridcolor: '#e5e7eb',
+                rangemode: 'tozero',
+                tickformat: 'd',
+            },
+            plot_bgcolor: '#f7f9fd',
+            paper_bgcolor: '#f7f9fd',
+            font: { family: 'system-ui, sans-serif', color: '#2f3d52' },
+            showlegend: false,
+            hovermode: 'closest',
+        };
+        Plotly.newPlot('month-count-container', traces, layout, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        });
+    }
+
     function renderMedianCharts(deals) {
         renderMedianWithSecondary('median-loan-container', deals, {
             series: debtPerM2,
@@ -1536,10 +1765,12 @@
         }
         renderStats(filtered);
         renderScatter(filtered);
+        renderSeasonal(filtered);
         renderMedianCharts(filtered);
         renderMedianComparison(filtered);
         renderMeanComparison(filtered);
         renderCountChart(filtered);
+        renderMonthCountChart(filtered);
     }
 
     /* ── URL → highlight handling ────────────────────── */
