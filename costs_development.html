@@ -6,6 +6,7 @@
     <title>Vision Myggan – Kostnadsutveckling</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         body { font-size: 1rem; }
         @media (max-width: 640px) {
@@ -311,6 +312,11 @@
 </section>
 
 </main>
+
+<section class="max-w-6xl mx-auto mt-10 mb-4 px-6">
+  <h2 class="text-lg font-semibold text-gray-600 mb-3">Källdokument (PDF)</h2>
+  <ul id="pdf-source-list" class="space-y-1 text-sm text-gray-600"></ul>
+</section>
 
 <footer class="text-center text-gray-500 text-sm py-4 mt-8">
 &copy; 2026 Vision Myggan – En medlemsrörelse i BRF Sjötungan
@@ -1029,8 +1035,36 @@
         div.on('plotly_treemapclick', () => false);
     }
 
+    async function loadPDFSources() {
+        try {
+            const response = await fetch('sources.yaml?v=' + Date.now());
+            const yamlText = await response.text();
+            const data = window.jsyaml ? window.jsyaml.load(yamlText) : null;
+            renderPDFSourceList(data && Array.isArray(data.annual_reports) ? data.annual_reports : []);
+        } catch (error) {
+            console.error('Error loading PDF sources:', error);
+        }
+    }
+
+    function renderPDFSourceList(reports) {
+        const list = document.getElementById('pdf-source-list');
+        if (!list) return;
+        const sortedReports = [...(Array.isArray(reports) ? reports : [])]
+            .sort((a, b) => b.finance_period - a.finance_period);
+
+        const reportItems = sortedReports.map(r => {
+            return `<li>${r.finance_period} – <a href="${r.url}" target="_blank" rel="noopener" class="text-blue-700 hover:underline break-all">${r.url}</a></li>`;
+        }).join('');
+
+        list.innerHTML = [
+            '<li class="font-semibold text-gray-700 mt-2">Årsredovisningar</li>',
+            reportItems || '<li class="text-gray-500">Inga årsredovisningar hittades.</li>'
+        ].join('');
+    }
+
     async function init() {
         await loadData();
+        loadPDFSources();
         updateInflationNote();
 
         const lastYearHeader = document.getElementById('lastYearHeader');
