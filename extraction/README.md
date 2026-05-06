@@ -28,7 +28,8 @@ This folder groups reusable data-extraction assets in one place.
 - Script: `scripts/compare_guide_html_pdf.py`
 - Method doc: `methods/guide_html_pdf_comparison.md`
 - Script: `scripts/scrape_hemnet_sales.py`
-- Method doc: `methods/hemnet_sales.md`
+- Script: `scripts/scrape_booli_sales.py`
+- Method doc: `methods/sjotungan_sales.md`
 - Script: `scripts/fetch_scb_brf_prices.py`
 - Method doc: `methods/sweden_brf_prices.md`
 - Script: `scripts/fetch_maklarstatistik_brf.py`
@@ -222,7 +223,7 @@ If category auto-detection fails due to naming differences, pin IDs explicitly i
 
 ## Hemnet sold-listings extraction
 
-Scrape all sold listings ("slutpriser") for Myggdalsvägen, Tyresö from Hemnet, filter to BRF Sjötungan's address range (#6–#122), and write `data/apartment_prices/sjotungan_sales.csv` plus `data/apartment_prices/sjotungan_sales_raw.json`. See `methods/hemnet_sales.md` for the field mapping, filtering rule, coverage, and Booli supplement notes.
+Scrape all sold listings ("slutpriser") for Myggdalsvägen, Tyresö from Hemnet, filter to BRF Sjötungan's address range (#6–#122), and write `data/apartment_prices/sjotungan_sales_hemnet.csv` plus `data/apartment_prices/sjotungan_sales_hemnet_raw.json`. See `methods/sjotungan_sales.md` for the field mapping, filtering rule, coverage, and Booli supplement notes.
 
 Scrape from the network:
 
@@ -254,43 +255,87 @@ Björkbacksvägen, Tyresö → `data/apartment_prices/bjorkbacksvagen_annual_med
     --aggregate-only --output-aggregated data/apartment_prices/bjorkbacksvagen_annual_medians.csv
 ```
 
-Tyresö kommun → `data/apartment_prices/tyreso_kommun_annual_medians.csv` (use empty `--street-name` since the query spans many streets). Pass `--shard-by-rooms` to expand past Hemnet's 2,500-result cap by sweeping one unfiltered baseline plus one query per room count (1, 2, 3, 4, 5, 6+); without it the dataset starts in mid-September 2019. With sharding the kommun output covers 2013–2026 (≈4,100 listings):
+Tyresö kommun → `data/apartment_prices/tyreso_kommun_annual_medians_hemnet.csv` (use empty `--street-name` since the query spans many streets). Pass `--shard-by-rooms` to expand past Hemnet's 2,500-result cap by sweeping one unfiltered baseline plus one query per room count (1, 2, 3, 4, 5, 6+); without it the dataset starts in mid-September 2019. With sharding the kommun output covers 2013–2026 (≈4,100 listings):
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
     --location-id 17792 --street-name "" --no-filter --shard-by-rooms \
-    --aggregate-only --output-aggregated data/apartment_prices/tyreso_kommun_annual_medians.csv
+    --aggregate-only --output-aggregated data/apartment_prices/tyreso_kommun_annual_medians_hemnet.csv
 ```
 
-BRF Gäddan i Tyresö → `data/apartment_prices/gaddan_annual_medians.csv`. Same Sikvägen query as the Sikvägen aggregate above, but with `--number-set` to restrict to the föreningens own addresses (see `methods/hemnet_sales.md#brf-gäddan-filter` for the allow-list rationale). Add `--use-playwright` while Hemnet's Cloudflare challenge is active (see `methods/hemnet_sales.md#cloudflare-and---use-playwright`):
+BRF Gäddan i Tyresö → `data/apartment_prices/gaddan_annual_medians_hemnet.csv`. Same Sikvägen query as the Sikvägen aggregate above, but with `--number-set` to restrict to the föreningens own addresses (see `methods/sjotungan_sales.md#brf-gäddan-filter` for the allow-list rationale). Add `--use-playwright` while Hemnet's Cloudflare challenge is active (see `methods/sjotungan_sales.md#cloudflare-and---use-playwright`):
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
     --location-id 485023 --street-name Sikvägen \
     --number-set "29,31,33,35,37,38,39,40,41,42,43,44,45,46,47,48,49,51,53,55,59" \
-    --aggregate-only --output-aggregated data/apartment_prices/gaddan_annual_medians.csv \
+    --aggregate-only --output-aggregated data/apartment_prices/gaddan_annual_medians_hemnet.csv \
     --use-playwright
 ```
 
-HSB BRF Siken i Tyresö → `data/apartment_prices/siken_annual_medians.csv`. Same Sikvägen query, restricted to the odd side 1–27 (see `methods/hemnet_sales.md#hsb-brf-siken-filter`):
+HSB BRF Siken i Tyresö → `data/apartment_prices/siken_annual_medians_hemnet.csv`. Same Sikvägen query, restricted to the odd side 1–27 (see `methods/sjotungan_sales.md#hsb-brf-siken-filter`):
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
     --location-id 485023 --street-name Sikvägen \
     --number-set "1,3,5,7,9,11,13,15,17,19,21,23,25,27" \
-    --aggregate-only --output-aggregated data/apartment_prices/siken_annual_medians.csv \
+    --aggregate-only --output-aggregated data/apartment_prices/siken_annual_medians_hemnet.csv \
     --use-playwright
 ```
 
-HSB BRF Björkbacken i Tyresö → `data/apartment_prices/bjorkbacken_annual_medians.csv`. Spans two streets (Björkbacksvägen odd 9–83 and Bollmoravägen 36–58), fetched in multi-source mode with one `--source` per street; rows are unioned before aggregation (see `methods/hemnet_sales.md#hsb-brf-björkbacken-filter`):
+HSB BRF Björkbacken i Tyresö → `data/apartment_prices/bjorkbacken_annual_medians_hemnet.csv`. Spans two streets (Björkbacksvägen odd 9–83 and Bollmoravägen 36–58), fetched in multi-source mode with one `--source` per street; rows are unioned before aggregation (see `methods/sjotungan_sales.md#hsb-brf-björkbacken-filter`):
 
 ```bash
 /Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_hemnet_sales.py \
-    --aggregate-only --output-aggregated data/apartment_prices/bjorkbacken_annual_medians.csv \
+    --aggregate-only --output-aggregated data/apartment_prices/bjorkbacken_annual_medians_hemnet.csv \
     --use-playwright \
     --source "484982:Björkbacksvägen:9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73,75,77,79,81,83" \
     --source "484985:Bollmoravägen:36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58"
 ```
+
+## Booli sold-listings extraction
+
+Booli's GraphQL endpoint (`getHousingCoopSold`) scopes natively to a
+BRF (`housingCoopId`), unlike Hemnet which only filters down to street
+level. A single call returns the BRF's full sold-listing history — no
+pagination, no result cap, no street-number filter, no shard-by-rooms.
+Same Cloudflare gating as Hemnet, so Playwright + stealth is built
+into the scraper (no flag needed). See `methods/sjotungan_sales.md`
+for the field mapping and the privacy rationale (broker name + photo
+URL are stripped on write).
+
+Per-listing extraction for BRF Sjötungan (default args):
+
+```bash
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_booli_sales.py
+```
+
+Writes `data/apartment_prices/sjotungan_sales_booli.csv` plus the raw
+GraphQL payload at `..._booli_raw.json`.
+
+Annual-medians-only mode for peer-BRF comparison overlays on
+`sales_booli.html`:
+
+```bash
+# HSB BRF Björkbacken (housingCoopId 53246)
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_booli_sales.py \
+    --brf-id 53246 --aggregate-only \
+    --output-aggregated data/apartment_prices/bjorkbacken_annual_medians_booli.csv
+
+# HSB BRF Gäddan i Tyresö (housingCoopId 48924)
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_booli_sales.py \
+    --brf-id 48924 --aggregate-only \
+    --output-aggregated data/apartment_prices/gaddan_annual_medians_booli.csv
+
+# HSB BRF Siken (housingCoopId 48115)
+/Users/aleksandr/code/sjotungan-analytics/.venv/bin/python extraction/scripts/scrape_booli_sales.py \
+    --brf-id 48115 --aggregate-only \
+    --output-aggregated data/apartment_prices/siken_annual_medians_booli.csv
+```
+
+Tyresö kommun has no equivalent on Booli — `getHousingCoopSold` is
+BRF-scoped only — so the kommun-level overlay on `sales_booli.html`
+stays Hemnet-derived.
 
 ## National BRF price reference (SCB)
 

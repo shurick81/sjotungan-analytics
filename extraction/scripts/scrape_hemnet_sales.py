@@ -64,10 +64,22 @@ CSV_COLUMNS = [
     "monthly_fee_kr",
     "price_change_pct",
     "broker_agency",
-    "broker_name",
     "listing_id",
     "hemnet_url",
 ]
+
+
+# Personal data is dropped from cards before anything is persisted.
+# Hemnet's SaleCard includes the broker's name and a face-photo URL
+# (brokerThumbnail). Neither is needed for price analysis and we have
+# no lawful basis under GDPR to retain them. Only the agency (a legal
+# entity) and its logo are kept.
+PERSONAL_BROKER_FIELDS = ("brokerName", "brokerThumbnail")
+
+
+def strip_personal(cards: list) -> list:
+    return [{k: v for k, v in c.items() if k not in PERSONAL_BROKER_FIELDS}
+            for c in cards]
 
 
 def _build_query_url(page: int, location_id: int,
@@ -239,7 +251,6 @@ def card_to_row(card: dict, extract_street_number) -> dict:
         "monthly_fee_kr": parse_int_kr(card.get("fee")),
         "price_change_pct": parse_price_change_pct(card.get("priceChange")),
         "broker_agency": card.get("brokerAgencyName"),
-        "broker_name": card.get("brokerName"),
         "listing_id": card.get("listingId"),
         "hemnet_url": f"https://www.hemnet.se/salda/{slug}" if slug else None,
     }
@@ -352,10 +363,10 @@ def parse_args():
                         "--number-min/--number-max when provided.")
     p.add_argument("--no-filter", action="store_true",
                    help="Disable number filtering — keep every listing on the street.")
-    p.add_argument("--output-csv", default="data/apartment_prices/sjotungan_sales.csv",
-                   help="Path to the filtered CSV output (default: data/apartment_prices/sjotungan_sales.csv)")
-    p.add_argument("--output-raw", default="data/apartment_prices/sjotungan_sales_raw.json",
-                   help="Path to the raw JSON archive of all SaleCards (default: data/apartment_prices/sjotungan_sales_raw.json)")
+    p.add_argument("--output-csv", default="data/apartment_prices/sjotungan_sales_hemnet.csv",
+                   help="Path to the filtered CSV output (default: data/apartment_prices/sjotungan_sales_hemnet.csv)")
+    p.add_argument("--output-raw", default="data/apartment_prices/sjotungan_sales_hemnet_raw.json",
+                   help="Path to the raw JSON archive of all SaleCards (default: data/apartment_prices/sjotungan_sales_hemnet_raw.json)")
     p.add_argument("--from-cache", action="store_true",
                    help="Re-parse the CSV from the existing raw JSON without re-fetching Hemnet.")
     p.add_argument("--aggregate-only", action="store_true",
@@ -487,6 +498,8 @@ def main():
         print(f"Scraping Hemnet slutpriser for {args.street_name} (location_id={args.location_id})…")
         raw_cards = scrape_all(args.location_id, shard_by_rooms=args.shard_by_rooms,
                                use_playwright=args.use_playwright)
+
+    raw_cards = strip_personal(raw_cards)
 
     print(f"\nTotal raw SaleCards collected: {len(raw_cards)}")
 

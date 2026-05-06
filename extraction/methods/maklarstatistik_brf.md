@@ -7,7 +7,7 @@ Hemnet medians.
 ## Why Mäklarstatistik (not Hemnet)
 
 Hemnet's slutpriser browsing caps at 2,500 results per location query.
-Even with room-count sharding (see `methods/hemnet_sales.md`), country-
+Even with room-count sharding (see `methods/sjotungan_sales.md`), country-
 or county-level coverage by per-sale scraping is impractical: Sweden as
 a whole caps at ~8 days of data, and Stockholms län would still risk
 truncation across the longer history. Mäklarstatistik publishes the
@@ -114,7 +114,7 @@ Mäklarstatistik does not publish a per-month, non-rolling kr/m² series
 on these pages. The closest thing is the rolling-12 series captured
 above. If we ever need true monthly medians we'd have to compute them
 ourselves from per-sale data — back to Hemnet/Booli scraping with all
-the cap problems described in `hemnet_sales.md`.
+the cap problems described in `sjotungan_sales.md`.
 
 ## Monthly labels
 

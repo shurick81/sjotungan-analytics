@@ -51,8 +51,7 @@ parsing rendered DOM, which changes with every Hemnet redesign.
 | `kr_per_m2`        | `squareMeterPrice`             | Same.                                                    |
 | `monthly_fee_kr`   | `fee`                          | Same. Reflects the avgift at sale time, not today's.     |
 | `price_change_pct` | `priceChange`                  | "+5,2 %" → 0.052; "±0 %" → 0.0.                          |
-| `broker_agency`    | `brokerAgencyName`             |                                                           |
-| `broker_name`      | `brokerName`                   | Often null.                                               |
+| `broker_agency`    | `brokerAgencyName`             | Agency only — broker name is not retained, see Privacy. |
 | `listing_id`       | `listingId`                    | Dedup key.                                                |
 | `hemnet_url`       | constructed from `slug`        | `https://www.hemnet.se/salda/{slug}`.                     |
 
@@ -66,10 +65,10 @@ even-numbered; no odd numbers exist in the source data.
 
 ## Output
 
-- `data/apartment_prices/sjotungan_sales.csv` — filtered, sorted by `sold_date`
+- `data/apartment_prices/sjotungan_sales_hemnet.csv` — filtered, sorted by `sold_date`
   descending, UTF-8 with BOM (so Excel renders Swedish characters),
   comma-separated, header row.
-- `data/apartment_prices/sjotungan_sales_raw.json` — every collected `SaleCard`,
+- `data/apartment_prices/sjotungan_sales_hemnet_raw.json` — every collected `SaleCard`,
   unfiltered, for re-parsing without re-fetching.
 
 ## Coverage
@@ -101,10 +100,10 @@ Reference streets currently maintained in this mode:
 |------------------------|------------:|----------------------------------------------|
 | Sikvägen, Tyresö       | 485023      | `data/apartment_prices/sikvagen_annual_medians.csv`           |
 | Björkbacksvägen, Tyresö | 484982     | `data/apartment_prices/bjorkbacksvagen_annual_medians.csv`    |
-| Tyresö kommun          | 17792       | `data/apartment_prices/tyreso_kommun_annual_medians.csv`      |
-| BRF Gäddan i Tyresö    | 485023      | `data/apartment_prices/gaddan_annual_medians.csv`             |
-| HSB BRF Siken i Tyresö | 485023      | `data/apartment_prices/siken_annual_medians.csv`              |
-| HSB BRF Björkbacken i Tyresö | 484982 + 484985 | `data/apartment_prices/bjorkbacken_annual_medians.csv` |
+| Tyresö kommun          | 17792       | `data/apartment_prices/tyreso_kommun_annual_medians_hemnet.csv`      |
+| BRF Gäddan i Tyresö    | 485023      | `data/apartment_prices/gaddan_annual_medians_hemnet.csv`             |
+| HSB BRF Siken i Tyresö | 485023      | `data/apartment_prices/siken_annual_medians_hemnet.csv`              |
+| HSB BRF Björkbacken i Tyresö | 484982 + 484985 | `data/apartment_prices/bjorkbacken_annual_medians_hemnet.csv` |
 
 Street-level files are not BRF-filtered (they cover every `<street> N`
 sale Hemnet exposes and span multiple BRFs — used as neighborhood
@@ -223,26 +222,90 @@ complete. As a sanity check: 2020 returns 486 listings sharded vs. 486
 unsharded — same value, indicating the baseline catches what the room
 shards miss for years still in its window.
 
-When interpreting `data/apartment_prices/tyreso_kommun_annual_medians.csv` (sharded
+When interpreting `data/apartment_prices/tyreso_kommun_annual_medians_hemnet.csv` (sharded
 output), all 13 covered years (2013–2026) should be treated as complete
 within Hemnet's overall coverage; 2026 is partial only because the
 year is not yet over. Re-run periodically to refresh.
 
-## Booli supplement (open)
+## Booli supplement
 
 Booli has a separate sold-listings dataset for this BRF at
-`https://www.booli.se/bostadsrattsforening/267023`. Booli is gated by
-Cloudflare's JS challenge, so HTTP scraping with `requests` returns 403.
-Practical paths:
+`https://www.booli.se/bostadsrattsforening/267023` (housingCoopId
+267023 = HSB BRF Sjötungan). Unlike Hemnet, Booli scopes natively to
+the BRF, so no street-number filter is needed.
 
-1. Run an extraction snippet in the user's browser DevTools console
-   (cookies inherit Cloudflare clearance) and download the JSON.
-2. Use Playwright with a stealth profile (heavy, brittle).
-3. Save full HTML manually per slutpriser page and parse offline.
+Behind Cloudflare like Hemnet — plain `requests` returns 403. The
+scraper at `extraction/scripts/scrape_booli_sales.py` uses Playwright
++ stealth: it loads the BRF page once and intercepts the
+`getHousingCoopSold` GraphQL response, which returns the full
+sold-listing history in a single call — no pagination, no result cap,
+no shard-by-rooms.
 
-No script for Booli is committed yet. When added, it should write to
-`data/apartment_prices/sjotungan_sales_booli.json` and the merged result into
-`data/apartment_prices/sjotungan_sales.csv` with a `source` column.
+Output:
+
+- `data/apartment_prices/sjotungan_sales_booli.csv` — per-listing rows,
+  same columns as the Hemnet CSV plus `booli_url` (in place of
+  `hemnet_url`) and `apartment_number` (Lgh, populated on ~42% of rows).
+- `data/apartment_prices/sjotungan_sales_booli_raw.json` — the full
+  GraphQL `data.sold` array for re-parsing without re-fetching.
+
+Coverage as of May 2026: 372 sales spanning 2012-11-02 → 2026-05-05 —
+one year deeper than Hemnet's 2013-05-27 floor and 36 rows more
+overall. Three columns the GraphQL endpoint does not expose are left
+null: `asking_price_kr`, `monthly_fee_kr`, `price_change_pct`.
+Recovering them requires one fetch per `/bostad/{booliId}` detail
+page (~10 minutes for all 372; not implemented).
+
+Hemnet and Booli are kept in separate CSVs, distinguished by the
+`_hemnet` / `_booli` filename suffix. The two sources do not align
+cleanly on (date, address, final_price): only 114 of the 336 Hemnet
+rows have an exact-match Booli row, the rest differ mostly by small
+date offsets (Hemnet appears to use kontraktsdatum, Booli
+tillträdesdatum or similar). Any cross-source merge needs fuzzy
+matching — date window, normalized address, price tolerance.
+
+### Booli aggregate-only mode for peer BRFs
+
+The Booli scraper supports `--aggregate-only --output-aggregated PATH`,
+mirroring Hemnet's aggregate mode: it computes annual median / mean /
+min / max kr/m² and writes a single time-series CSV with no per-row
+data and no raw JSON. Used to source the peer-BRF comparison overlays
+on `sales_booli.html`:
+
+| Scope                   | housingCoopId | Output                                                |
+|-------------------------|--------------:|-------------------------------------------------------|
+| HSB BRF Björkbacken     | 53246         | `data/apartment_prices/bjorkbacken_annual_medians_booli.csv` |
+| HSB BRF Gäddan i Tyresö | 48924         | `data/apartment_prices/gaddan_annual_medians_booli.csv`      |
+| HSB BRF Siken           | 48115         | `data/apartment_prices/siken_annual_medians_booli.csv`       |
+
+In every case Booli's coverage exceeds Hemnet's per-BRF aggregate:
+~30–50 % more rows per year and one extra year (2012) at the start.
+No street-number allow-list is needed — Booli's BRF endpoint already
+scopes to the BRF natively, so multi-source unioning (Björkbacken)
+and disjoint number-set filtering (Gäddan, Siken) are both unnecessary.
+
+Tyresö kommun has no equivalent on Booli — `getHousingCoopSold` is
+BRF-scoped only — so the kommun-level overlay on `sales_booli.html`
+stays Hemnet-derived.
+
+## Privacy
+
+Both scrapers strip personal data on write:
+
+- Hemnet: `brokerName` and `brokerThumbnail` are removed from each
+  `SaleCard` before the raw JSON is written; `broker_name` is not a
+  CSV column.
+- Booli: the `agent` object (name, profile URL, photo URL) and
+  `agentId` are removed from each `SoldProperty` before the raw JSON
+  is written; `broker_name` is not a CSV column.
+- Kept: `broker_agency` / `agency` (a legal entity, not personal data)
+  and the agency logo (`brokerAgencyThumbnail` on Hemnet).
+
+Replicating publicly-visible agent names into a separate dataset is
+processing of personal data under GDPR Art. 4(2), and we have no
+lawful basis (Art. 6) for retention. The scrubbing also runs on
+`--from-cache`, so re-running over an old un-sanitised cache rewrites
+it clean.
 
 ## Known caveats
 
@@ -257,7 +320,7 @@ No script for Booli is committed yet. When added, it should write to
 
 The script is idempotent — re-running fetches Hemnet again and
 overwrites both files. Use `--from-cache` to skip the network and
-re-derive the CSV from `data/apartment_prices/sjotungan_sales_raw.json`.
+re-derive the CSV from `data/apartment_prices/sjotungan_sales_hemnet_raw.json`.
 
 ## Cloudflare and `--use-playwright`
 
