@@ -2,71 +2,96 @@ annual_reports:
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/stamma2025.pdf"
     finance_period: 2024
     local_path: "data/annual_reports/stamma2025.pdf"
+    text_local_path: "data/annual_reports/stamma2025_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2024/stamma-2024.pdf"
     finance_period: 2023
     local_path: "data/annual_reports/stamma-2024.pdf"
+    text_local_path: "data/annual_reports/stamma-2024_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2023/stamma-2023.pdf"
     finance_period: 2022
     local_path: "data/annual_reports/stamma-2023.pdf"
+    text_local_path: "data/annual_reports/stamma-2023_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2022/stamma_kallelse_2022.pdf"
     finance_period: 2021
     local_path: "data/annual_reports/stamma_kallelse_2022.pdf"
+    text_local_path: "data/annual_reports/stamma_kallelse_2022_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2021/stamma_kallelse-2021.pdf"
     finance_period: 2020
     local_path: "data/annual_reports/stamma_kallelse-2021.pdf"
+    text_local_path: "data/annual_reports/stamma_kallelse-2021_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2020/BRF_Sjotungan_arsredovisning_2019.pdf"
     finance_period: 2019
     local_path: "data/annual_reports/BRF_Sjotungan_arsredovisning_2019.pdf"
+    text_local_path: "data/annual_reports/BRF_Sjotungan_arsredovisning_2019_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2019/kallelse%20stamma%202019.pdf"
     finance_period: 2018
     local_path: "data/annual_reports/kallelse_stamma_2019.pdf"
+    text_local_path: "data/annual_reports/Kallelse_Stamma_2019_Sjotungan_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2018/kallelse%20stamma2018.pdf"
     finance_period: 2017
     local_path: "data/annual_reports/kallelse_stamma2018.pdf"
+    text_local_path: "data/annual_reports/HSB_Brf_Sjotungan_Arsredovisning_2017_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2017/arsredovisning%202016.pdf"
     finance_period: 2016
     local_path: "data/annual_reports/arsredovisning_2016.pdf"
+    text_local_path: "data/annual_reports/arsredovisning_2016_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2016/arsredovisning2015.pdf"
     finance_period: 2015
     local_path: "data/annual_reports/arsredovisning2015.pdf"
+    text_local_path: "data/annual_reports/arsredovisning2015_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2015/arsredovisning2014.pdf"
     finance_period: 2014
     local_path: "data/annual_reports/arsredovisning2014.pdf"
+    text_local_path: "data/annual_reports/arsredovisning2014_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2014/arsredovisning%202013.pdf"
     finance_period: 2013
     local_path: "data/annual_reports/arsredovisning_2013.pdf"
+    text_local_path: "data/annual_reports/arsredovisning_2013_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2013.pdf"
     finance_period: 2012
     local_path: "data/annual_reports/arsredovisning2013.pdf"
+    text_local_path: "data/annual_reports/arsredovisning2013_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2012.pdf"
     finance_period: 2011
     local_path: "data/annual_reports/arsredovisning2012.pdf"
+    text_local_path: "data/annual_reports/arsredovisning2012_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning2010.pdf"
     finance_period: 2010
     local_path: "data/annual_reports/arsredovisning2010.pdf"
+    text_local_path: "data/annual_reports/arsredovisning2010_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning%202009.pdf"
     finance_period: 2009
     local_path: "data/annual_reports/arsredovisning_2009.pdf"
+    text_local_path: "data/annual_reports/arsredovisning 2009_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning%202008.pdf"
     finance_period: 2008
     local_path: "data/annual_reports/Arsredovisning_2008.pdf"
+    text_local_path: "data/annual_reports/Arsredovisning 2008_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning%202007.pdf"
     finance_period: 2007
     local_path: "data/annual_reports/Arsredovisning_2007.pdf"
+    text_local_path: "data/annual_reports/Arsredovisning 2007_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning_2006.pdf"
     finance_period: 2006
     local_path: "data/annual_reports/Arsredovisning_2006.pdf"
+    text_local_path: "data/annual_reports/Arsredovisning_2006_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/bokslut2005.pdf"
     finance_period: 2005
     local_path: "data/annual_reports/bokslut2005.pdf"
+    text_local_path: "data/annual_reports/bokslut2005_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/Arsredovisning_2004.pdf"
     finance_period: 2004
     local_path: "data/annual_reports/Arsredovisning_2004.pdf"
+    text_local_path: "data/annual_reports/Arsredovisning_2004_OCR_text.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/arsredovisning_03_B.pdf"
     finance_period: 2003
     local_path: "data/annual_reports/arsredovisning_03_B.pdf"
+    text_local_path: "data/annual_reports/arsredovisning_03_B_OCR_text.pdf"
 
 stamma_protocols:
+  - url: ""
+    meeting_year: 2025
+    local_path: "data/stamma_protocols/ExtraForeningsstamma5maj2025.pdf"
   - url: "https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/stamma2025-protokoll.pdf"
     meeting_year: 2025
     local_path: "data/stamma_protocols/stamma2025-protokoll.pdf"

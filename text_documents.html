@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Textdokument - BRF Sjotungan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <style>
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        body {
+            font-size: 1rem;
+            background: #f0f4fa;
+            color: var(--vm-text);
+        }
+
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem !important; }
+        }
+
+        h1 { font-size: 2.25rem; }
+
+        .doc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            background: #f7f9fd;
+            overflow: hidden;
+        }
+
+        .doc-list li {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            padding: 10px 16px;
+            border-bottom: 1px solid #dde6f4;
+            font-size: 14px;
+        }
+
+        .doc-list li:last-child {
+            border-bottom: none;
+        }
+
+        .doc-list li:hover {
+            background: #eef3fb;
+        }
+
+        .doc-year {
+            flex: 0 0 4.5rem;
+            font-weight: 600;
+            color: #33486f;
+            white-space: nowrap;
+        }
+
+        .rules-list .doc-year {
+            flex-basis: 10rem;
+        }
+
+        .doc-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .doc-note {
+            color: var(--vm-muted);
+            font-size: 13px;
+        }
+
+        .doc-url {
+            color: var(--vm-blue);
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .doc-url:hover {
+            text-decoration: underline;
+        }
+
+        .doc-missing {
+            color: #b0b8c7;
+            font-style: italic;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: var(--vm-card);
+            color: var(--vm-blue);
+            margin-left: 6px;
+        }
+
+        .empty-state {
+            border: 1px dashed var(--vm-border);
+            background: #f7f9fd;
+            border-radius: 10px;
+            color: var(--vm-muted);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+        <nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+            <button onclick="location.href='https://visionmyggan.se/#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+            <button onclick="location.href='https://visionmyggan.se/#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+            <button onclick="location.href='https://visionmyggan.se/#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+            <button onclick="location.href='https://visionmyggan.se/#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto mt-8 p-4">
+        <section class="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+            <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Textdokument</h1>
+            <p class="mb-6" style="color: var(--vm-muted);">
+                Sökbara textversioner av föreningens årsredovisningar och stämmoprotokoll.
+            </p>
+
+            <section class="mb-10" aria-labelledby="annual-reports-heading">
+                <h2 id="annual-reports-heading" class="text-xl font-bold text-blue-900 mb-3">Årsredovisningar</h2>
+                <ul class="doc-list" id="annual-reports-list">
+                    <li><span class="doc-missing">Laddar…</span></li>
+                </ul>
+                <div id="annual-reports-empty" class="empty-state mt-4 p-4 text-sm hidden">
+                    Inga årsredovisningar hittades i sources.yaml.
+                </div>
+            </section>
+
+            <section class="mb-10" aria-labelledby="stamma-protocols-heading">
+                <h2 id="stamma-protocols-heading" class="text-xl font-bold text-blue-900 mb-3">Stämmoprotokoll</h2>
+                <ul class="doc-list" id="stamma-protocols-list">
+                    <li><span class="doc-missing">Laddar…</span></li>
+                </ul>
+                <div id="stamma-protocols-empty" class="empty-state mt-4 p-4 text-sm hidden">
+                    Inga stämmoprotokoll hittades i sources.yaml.
+                </div>
+            </section>
+
+            <section class="mb-10" aria-labelledby="rules-heading">
+                <h2 id="rules-heading" class="text-xl font-bold text-blue-900 mb-3">Stadgar och regler</h2>
+                <p class="text-sm mb-4" style="color: var(--vm-muted);">
+                    Föreningens egna stadgar och ordnings-/störningsregler.
+                </p>
+                <ul class="doc-list rules-list">
+                    <li>
+                        <span class="doc-year">Stadgar 2023</span>
+                        <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/images/pdf/stadgar/NYAStadgar2023.pdf" target="_blank" rel="noopener">https://www.sjotungan.se/public_html/new2016/images/pdf/stadgar/NYAStadgar2023.pdf</a>
+                    </li>
+                    <li>
+                        <span class="doc-year">Ordningsregler</span>
+                        <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/images/pdf/stadgar/ordningsregler.pdf" target="_blank" rel="noopener">https://www.sjotungan.se/public_html/new2016/images/pdf/stadgar/ordningsregler.pdf</a>
+                    </li>
+                    <li>
+                        <span class="doc-year">Störningsregler</span>
+                        <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/images/pdf/stadgar/storningsregler.pdf" target="_blank" rel="noopener">https://www.sjotungan.se/public_html/new2016/images/pdf/stadgar/storningsregler.pdf</a>
+                    </li>
+                </ul>
+            </section>
+
+            <section aria-labelledby="legislation-heading">
+                <h2 id="legislation-heading" class="text-xl font-bold text-blue-900 mb-3">Lagstiftning</h2>
+                <p class="text-sm mb-4" style="color: var(--vm-muted);">
+                    Nationell lagstiftning som styr bostadsrättsföreningar utöver de egna stadgarna. Bostadsrättsföreningar är ekonomiska föreningar och regleras av lag (2018:672) om ekonomiska föreningar tillsammans med bostadsrättslagen (1991:614).
+                </p>
+                <ul class="doc-list rules-list">
+                    <li>
+                        <span class="doc-year">SFS 2018:672</span>
+                        <span class="doc-text">
+                            <a class="doc-url" href="SFS2018672_fulltext_konsoliderad.pdf" target="_blank" rel="noopener">SFS2018672_fulltext_konsoliderad.pdf</a>
+                            <span class="doc-note">Lag (2018:672) om ekonomiska föreningar – konsoliderad fulltext.</span>
+                        </span>
+                    </li>
+                </ul>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        function basename(path) {
+            return path.split('/').pop();
+        }
+
+        function deriveTxtCandidates(pdfLocalPath) {
+            const base = pdfLocalPath.replace(/\.pdf$/i, '');
+            return [`${base}_text.txt`, `${base}_ocr.txt`];
+        }
+
+        async function pathExists(path) {
+            try {
+                const res = await fetch(path, { method: 'HEAD' });
+                return res.ok;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        async function findExistingTxt(pdfLocalPath) {
+            if (!pdfLocalPath) return null;
+            for (const candidate of deriveTxtCandidates(pdfLocalPath)) {
+                if (await pathExists(candidate)) return candidate;
+            }
+            return null;
+        }
+
+        function renderAnnualReports(reports) {
+            const list = document.getElementById('annual-reports-list');
+            if (!reports || reports.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('annual-reports-empty').classList.remove('hidden');
+                return;
+            }
+
+            const sorted = [...reports].sort(
+                (a, b) => (b.finance_period || 0) - (a.finance_period || 0)
+            );
+
+            list.innerHTML = sorted.map(r => {
+                const year = r.finance_period ?? '–';
+                const url = r.text_local_path;
+                const urlCell = url
+                    ? `<a class="doc-url" href="${url}" target="_blank" rel="noopener">${url}</a>`
+                    : `<span class="doc-missing">saknas</span>`;
+                return `<li>
+                    <span class="doc-year">${year}</span>
+                    ${urlCell}
+                </li>`;
+            }).join('');
+        }
+
+        async function renderStammaProtocols(protocols) {
+            const list = document.getElementById('stamma-protocols-list');
+            if (!protocols || protocols.length === 0) {
+                list.innerHTML = '';
+                document.getElementById('stamma-protocols-empty').classList.remove('hidden');
+                return;
+            }
+
+            const sorted = [...protocols].sort((a, b) => {
+                const yb = b.meeting_year || 0;
+                const ya = a.meeting_year || 0;
+                if (yb !== ya) return yb - ya;
+                return basename(a.local_path || '').localeCompare(basename(b.local_path || ''));
+            });
+
+            const enriched = await Promise.all(sorted.map(async p => {
+                const txtPath = await findExistingTxt(p.local_path);
+                return { ...p, txt_path: txtPath };
+            }));
+
+            list.innerHTML = enriched.map(p => {
+                const year = p.meeting_year ?? '–';
+                const filename = basename(p.local_path || '');
+                const isExtra = /extra/i.test(filename);
+                const yearLabel = isExtra
+                    ? `${year}<span class="pill">extra</span>`
+                    : `${year}`;
+                const urlCell = p.txt_path
+                    ? `<a class="doc-url" href="${p.txt_path}" target="_blank" rel="noopener">${p.txt_path}</a>`
+                    : `<span class="doc-missing">saknas</span>`;
+                return `<li>
+                    <span class="doc-year">${yearLabel}</span>
+                    ${urlCell}
+                </li>`;
+            }).join('');
+        }
+
+        async function init() {
+            try {
+                const res = await fetch('sources.yaml');
+                const text = await res.text();
+                const data = jsyaml.load(text);
+                renderAnnualReports(data.annual_reports || []);
+                await renderStammaProtocols(data.stamma_protocols || []);
+            } catch (err) {
+                console.error('Kunde inte läsa sources.yaml:', err);
+                document.getElementById('annual-reports-list').innerHTML =
+                    `<li style="color: #b00;">Fel vid laddning av sources.yaml</li>`;
+                document.getElementById('stamma-protocols-list').innerHTML =
+                    `<li style="color: #b00;">Fel vid laddning av sources.yaml</li>`;
+            }
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
