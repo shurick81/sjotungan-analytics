@@ -17,7 +17,7 @@ förslag
 till val och arvoden samt 1 motion)
 3. Valberedningens förslag till val vid stämman.
 
-Paragraferna: $1 till 825
+Paragraferna: §1 till 825
 
 Underskrifter
 
@@ -70,26 +70,26 @@ mandatperiod.
 24. Övriga i kallelsen anmälda ärenden.
 25. Föreningsstämmans avslutande.
 
-$1. Föreningsstämmans öppnande
+§1. Föreningsstämmans öppnande
 Föreningens ordförande Björn Bergström hälsade alla välkomna och öppnade 2019 års
 
 årsstämma.
 
-$2. Val av ordförande vid stämmen
+§2. Val av ordförande vid stämmen
 Till stämmans ordförande föreslogs Stefan Johansson.
 Beslut: Stämman beslöt välja Stefan Johansson till stämmans ordförande.
 
-$3. Anmälan av ordförandens val av protokollförare
+§3. Anmälan av ordförandens val av protokollförare
 Ordföranden meddelade att Bertil Neij skulle föra protokoll under mötet.
 
-$4. Godkännande av röstlängd (bilaga 1)
+§4. Godkännande av röstlängd (bilaga 1)
 Som förteckning över närvarande röstberättigade medlemmar ska den medlemslista på
 
 vilken medlemmarna prickas av när de registreras inför stämman godkännas.
 Beslut: Stämman godkände röstlängden. Antal närvarande röstberättigade var 57
 
 medlemmar.
-$5. Fråga om närvarorätt på stämmen
+§5. Fråga om närvarorätt på stämmen
 
 Ordförande frågade stämman om även icke-medlemmar fick närvara på stämman.
 Beslut: Stämman beslöt enhälligt att även icke-medlemmar fick närvara på stämman.
@@ -98,51 +98,51 @@ Justering
 Sekreterare stä' justerare
 
 ===== PAGE 3 =====
-$6. Godkännande av dagordningen (bilaga 2)
+§6. Godkännande av dagordningen (bilaga 2)
 Ordförande frågade stämman om den föreslagna dagordningen kunde godkännas.
 
 Beslut: Stämman godkände dagordningen.
 
-$7. Val av två personer att jämte ordföranden justera protokollet.
+§7. Val av två personer att jämte ordföranden justera protokollet.
 Eva Forsberg och Åke Berg föreslogs justera protokollet.
 Beslut: Stämman valde Eva Forsberg och Åke Berg till justerare.
 
-$8. Val av minst två rösträknare
+§8. Val av minst två rösträknare
 Eva Forsberg och Åke Berg föreslogs vara rösträknare på stämman.
 Beslut: Stämman valde Eva F orsberg och Åke Berg till rösträknare på stämman.
 
-$9. Fråga om kallelse skett i behörig ordning
+§9. Fråga om kallelse skett i behörig ordning
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats.
 Beslut: Stämman godkände att kallelse skett i behörig ordning.
 
-$10. Genomgång av styrelsens årsredovisning (bilaga 2)
+§10. Genomgång av styrelsens årsredovisning (bilaga 2)
 HSB-ekonomen Johan Lidén gick igenom årsredovisningen och uppmanade
 medlemmarna att ställa frågor.
 Beslut: Stämman godkände styrelsens årsredovisning.
 
-$11. Genomgång av revisorernas berättelse (bilaga 2)
+§11. Genomgång av revisorernas berättelse (bilaga 2)
 I revisionsberättelsen meddelade föreningens revisor Olle Wicander (som var
 förhindrad att närvara på stämman) att revision utförts och att föreningens räkenskaper
 var i sin ordning.
 Beslut: Stämman godkände revisionsberättelsen.
 
-$12. Beslut om fastställande av resultaträkningen och balansräkningen (bilaga 2)
+§12. Beslut om fastställande av resultaträkningen och balansräkningen (bilaga 2)
 Styrelsens förslag till resultaträkning och balansräkning föredrogs.
 Beslut: Stämman beslöt fastställa styrelsens förslag till resultaträkning och
 balansräkning för föreningen. Beslutet var enhälligt.
 
-$13. Beslut om föreningens vinst eller förlust enligt den fastställda balansräkningen
+§13. Beslut om föreningens vinst eller förlust enligt den fastställda balansräkningen
 
 (bilaga 2)
 Beslut: Stämman beslutade att godkänna styrelsens förslag till resultatdisposition.
 
-$14. Beslut om ansvarsfrihet för styrelsen (bilaga 2)
+§14. Beslut om ansvarsfrihet för styrelsen (bilaga 2)
 Stämman frågades om ansvarsfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas förslag för
 verksamhetsåret 2018. Stämmans beslut var enhälligt.
 
-$15. Beslut om arvoden för styrelseledamöter, revisorer och valberedning för
+§15. Beslut om arvoden för styrelseledamöter, revisorer och valberedning för
 kommande
 mandatperiod (bilaga 2)
 Valberedningens förslag redovisades.
@@ -158,13 +158,13 @@ revisorsuppleant. Valberedningen har 1,5 prisbasbelopp kollektivt. Dessa
 prisbasbelopp ska fördelas internt inom styrelsen. Revisor, revisorsuppleant och
 valberedare kan få max timarvode som styrelseledamöterna får.
 
-$16. Beslut om antal styrelseledamöter och suppleanter (bilagorna 2-3)
+§16. Beslut om antal styrelseledamöter och suppleanter (bilagorna 2-3)
 Valberedningens förslag var att styrelsen skulle bestå av 9 ledamöter och inga
 suppleanter.
 
 Beslut: Stämman godkände valberedningens förslag.
 
-$17. Val av styrelseordförande, styrelseledamöter och suppleanter (bilagorna 2-3)
+§17. Val av styrelseordförande, styrelseledamöter och suppleanter (bilagorna 2-3)
 Valberedningens förslag till val av styrelseordförande, styrelseledamöter och
 suppleant
 redovisades.
@@ -182,10 +182,10 @@ valda till år 2020.
 HSB Stockholms representant i styrelsen är f.n. Stefan Dahlgren (ordinarie
 ledamot), utsedd av HSB Stockholm.
 
-$18. Presentation av HSB-ledamot
+§18. Presentation av HSB-ledamot
 HSB-ledamoten Stefan Dahlgren presenterade sig för stämman.
 
-$19. Beslut om antal revisorer och suppleanter (bilagorna 2-3)
+§19. Beslut om antal revisorer och suppleanter (bilagorna 2-3)
 
 Valberedningens förslag presenterades.
 
@@ -194,15 +194,15 @@ revisor
 
 och 1 revisorssuppleant.
 
-$20. Val av revisor och revisorssuppleant (bilagorna 2-3)
+§20. Val av revisor och revisorssuppleant (bilagorna 2-3)
 Valberedningens förslag presenterades.
 Beslut: Stämman beslöt välja Olle Wicander till revisor för 2 år, omval.
 Kvarstående: Revisorssuppleant är Olof Åkerlind, vald till år 2020.
 
-$21. Beslut om antal ledamöter i valberedningen
+§21. Beslut om antal ledamöter i valberedningen
 Beslut: Stämman beslöt att valberedningen ska bestå av 3 ledamöter.
 
-$22. Val av valberedning. (bilagorna 2-3)
+§22. Val av valberedning. (bilagorna 2-3)
 Beslut: Stämman beslöt välja Victor Aronsson till valberedningen på 2 år, omval.
 
 Victor Aronsson valdes till valberedningens ordförande.
@@ -216,19 +216,19 @@ kA å = | V
 
 
 ===== PAGE 5 =====
-$23. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
+§23. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
 (bilagorna 2-3)
 Valberedningens förslag presenterades.
 Beslut: Till ordinarie fullmäktige valdes Björn Bergström, Stefan Bengtsson, Lena
 Wiklund, Leila Isaksson, Bertil Neij, Hans-Göran Vistrand, Jaime
 Martinez och Lukas Sveman.
 
-$24. Övriga i kallelsen anmälda ärenden (bilaga 2)
+§24. Övriga i kallelsen anmälda ärenden (bilaga 2)
 Motion 1
 Motion angående TV-kanaler och bredband.
 Beslut: Stämman beslutade att avslå motionen enligt styrelsens förslag till beslut.
 
-$25. Föreningsstämmans avslutande
+§25. Föreningsstämmans avslutande
 Föreningsstämman avslutades av stämmoordföranden klockan 20.20.
 
 Justering % 3_ r( justerare

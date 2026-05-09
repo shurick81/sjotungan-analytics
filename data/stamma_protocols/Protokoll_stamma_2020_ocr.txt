@@ -9,7 +9,7 @@ Tid: Måndagen den 22 juni 2020 kl. 18.30-19.20
 
 Beslutande: - Medlemmar med rösträtt i HSB:s Bostadsrättsförening Sjötungan i
 Tyresö genom poströstning. Enligt en tillfällig lag kan stämman genomföras
-med enbart poströstning (för att förhindra smittspridning av covid19). Vid beslut av $2 och 4-8
+med enbart poströstning (för att förhindra smittspridning av covid19). Vid beslut av §2 och 4-8
 representerades stämman av 6 fysiskt närvarande medlemmar: Björn Bergström, Bertil Neij,
 Leila Isaksson, Gia Carneström, Lukas Sveman och Hans Håkansson.
 
@@ -20,7 +20,7 @@ förslag till val och arvoden samt 6 motioner).
 till arvoden.
 4. 88 st. poströster.
 
-Paragraferna: $1 till $ 25
+Paragraferna: §1 till § 25
 
 Underskrifter
 
@@ -103,25 +103,25 @@ mandatperiod.
 
 PO S R r
 
-$1. Föreningsstämmans öppnande
+§1. Föreningsstämmans öppnande
 
 Föreningens ordförande Björn Bergström hälsade alla välkomna och öppnade 2020 års
 årsstämma.
 
-$2. Val av ordförande vid stämmen
+§2. Val av ordförande vid stämmen
 Till stämmans ordförande föreslogs Victor Aronsson.
 Beslut: Stämman beslöt välja Victor Aronsson till stämmans ordförande.
 
-$3. Anmälan av ordförandens val av protokollförare
+§3. Anmälan av ordförandens val av protokollförare
 Ordföranden meddelade att Bertil Neij skulle föra protokoll under mötet.
 
-$4. Godkännande av röstlängd (bilaga 1)
+§4. Godkännande av röstlängd (bilaga 1)
 Som förteckning över poströstande röstberättigade medlemmar ska den medlemslista
 på vilken medlemmarna prickas av när de poströstat inför stämman godkännas.
 Beslut: Stämman godkände röstlängden. Antal poströstande röstberättigade var 88
 medlemmar.
 
-$5. Fråga om närvarorätt på stämmen
+§5. Fråga om närvarorätt på stämmen
 Ordförande frågade stämman om även icke-medlemmar fick närvara på stämman.
 Beslut: Stämman beslöt enhälligt att även icke-medlemmar fick närvara på stämman.
 
@@ -131,52 +131,52 @@ Sekreterare stämmoordf. justerare
 VA > JH
 
 ===== PAGE 3 =====
-$6. Godkännande av dagordningen (tillgänglig i årsredovisningen samt i poströstnings-
+§6. Godkännande av dagordningen (tillgänglig i årsredovisningen samt i poströstnings-
 häftet)
 Ordförande frågade stämman om den föreslagna dagordningen kunde godkännas.
 Beslut: Stämman godkände dagordningen.
 
-$7. Val av två personer att jämte ordföranden justera protokollet.
+§7. Val av två personer att jämte ordföranden justera protokollet.
 Pernilla Johansson och Hans Håkansson föreslogs justera protokollet.
 Beslut: Stämman valde Pernilla Johansson och Hans Håkansson till justerare.
 
-$8. Val av minst två rösträknare
+§8. Val av minst två rösträknare
 Pernilla Johansson och Hans Håkansson föreslogs vara rösträknare på stämman.
 Beslut: Stämman valde Pernilla Johansson och Hans Håkansson till rösträknare på
 stämman.
 
-$9. Fråga om kallelse skett i behörig ordning
+§9. Fråga om kallelse skett i behörig ordning
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats.
 Beslut: Stämman godkände att kallelse skett i behörig ordning (86 av 88 poströstande
 godkände att kallelsen skett i behörig ordning).
 
-$10. Genomgång av styrelsens årsredovisning (bilaga 2)
+§10. Genomgång av styrelsens årsredovisning (bilaga 2)
 Beslut: Stämman godkände styrelsens årsredovisning (84 av 88 poströstande
 godkände årsredovisningen).
 
-$11. Genomgång av revisorernas berättelse (bilaga 2)
+§11. Genomgång av revisorernas berättelse (bilaga 2)
 I revisionsberättelsen meddelade revisorerna att revision utförts och att föreningens
 räkenskaper var i sin ordning.
 Beslut: Stämman godkände revisionsberättelsen (83 av 88 poströstande godkände
 revisionsberättelsen).
 
-$12. Beslut om fastställande av resultaträkningen och balansräkningen (bilaga 2)
+§12. Beslut om fastställande av resultaträkningen och balansräkningen (bilaga 2)
 Styrelsens förslag till resultaträkning och balansräkning föredrogs.
 Beslut: Stämman beslöt fastställa styrelsens förslag till resultaträkning och
 balansräkning för föreningen (83 av 88 poströstande godkände styrelsens förslag).
 
-$13. Beslut om föreningens vinst eller förlust enligt den fastställda balansräkningen
+§13. Beslut om föreningens vinst eller förlust enligt den fastställda balansräkningen
 (bilaga 2)
 Beslut: Stämman beslutade att godkänna styrelsens förslag till resultatdisposition (81
 av 88 poströstande godkände styrelsens förslag).
 
-$14. Beslut om ansvarsfrihet för styrelsen (bilaga 2)
+§14. Beslut om ansvarsfrihet för styrelsen (bilaga 2)
 Stämman frågades om ansvarsfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas förslag för
 verksamhetsåret 2019 (80 av 88 poströstande godkände revisorernas förslag).
 
-$15. Beslut om arvoden för styrelseledamöter, revisorer och valberedning för
+§15. Beslut om arvoden för styrelseledamöter, revisorer och valberedning för
 kommande mandatperiod (bilaga 3)
 Valberedningens förslag redovisades.
 a) Beslut: Stämman beslutade enligt valberedningens förslag att arvodet är 1,5
@@ -198,7 +198,7 @@ c) Beslut: Stämman beslutade enligt valberedningens förslag att arvodet till
 valberedningen är 0,6 prisbasbelopp (82 av 88 poströstande godkände valberedningens
 förslag).
 
-$16. Beslut om antal styrelseledamöter och suppleanter (bilagorna 2-3)
+§16. Beslut om antal styrelseledamöter och suppleanter (bilagorna 2-3)
 Valberedningens förslag var att styrelsen skulle bestå av högst 8 ledamöter och inga
 suppleanter.
 a) Beslut: Stämman godkände valberedningens förslag att styrelsen ska bestå av högst
@@ -206,7 +206,7 @@ a) Beslut: Stämman godkände valberedningens förslag att styrelsen ska bestå 
 b) Beslut: Stämman godkände valberedningens förslag att styrelsen ska bestå av inga
 suppleanter (82 av 88 poströstande godkände valberedningens förslag).
 
-$17. Val av styrelseordförande och styrelseledamöter (bilagorna 2-3)
+§17. Val av styrelseordförande och styrelseledamöter (bilagorna 2-3)
 Valberedningens förslag till val av styrelseordförande och styrelseledamöter
 redovisades.
 a) Beslut: Till styrelseordförande för 1 år valdes Björn Bergström, omval, enligt val-
@@ -218,28 +218,28 @@ röster) enligt valberedningens förslag.
 Kvarstående ledamöter: Stefan Bengtsson, Leila Isaksson och Lukas Sveman är
 valda till år 2021.
 
-$18. Presentation av HSB-ledamot
+§18. Presentation av HSB-ledamot
 HSB-ledamoten Stefan Dahlgren är HSB:s representant i styrelsen.
 
-$19. Beslut om antal revisorer och suppleanter (bilagorna 2-3)
+§19. Beslut om antal revisorer och suppleanter (bilagorna 2-3)
 Valberedningens förslag presenterades.
 a) Beslut: Stämman beslöt godkänna valberedningens förslag att revisorerna ska vara
 högst 2 till antal (83 av 88 poströstande godkände valberedningens förslag).
 b) Beslut: Stämman beslöt godkänna valberedningens förslag att inga revisorssupp-
 leanter ska utses (77 av 88 poströster godkände valberedningens förslag).
 
-$20. Val av revisor (bilagorna 2-3)
+§20. Val av revisor (bilagorna 2-3)
 Valberedningens förslag presenterades.
 Beslut: Stämman beslöt välja Mattias Matti till revisor för 2 år, nyval, enligt valbered-
 ningens förslag (83 poströster av 88 godkände valberedningens förslag).
 
 Kvarstående: Revisor Olle Wicander är vald till år 2021.
 
-$21. Beslut om antal ledamöter i valberedningen
+§21. Beslut om antal ledamöter i valberedningen
 Beslut: Stämman beslöt att valberedningen ska bestå av högst 2 ledamöter, enligt val-
 beredningens förslag (83 av 88 poströster godkände valberedningens förslag).
 
-$22. Val av valberedning. (bilagorna 2-3)
+§22. Val av valberedning. (bilagorna 2-3)
 a) Beslut: Stämman godkände valberedningens förslag att Victor Aronsson utses
 
 Justering
@@ -256,14 +256,14 @@ enligt valberedningens förslag (81 av 88 poströster godkände valberedningens 
 
 slag).
 
-$23. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
+§23. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
 (bilagorna 2-3)
 Valberedningens förslag var att stämman delegerar till styrelsen att utse representant-
 er och ersättare till HSB Stockholms distriktsstämma.
 Beslut: Stämman beslutade enligt valberedningens förslag (82 av 88 poströster god-
 kände valberedningens förslag).
 
-$24. Övriga i kallelsen anmälda ärenden (bilaga 2)
+§24. Övriga i kallelsen anmälda ärenden (bilaga 2)
 a) Motion 1.
 Motion angående solceller på tak.
 Beslut: Stämman beslutade att avslå motionen enligt styrelsens förslag till beslut (76 av
@@ -289,7 +289,7 @@ Motion angående bredband och vattenbesparing.
 Beslut: Stämman beslutade att avslå motionen enligt styrelsens förslag till beslut (81 av
 88 poströster godkände styrelsens förslag till beslut).
 
-$25. Föreningsstämmans avslutande
+§25. Föreningsstämmans avslutande
 Föreningsstämman avslutades av stämmoordföranden klockan 19.20.
 
 Justering

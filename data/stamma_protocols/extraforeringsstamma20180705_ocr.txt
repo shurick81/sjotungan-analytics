@@ -17,7 +17,7 @@ Tyresö. |
 Bilagor: I. Deltagarförteckning (röstlängd) samt 2 fullmakter
 2. Kallelsen
 
-Paragraferna: $1 till 3 12
+Paragraferna: §1 till 3 12
 
 Underskrifter
 
@@ -49,7 +49,7 @@ Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESÖ Sida 2 av 3
 
 Dagordning för stämman, paragraferna:
 
-$.
+§.
 
 82.
 
@@ -57,7 +57,7 @@ S
 
 84.
 
-$5.
+§5.
 
 86.
 
@@ -130,22 +130,22 @@ BRF SJOTUNGAN
 STÄMMOPROTOKOLL år 2018 -
 Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESÖ Sida 3 av 3
 
-$8. Val av minst två rösträknare
+§8. Val av minst två rösträknare
 Inger Malm och Alfonso Morales föreslogs vara rösträknare på stämman.
 Beslut: Stämman valde Inger Malm och Alfonso Morales till rösträknare på stämman.
 
-$9. Fråga om kallelse skett i behörig ordning
+§9. Fråga om kallelse skett i behörig ordning
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats. ?
 Beslut: Stämman godkände att kallelse skett i behörig ordning.
 
-$10. Styrelsens redovisning av föreslagna åtgärder på ledningar för vatten och avlopp samt
+§10. Styrelsens redovisning av föreslagna åtgärder på ledningar för vatten och avlopp samt
 : Badrum, duschrum och kök.
 Pär Jangholt från HSB Konsult lämnade, på styrelsens uppdrag, en sammanfattande redo-
 görelse av förslag till åtgärder på ledningar för vatten och avlopp samt badrum, duschrum
 och kök i berörda lägenheter på Myggdalsvägen 104.
 
-$11. Styrelsens anmälda ärende om förändringsåtgärder i berörda bostadsrätter.
+§11. Styrelsens anmälda ärende om förändringsåtgärder i berörda bostadsrätter.
 Styrelsen föreslår att stämman beslutar om:
 - - Att föreningen övertar medlemmens underhållsansvar under ombyggnadstiden i lägen-
 heten med anledning av åtgärderna badrum, duschrum och kök.
@@ -159,7 +159,7 @@ tet.
 Beslut: Stämman beslöt att godkänna styrelsens förslag att föreningen övertar under-
 hållsansvaret i de berörda lägenheterna under ombyggnadstiden. Beslutet var enhälligt.
 
-$12. Extra föreningsstämman avslutas.
+§12. Extra föreningsstämman avslutas.
 Stämmans ordförande avslutade stämman kl. 20.00.
 
 Justering M

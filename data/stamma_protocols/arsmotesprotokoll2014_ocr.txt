@@ -16,7 +16,7 @@ Bilagor: 1. Deltagarförteckning
 2. Styrelsens årsredovisning
 3. Valberedningens förslag
 
-Paragraferna: $1 till $ 17
+Paragraferna: §1 till § 17
 
 Underskrifter
 A
@@ -83,24 +83,24 @@ MM N AN B W Nr
 Stämman öppnades av föreningens ordförande Bengt Rapp som hälsade de närvarande väl-
 komna.
 
-$1. Val av ordförande vid stämman
+§1. Val av ordförande vid stämman
 Till ordförande vid stämman föreslogs Inge Hjalmarsson, HSB Stockholm.
 Beslut: Till stämmoordförande valdes Inge Hjalmarsson.
 
-$2. Anmälan av ordförandens val av protokollförare
+§2. Anmälan av ordförandens val av protokollförare
 Ordföranden meddelade att Cecilia Alm skulle föra protokoll under mötet.
 
-$3. Godkännande av röstlängd (Bilaga 1)
+§3. Godkännande av röstlängd (Bilaga 1)
 Som förteckning över närvarande röstberättigade medlemmar ska den medlemslista på vil-
 ken medlemmarna prickas av när de registreras inför stämman godkännas.
 Beslut: Stämman godkände förteckningen. Antal närvarande röstberättigade var 47 med-
 lemmar (varav 3 ombud).
 
-$4. Fastställande av dagordning
+§4. Fastställande av dagordning
 Ordförande frågade stämman om den föreslagna dagordningen kunde godkännas.
 Beslut: Stämman godkände dagordningen.
 
-$5. Val av två personer, tillika rösträknare att jämte ordförande justera protokollet
+§5. Val av två personer, tillika rösträknare att jämte ordförande justera protokollet
 Bo Egelryd och Bo Rådeström föreslogs justera stämmoprotokollet samt vara rösträknare. .
 Beslut: Stämman valde Bo Egelryd och Bo Rådeström som justerare tillika rösträknare.
 
@@ -116,42 +116,42 @@ BRF SJOTUNGAN
 
 Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESÖ Sida 3 av 4
 
-$6. Fråga om kallelse behörigen skett
+§6. Fråga om kallelse behörigen skett
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats.
 Beslut: Stämman godkände att kallelsen distribuerats i rätt tid.
 
-$7. Styrelsens årsredovisning (Bilaga 2)
+§7. Styrelsens årsredovisning (Bilaga 2)
 Stämmoordföranden läste upp styrelsens årsredovisning rubrikvis och uppmanade medlem-
 marna att ställa frågor. En genomgång av föreningens balans och resultaträkning föredrogs
 av föreningens ekonom, Caroline Strömvall från HSB
 Beslut: Stämman godkände styrelsens årsredovisning.
 
-$8. Revisorernas berättelse
+§8. Revisorernas berättelse
 Revisionsberättelsen lästes upp av föreningens ekonom Caroline Strömvall.
 Beslut: Stämman godkände revisionsberättelsen.
 
-$9. Beslut om fastställande av resultat- och balansräkning
+§9. Beslut om fastställande av resultat- och balansräkning
 Styrelsens förslag till resultat- och balansräkning föredrogs.
 Beslut: Stämman fastställde förslaget till resultat- och balansräkningen för föreningen.
 
-$10. Beslut i anledning av föreningens vinst eller förlust enligt den fastställda
+§10. Beslut i anledning av föreningens vinst eller förlust enligt den fastställda
 balansräkningen.
 Beslut: Stämman beslutade att godkänna föreningens resultatdisposition för år 2013.
 
-$11. Beslut i fråga om ansvarsfrihet för styrelsen
+§11. Beslut i fråga om ansvarsfrihet för styrelsen
 Stämman frågades om ansvarsfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas förslag för verksam-
 hetsåret 2013. Stämmans beslut var enhälligt.
 
-$12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
+§12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
 Beslut: Stämman beslutade enligt valberedningens förslag att arvodet är 1,5 prisbasbelopp
 per styrelsemedlem och styrelsesuppleant samt 1,5 prisbasbelopp kollektivt för revisor och
 revisorsuppleant. Valberedningen har 0,5 prisbasbelopp kollektivt. Dessa prisbasbelopp ska
 fördelas internt inom styrelsen. Revisor, revisorsuppleant och valberedare kan få max tim-
 arvode som styrelseledamöterna.
 
-$13. Val av styrelseordförande, styrelseledamöter och suppleanter. (Bilaga 2)
+§13. Val av styrelseordförande, styrelseledamöter och suppleanter. (Bilaga 2)
 Valberedningens förslag till styrelseordförande, styrelseledamöter och suppleanter redovisa-
 des.
 Beslut:
@@ -188,13 +188,13 @@ Beslut:
 e Kvarstående Revisor Alfonso Morales är vald till 2015.
 e Kvarstående revisorsuppleant I år Jonny Pegestam.
 
-$15. Val av valberedning
+§15. Val av valberedning
 Till valberedning föreslogs Gunilla Lovén (sammankallande) och Aune Nordlund
 Beslut: Till föreningens valberedning beslutade stämman att välja:
 e - Gunilla Lovén (sammankallande) och Aune Nordlund 1 år nyval
 e Kvarstående valberedare är Hilde Bjöns är vald till 2015.
 
-$16. Erforderligt val av fallmäktige med suppleanter och övriga representanter i HSB
+§16. Erforderligt val av fallmäktige med suppleanter och övriga representanter i HSB
 Valberedningens förslag redovisades för stämman (Bilaga 2).
 Beslut: Stämman beslutade att välja enligt följande:
 e Ordinarie ledamöter: Bengt Rapp, Andreas Tollefors Bristam, Stefan Bengtsson,

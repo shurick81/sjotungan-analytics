@@ -19,7 +19,7 @@ Bilagor: 1. Årsberättelse 2007
 3. Valberedningens förslag
 4. Motioner (19 st) och styrelsens propositioner (2 st)
 
-Paragrafer: S1 till $19
+Paragrafer: S1 till §19
 
 Underskrifter: x Y
 X—.
@@ -138,7 +138,7 @@ närvarande välkomna och öppnade stämman.
 Till ordförande föreslogs Stefan Johansson, HSB Stockholm.
 Beslut: Till stämmoordförande valdes Stefan Johansson.
 
-$3 Upprättande av förteckning över närvarande medlemmar
+§3 Upprättande av förteckning över närvarande medlemmar
 Som förteckning över närvarande röstberättigade medlemmar ska den
 medlemslista på vilken medlemmarna prickas av när de registreras på
 
@@ -160,7 +160,7 @@ Beslut: Stämman valde Sten-Åke Dahl och Friedrich Schober som justerare
 
 tillika rösträknare.
 
-$6 Fråga om kallelse behörigen skett
+§6 Fråga om kallelse behörigen skett
 Stämmoordförande redogjorde för när kallelsen till stämman distribuerats.
 
 Beslut: Stämman godkände att kallelsen distribuerats i rätt tid.
@@ -180,7 +180,7 @@ Beslut: Stämman godkände revisionsberättelsen.
 Styrelsens förslag till resultat- och balansräkning föredrogs.
 Beslut: Stämman fastställde resultat- och balansräkningen för föreningen.
 
-$10 Fråga om ansvarsfrihet för styrelsen
+§10 Fråga om ansvarsfrihet för styrelsen
 
 Justeringar; CÄ-"'N
 Stämmoordförande '/ ;
@@ -197,7 +197,7 @@ Stämman frågades om ansvarfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas
 förslag för verksamhetsåret 2007
 
-$11 Beslut angående föreningens resultat för 2007
+§11 Beslut angående föreningens resultat för 2007
 Beslut: Stämman beslutade att godkänna föreningens resultatdisposition för
 år 2007.
 
@@ -206,7 +206,7 @@ mandatperiod
 Beslut: Stämman beslutade att arvodet är I prisbasbelopp per vald ledamot
 att fördelas internt inom styrelsen.
 
-$13 Valav styrelseordförande, styrelseledamöter och suppleanter
+§13 Valav styrelseordförande, styrelseledamöter och suppleanter
 Valberedningens förslag till styrelseordförande, styrelseledamöter och
 suppleanter redovisades.
 Beslut: Styrelseordförande för 1 år valdes Bengt Rapp.
@@ -260,7 +260,7 @@ föreningens valberedning.
 Valberedningen kan tillsätta ytterligare en person i valberedningen under
 året om de finner en lämplig kandidat.
 
-$17 Inkomna motioner (19 st, för fullständig text i motioner se bilaga +)
+§17 Inkomna motioner (19 st, för fullständig text i motioner se bilaga +)
 
 Motion Å.
 Motion angående solfångare. Sylvia Hallvar M96

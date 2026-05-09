@@ -19,7 +19,7 @@ Bilagor: 1. a. Deltagarförteckning. 1. b. En fullmakt för ombud.
 om nya stadgar och motionerna 1-8).
 3. Nya stadgarna
 
-Paragraferna: $1 till $ 19
+Paragraferna: §1 till § 19
 
 Underskrifter
 
@@ -115,7 +115,7 @@ Beslut: Stämman godkände förteckningen. Antal närvarande röstberättigade v
 lemmar samt 1 ombud.
 Beslut: Stämman beslöt enhälligt att även utomstående fick närvara på stämman.
 
-$4. Fastställande av dagordning
+§4. Fastställande av dagordning
 
 Ordförande frågade stämman om den föreslagna dagordningen kunde godkännas.
 Beslut: Stämman godkände dagordningen.
@@ -136,12 +136,12 @@ BRF SJÖTUNGAN
 ÅRSMÖTESPROTOKOLL år 2017 -
 Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESO Sida 3 av 5
 
-$6. Fråga om kallelse behörigen skett
+§6. Fråga om kallelse behörigen skett
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats.
 Beslut: Stämman godkände att kallelsen distribuerats i rätt tid.
 
-$7. Styrelsens årsredovisning (Bilaga 2)
+§7. Styrelsens årsredovisning (Bilaga 2)
 Stämmoordföranden läste upp styrelsens årsredovisning rubrikvis och uppmanade medlem-
 marna att ställa frågor.
 Frågor ställdes av Oscar Bueno-Martinez om ökade kostnader för administration och elekt-
@@ -154,7 +154,7 @@ frågade om en sådan grupp bildats. Svaret från föreningens ordförande var a
 bildats en sådan grupp.
 Beslut: Stämman godkände styrelsens årsredovisning.
 
-$8. Revisorernas berättelse (Bilaga 2)
+§8. Revisorernas berättelse (Bilaga 2)
 Revisionsberättelsen lästes upp av föreningens revisor Olle Wicander.
 
 Beslut: Stämman godkände revisionsberättelsen.
@@ -165,17 +165,17 @@ Beslut: Stämman fastställde förslaget till resultaträkningen och balansräkn
 
 ningen.
 
-$10. Beslut i anledning av föreningens vinst eller förlust enligt den fastställda
+§10. Beslut i anledning av föreningens vinst eller förlust enligt den fastställda
 Balansräkningen (Bilaga 2)
 Beslut: Stämman beslutade att godkänna föreningens resultatdisposition.
 
-$11. Beslut i fråga om ansvarsfrihet för styrelsen
+§11. Beslut i fråga om ansvarsfrihet för styrelsen
 Stämman frågades om ansvarsfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas förslag för verksam-
 
 hetsåret 2016. Stämmans beslut var enhälligt.
 
-$12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod (Bil. 2)
+§12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod (Bil. 2)
 Beslut: Stämman beslutade enligt valberedningens förslag att arvodet är 1,5 prisbasbelopp
 per styrelsemedlem och styrelsesuppleant samt 1,5 prisbasbelopp kollektivt för revisor och
 revisorsuppleant. Valberedningen har 1,5 prisbasbelopp kollektivt. Dessa prisbasbelopp ska
@@ -300,7 +300,7 @@ Att justera så hissarna, när de är tomma, automatiskt återgår till bottenv�
 
 Beslut: Stämman beslutade att avslå motionen enligt styrelsens förslag till beslut.
 
-$19. Föreningsstämmans avslutande.
+§19. Föreningsstämmans avslutande.
 Föreningsstämman avslutades av stämmoordföranden kl. 20.00
 
 Justering z %

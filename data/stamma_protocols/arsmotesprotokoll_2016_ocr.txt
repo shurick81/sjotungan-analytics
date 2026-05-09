@@ -18,7 +18,7 @@ Bilagor: 1. Deltagarförteckning (bilaga 1).
 3. Styrelsens årsredovisning (inklusive proposition 1-2) (bilaga 3).
 4. Valberedningens förslag (bilaga 4)
 
-Paragraferna: $1 till $ 18
+Paragraferna: §1 till § 18
 
 Underskrifter
 
@@ -48,15 +48,15 @@ Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESO Sida 2 av 5
 
 Dagordning för stämman, paragraferna:
 
-$1.
+§1.
 
 82.
 
 83.
 
-$4.
+§4.
 
-$5.
+§5.
 
 Val av ordförande för stämman
 Anmälan av ordförandens val av protokollförare.
@@ -121,12 +121,12 @@ BRF SJÖTUNGAN
 ÅRSMÖTESPROTOKOLL år 2016 |
 Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESÖ Sida 3 av 5
 
-$6. Fråga om kallelse behörigen skett
+§6. Fråga om kallelse behörigen skett
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats.
 Beslut: Stämman godkände att kallelsen distribuerats i rätt tid.
 
-$7. Styrelsens årsredovisning (Bilaga 3)
+§7. Styrelsens årsredovisning (Bilaga 3)
 Stämmoordföranden läste upp styrelsens årsredovisning rubrikvis och uppmanade medlem-
 marna att ställa frågor.
 Det ställdes frågor från medlemmar om renoveringen av D-garaget. Varför det blev 60740 dy-
@@ -140,11 +140,11 @@ Den ekonomiska delen av årsredovisningen redovisades av Ann-Christine Ålhed fr
 Stockholm Ekonomiförvaltning.
 Beslut: Stämman godkände styrelsens årsredovisning.
 
-$8. Revisorernas berättelse
+§8. Revisorernas berättelse
 Revisionsberättelsen lästes upp av föreningens revisor Olle Wikander.
 Beslut: Stämman godkände revisionsberättelsen.
 
-$9. Beslut om fastställande av resultat- och balansräkning
+§9. Beslut om fastställande av resultat- och balansräkning
 Styrelsens förslag till resultat- och balansräkning föredrogs.
 Beslut: Stämman fastställde förslaget till resultat- och balansräkningen för föreningen.
 
@@ -152,19 +152,19 @@ Beslut: Stämman fastställde förslaget till resultat- och balansräkningen fö
 balansräkningen.
 Beslut: Stämman beslutade att godkänna föreningens resultatdisposition för år 2015.
 
-$11. Beslut i fråga om ansvarsfrihet för styrelsen
+§11. Beslut i fråga om ansvarsfrihet för styrelsen
 Stämman frågades om ansvarsfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas förslag för verksam-
 hetsåret 2015. Stämmans beslut var enhälligt.
 
-$12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
+§12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
 Beslut: Stämman beslutade enligt valberedningens förslag att arvodet är 1,5 prisbasbelopp
 per styrelsemedlem och styrelsesuppleant samt 1,5 prisbasbelopp kollektivt för revisor och
 revisorsuppleant. Valberedningen har 0,5 prisbasbelopp kollektivt. Dessa prisbasbelopp ska
 fördelas internt inom styrelsen. Revisor, revisorsuppleant och valberedare kan få max tim-
 arvode som styrelseledamöterna.
 
-$13. Val av styrelseordförande, styrelseledamöter och suppleanter. (Bilaga 4)
+§13. Val av styrelseordförande, styrelseledamöter och suppleanter. (Bilaga 4)
 Valberedningens förslag till styrelseordförande, styrelseledamöter och suppleanter redovisa-
 
 Justering
@@ -194,25 +194,25 @@ Kvarstående ledamöter: Stefan Bengtsson, Björn Bergström och Lena Wiklund va
 HSB Stockholms representant i styrelsen är f.n. Stefan Dahlgren, utsedd av HSB Stock-
 holm.
 
-$14. Val av revisor och revisorsuppleant (Bilaga 3)
+§14. Val av revisor och revisorsuppleant (Bilaga 3)
 Valberedningens förslag till revisor och revisorsuppleant redovisades.
 Beslut:
 o Till revisorssuppleant valdes för 2 år Olle Åkerlind, nyval.
 Olle Wikander valdes 2015 till revisor för 2 år.
 
-$15. Val av valberedning
+§15. Val av valberedning
 Till valberedning föreslogs omval av 2015 års valda valberedning.
 Beslut: Till föreningens valberedning beslutade stämman att välja:
 e Gunilla Lovén (sammankallande).
 e Aune Nordlund.
 Kvarstående valberedare är Lillemor Jönsson som valdes 2015 för 2 år.
 
-$16. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
+§16. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
 Föreslogs att ett konstituerande styrelsemöte fick besluta om val av fullmäktige, suppleanter
 och övriga representanter i HSB Stockholm.
 Beslut: Stämman beslöt att hänskjuta beslutet till ett konstituerande styrelsemöte.
 
-$17. Övriga i kallelsen anmälda ärenden
+§17. Övriga i kallelsen anmälda ärenden
 Propositioner (2 propositioner redovisade i årsredovisningen).
 
 Proposition 1

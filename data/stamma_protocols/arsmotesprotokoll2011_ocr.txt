@@ -16,7 +16,7 @@ Bilagor: 1. Deltagarförteckning
 3. Styrelsens årsredovisning
 4. Valberedningens förslag
 5. Motioner (2 st)
-Paragraferna: $1 till $ 17
+Paragraferna: §1 till § 17
 Underskrifter
 
 S
@@ -81,21 +81,21 @@ N AVBWYN A
 Stämman öppnades av föreningens ordförande Bengt Rapp som hälsade de närvarande väl-
 komna.
 
-$1. Val av ordförande vid stämman
+§1. Val av ordförande vid stämman
 Till ordförande vid stämman föreslogs Jenny Jörgensen, HSB Stockholm.
 Beslut: Till stämmoordförande valdes Jenny Jörgensen.
 
 2. Anmälan av ordförandens val av protokollförare
 Ordföranden meddelade att Bertil Neij skulle föra protokoll under mötet.
 
-$3. Godkännande av röstlängd (Bilaga 1-2)
+§3. Godkännande av röstlängd (Bilaga 1-2)
 Som förteckning över närvarande röstberättigade medlemmar ska den medlemslista på vil-
 ken medlemmarna prickas av när de registreras inför stämman godkännas.
 Beslut: Stämman godkände förteckningen. Antal röstberättigade var 55 medlemmar, varav 1
 
 medlem med fullmakt.
 
-$4. Fastställande av dagordning
+§4. Fastställande av dagordning
 Ordförande frågade stämman om den föreslagna dagordningen kunde godkännas.
 Beslut: Stämman godkände dagordningen.
 
@@ -112,17 +112,17 @@ Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESO Sida 3 av 4
 Gabriela Araya och Inger Malm föreslogs justera stämmoprotokollet samt vara rösträknare.
 Beslut: Stämman valde Gabriela Araya och Inger Malm som justerare tillika rösträknare.
 
-$6. Fråga om kallelse behörigen skett
+§6. Fråga om kallelse behörigen skett
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats.
 Beslut: Stämman godkände att kallelsen distribuerats i rätt tid.
 
-$7. Styrelsens årsredovisning (Bilaga 3)
+§7. Styrelsens årsredovisning (Bilaga 3)
 Stämmoordföranden läste upp styrelsens årsredovisning rubrikvis och uppmanade medlem-
 marna att ställa frågor.
 Beslut: Stämman godkände styrelsens årsredovisning.
 
-$8. Revisorernas berättelse
+§8. Revisorernas berättelse
 Revisionsberättelsen lästes upp av stämmoordföranden.
 Beslut: Stämman godkände revisionsberättelsen.
 
@@ -130,23 +130,23 @@ Beslut: Stämman godkände revisionsberättelsen.
 Styrelsens förslag till resultat- och balansräkning föredrogs.
 Beslut: Stämman fastställde förslaget till resultat- och balansräkningen för föreningen.
 
-$10. Beslut i anledning av föreningens vinst eller förlust enligt den fastställda
+§10. Beslut i anledning av föreningens vinst eller förlust enligt den fastställda
 balansräkningen.
 Beslut: Stämman beslutade att godkänna föreningens resultatdisposition för år 2010.
 
-$11. Beslut i fråga om ansvarsfrihet för styrelsen
+§11. Beslut i fråga om ansvarsfrihet för styrelsen
 Stämman frågades om ansvarsfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas förslag för verksam-
 hetsåret 2010. Stämmans beslut var enhälligt.
 
-$12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
+§12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
 Beslut: Stämman beslutade att arvodet är 1,5 prisbasbelopp per styrelsemedlem och styrel-
 sesuppleant samt 1,5 prisbasbelopp kollektivt för revisor och revisorsuppleant. Valbered-
 ningen har 0,5 prisbasbelopp kollektivt. Dessa prisbasbelopp ska fördelas internt inom sty-
 relsen. Revisor, revisorsuppleant och valberedare kan få max timarvode som styrelseleda-
 möterna.
 
-$13. Val av styrelseordförande, styrelseledamöter och suppleanter. (Bilaga 4)
+§13. Val av styrelseordförande, styrelseledamöter och suppleanter. (Bilaga 4)
 Valberedningens förslag till styrelseordförande, styrelseledamöter och suppleanter redovisa-
 des.
 
@@ -176,12 +176,12 @@ Suppleant Rolf Lovén vald till 2012.
 e HSB Stockholms representanter i styrelsen är Hans Bählmann (ordinarie) och Veikko
 Melakari (suppleant).
 
-$14. Val av revisor och revisorsuppleant (Bilaga 4)
+§14. Val av revisor och revisorsuppleant (Bilaga 4)
 Valberedningens förslag till revisorsuppleant redovisades.
 Beslut: Karna Henseby som revisorsuppleant, omval 1 år.
 Revisor Alfonso Morales valdes 2010 på 2 år.
 
-$1S5. Val av valberedning
+§1S5. Val av valberedning
 Till valberedning föreslogs Hilde Bjöns, Christina Fredriksson och Sven Bäckström.
 Beslut: Stämman beslutade att välja Hilde Bjöns, Christina Fredriksson och Sven Bäck-
 ström att utgöra föreningens valberedning. Hilde Bjöns är sammankallande till valbered-

@@ -16,7 +16,7 @@ Bilagor: 1. Årsberättelse 2008
 3. Fullmakter, 7 st (bilagorna 3:1-7)
 4. Valberedningens förslag
 5. Motioner (4 st) och styrelsens propositioner (1 st).
-Paragraferna: $1 till 319
+Paragraferna: §1 till 319
 Underskrifter
 
 Q —
@@ -80,32 +80,32 @@ Revisorernas berättelse
 
 18. Inkomna motioner
 
-19. Övriga ärenden (struken, se $4 nedan)
+19. Övriga ärenden (struken, se §4 nedan)
 
 20. Stämmans avslutning
 
 ORNAVNBWNA
 
-$1. Stämmans öppnande
+§1. Stämmans öppnande
 Stämman öppnades av föreningens ordförande Bengt Rapp som hälsade de närvarande väl-
 komna och öppnade stämman.
 
-$2. Val av ordförande vid stämman
+§2. Val av ordförande vid stämman
 Till ordförande vid stämman föreslogs Stefan Johansson, HSB Stockholm.
 Beslut: Till stämmoordförande valdes Stefan Johansson.
 Stämmoordförande meddelade att Bertil Neij som mötets sekreterare skulle föra protokoll.
 
-$3. Upprättande av förteckning över närvarande medlemmar
+§3. Upprättande av förteckning över närvarande medlemmar
 Som förteckning över närvarande röstberättigade medlemmar ska den medlemslista på vil-
 ken medlemmarna prickas av när de registreras inför stämman godkännas.
 Beslut: Stämman godkände förteckningen. Antal röstberättigade var 83 medlemmar, varav 7
 medlemmar med fullmakt.
 
-$4. Fastställande av dagordning
+§4. Fastställande av dagordning
 Ordförande frågade stämman om den föreslagna dagordningen kunde godkännas. Förening-
-ens ordförande, Bengt Rapp, föreslog att $19 (övr ärenden) skulle strykas och läggas efter
+ens ordförande, Bengt Rapp, föreslog att §19 (övr ärenden) skulle strykas och läggas efter
 stämmans avslutning som frågestund.
-Beslut: Stämman godkände dagordningen med strykande av $19 enligt B. Rapps förslag.
+Beslut: Stämman godkände dagordningen med strykande av §19 enligt B. Rapps förslag.
 
 Justering
 
@@ -120,42 +120,42 @@ BRF SJÖTUNGAN
 ÅRSMÖTESPROTOKOLL år 2009 -
 Org.nr. 712400-1467, Myggdalsvägen 102, 135 43 TYRESOÖ Sida 3 av 5
 
-$5. Val av två personer, tillika rösträknare att jämte ordförande justera protokollet
+§5. Val av två personer, tillika rösträknare att jämte ordförande justera protokollet
 Inger Malm och Stig Lillfors föreslogs justera stämmoprotokollet samt vara rösträknare.
 Beslut: Stämman valde Inger Malm och Stig Lillfors som justerare tillika rösträknare.
 
-$6. Fråga om kallelse behörigen skett
+§6. Fråga om kallelse behörigen skett
 På frågan från stämmoordförande redogjorde föreningens ordförande när kallelsen till
 stämman distribuerats.
 Beslut: Stämman godkände att kallelsen distribuerats i rätt tid.
 
-$7. Styrelsens redovisningshandlingar
+§7. Styrelsens redovisningshandlingar
 Stämmoordföranden läste upp styrelsens redovisningshandlingar rubrikvis och uppmanade
 medlemmarna att ställa frågor.
 Beslut: Stämman godkände styrelsens redovisningshandlingar.
 
-$8. Revisorernas berättelse
+§8. Revisorernas berättelse
 Revisionsberättelsen lästes upp i stora drag av stämmoordföranden.
 Beslut: Stämman godkände revisionsberättelsen.
 
-$9. Beslut om fastställande av resultat- och balansräkning
+§9. Beslut om fastställande av resultat- och balansräkning
 Styrelsens förslag till resultat- och balansräkning föredrogs.
 Beslut: Stämman fastställde resultat- och balansräkningen för föreningen.
 
-$10. Beslut i fråga om ansvarsfrihet för styrelsen
+§10. Beslut i fråga om ansvarsfrihet för styrelsen
 Stämman frågades om ansvarsfrihet kunde beviljas för styrelsen.
 Beslut: Stämman beviljade styrelsen ansvarsfrihet enligt revisorernas förslag för verksam-
 hetsåret 2008.
 
-$11. Beslut angående föreningens resultat för år 2008
+§11. Beslut angående föreningens resultat för år 2008
 Beslut: Stämman beslutade att godkänna föreningens resultatdisposition för år 2008.
 
-$12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
+§12. Fastställande av arvode för styrelse och revisorer för kommande mandatperiod
 Beslut: Stämman beslutade att arvodet är 1 prisbasbelopp per styrelsemedlem och styrelse-
 suppleant samt 1I prisbasbelopp kollektivt för revisor och revisorsuppleant. Dessa basbelopp
 ska fördelas internt inom styrelsen.
 
-$13. Val av styrelseordförande, styrelseledamöter och suppleanter.
+§13. Val av styrelseordförande, styrelseledamöter och suppleanter.
 Valberedningens förslag till styrelseordförande, styrelseledamöter och suppleanter redovisa-
 des.
 Beslut:
@@ -189,12 +189,12 @@ på stämman 2008 till år 2010.
 HSB Stockholms representanter i styrelsen är Hans Bählmann (ordinarie) och Gunilla
 Karlsson (suppleant).
 
-$14. Val av revisor och revisorsuppleant
+§14. Val av revisor och revisorsuppleant
 Valberedningens förslag till revisor och revisorsuppleant redovisades.
 Beslut: Stämman beslutade att välja Karin Skeppström som ordinarie revisor och Alfonso
 Morales som revisorsuppleant.
 
-$15. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
+§15. Erforderligt val av fullmäktige med suppleanter och övriga representanter i HSB
 Valberedningens förslag redovisades för stämman.
 Beslut: Stämman beslutade att välja enligt följande:
 Ordinarie ledamöter: Bengt Rapp, Andreas Tollefors Gustafsson, Stefan Bengtsson, Pether
@@ -202,13 +202,13 @@ Johnsson, Bertil Neij och Markku Sandelin.
 Suppleanter: Anita Buske, Lena Wiklund, Ewa Forsberg, Åke Berg, Håkan Kylsäter och
 Rolf Lovén.
 
-$16. Val av valberedning
+§16. Val av valberedning
 Till valberedning föreslogs Håkan Kylsäter, Lolita Lall och Karna Henseby.
 Beslut: Stämman beslutade att välja Håkan Kylsäter, Lolita Lall och Karna Henseby att ut-
 göra föreningens valberedning. Håkan Kylsäter är sammankallande till valberedningen.
 Valberedningen får dessutom rätten att knyta till sig fler personer under mandatperioden.
 
-$17. Styrelsens förslag att installera 3-fas i lägenheter. (Bilaga 5)
+§17. Styrelsens förslag att installera 3-fas i lägenheter. (Bilaga 5)
 Styrelsens proposition att anta entreprenör E:s anbud för installation av 3-fas i samtliga lä-
 genheter
 Beslut: Stämman beslutade enligt styrelsens förslag till beslut. Beslutet justerades av stäm-
@@ -216,7 +216,7 @@ man.
 Styrelseordförande Bengt Rapp meddelade stämman att anbudsgivare/entreprenör E är Vreta
 elinstallation AB.
 
-$18. Inkomna motioner (4 motioner. Bilaga 5)
+§18. Inkomna motioner (4 motioner. Bilaga 5)
 
 Motion 1
 
@@ -255,7 +255,7 @@ Motion angående byggande av en biltvätt för föreningens medlemmar. Akbar Raz
 lägenhet nr 382.
 Beslut: Stämman beslutade enligt styrelsens förslag till beslut.
 
-$19. Stämmans avslutning
+§19. Stämmans avslutning
 Föreningens styrelseordförande tackade stämmoordförande för mycket väl utfört värv.
 
 Stämmoordförande förklarade stämman avslutad.
