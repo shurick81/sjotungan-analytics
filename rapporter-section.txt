@@ -1,0 +1,71 @@
+<h2 class="text-blue-700 font-semibold text-2xl mb-1">📊 Rapporter & analyser</h2>
+<p class="mb-4 text-sm text-gray-500">Ta del av analyser baserade på föreningens egna ekonomiska rapporter.</p>
+
+<h3 class="text-blue-600 font-semibold text-lg mt-2 mb-3">BRF-ekonomi</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <a href="/sjotungan-analytics/brf-economy-guide.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">📘</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Guide: BRF-ekonomi</h4>
+    <p class="text-gray-600 text-sm">En guide till hur man läser och förstår en bostadsrättsförenings ekonomi.</p>
+  </a>
+
+  <a href="/sjotungan-analytics/costs_development.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">📉</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Kostnadsutveckling</h4>
+    <p class="text-gray-600 text-sm">Hur föreningens kostnader har utvecklats över tid, per kategori.</p>
+  </a>
+
+  <a href="/sjotungan-analytics/prognosis.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">🔮</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Prognos</h4>
+    <p class="text-gray-600 text-sm">Framåtblickande prognos för kassa, skulder och investeringar.</p>
+  </a>
+
+  <a href="/sjotungan-analytics/changing_over_time.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">📊</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Ändringar över tid</h4>
+    <p class="text-gray-600 text-sm"><span class="text-xs text-blue-500">(rådata)</span> Ekonomiska förändringar över tid.</p>
+  </a>
+
+  <a href="/sjotungan-analytics/annual_details.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">💰</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Kassaflödesanalys</h4>
+    <p class="text-gray-600 text-sm"><span class="text-xs text-blue-500">(rådata)</span> Sammanställning av föreningens kassaflöde och ekonomiska utveckling.</p>
+  </a>
+</div>
+
+<h3 class="text-blue-600 font-semibold text-lg mt-6 mb-3">Övriga rapporter</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <a href="/sjotungan-analytics/stambyte.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">🔧</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Stambyte</h4>
+    <p class="text-gray-600 text-sm">Översikt av stambytet i BRF Sjötungan.</p>
+  </a>
+
+  <a href="/sjotungan-analytics/sales.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">🏠</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Försäljningar</h4>
+    <p class="text-gray-600 text-sm">Sålda lägenheter och pris per kvadratmeter över tid.</p>
+  </a>
+
+  <a href="/sjotungan-analytics/engagement.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">👥</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Engagemang</h4>
+    <p class="text-gray-600 text-sm">Översikt av medlemsengagemang och delaktighet i föreningen.</p>
+  </a>
+
+  <a href="/sjotungan-analytics/text_documents.html"
+     class="bg-white p-4 rounded-xl shadow hover:shadow-lg transition duration-200 border border-blue-100 flex flex-col">
+    <span class="text-2xl mb-2">📑</span>
+    <h4 class="font-semibold text-blue-800 mb-1">Textdokument</h4>
+    <p class="text-gray-600 text-sm">Lagstiftning, årsredovisningar och stämmoprotokoll.</p>
+  </a>
+</div>
