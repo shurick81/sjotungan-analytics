@@ -77,41 +77,67 @@ def _html_to_text(raw: str) -> str:
     return parser.get_text()
 
 
-# Separator and end-marker patterns specific to the
-# aktuellaArbeten-stambyte.html status page.
-_HR_SEP_RE = re.compile(r'<hr\s+class="bR10"\s*/?>', re.IGNORECASE)
-_END_MARKER = "<!--textEr_Styr SLUT-->"
+# Default separator/end-marker for the aktuellaArbeten-stambyte.html
+# status page. Other pages (e.g. main news) override these in sources.yaml.
+_DEFAULT_HR_PATTERN = r'<hr\s+class="bR10"\s*/?>'
+_DEFAULT_END_MARKER = "<!--textEr_Styr SLUT-->"
+# Date matchers — accept ASCII hyphen and Unicode en-dash; year-only or
+# year-month variants are ignored as too imprecise.
+_DATE_LINE_RE = re.compile(r"^\s*(20\d{2})[-–](\d{2})[-–](\d{2})\s*$", re.M)
 
 
-def split_html_into_dated_posts(local_path: Path) -> list[tuple[Optional[str], str]]:
-    """Split the status-page HTML into one chunk per <hr class="bR10"/> section.
+def split_html_into_dated_posts(
+    local_path: Path,
+    separator_pattern: str = _DEFAULT_HR_PATTERN,
+    end_marker: str = _DEFAULT_END_MARKER,
+    filter_keyword: Optional[str] = None,
+    filter_in_title: bool = False,
+    skip_first_chunk: bool = True,
+) -> list[tuple[Optional[str], str]]:
+    """Split an HTML page into one chunk per separator (default <hr class="bR10"/>).
 
-    Each section is text-extracted and tagged with the YYYY-MM-DD date found
-    inside it (typically the last date-only line — the post's footer stamp).
-    The section before the first <hr> is dropped as page chrome.
+    Each chunk is text-extracted and tagged with the YYYY-MM-DD date found
+    inside it (last date-only line — the post's footer stamp).
+
+    skip_first_chunk: if True (default, used by the stambyte feed), the chunk
+        before the first separator is treated as page chrome and dropped.
+        If False (used by the main news page, which starts with the newest
+        post directly), the first chunk is included.
+
+    filter_keyword: if set, only chunks whose text contains it
+        (case-insensitive) are returned.
     """
     raw = local_path.read_text(encoding="utf-8", errors="replace")
-    end_idx = raw.find(_END_MARKER)
-    if end_idx > 0:
-        raw = raw[:end_idx]
+    if end_marker:
+        end_idx = raw.find(end_marker)
+        if end_idx > 0:
+            raw = raw[:end_idx]
 
-    parts = _HR_SEP_RE.split(raw)
+    sep_re = re.compile(separator_pattern, re.IGNORECASE)
+    parts = sep_re.split(raw)
     if len(parts) < 2:
-        # No separators found — treat as a single undated blob.
         return [(None, _html_to_text(raw))]
 
-    # parts[0] is everything before the first hr — page nav/header. Drop it.
+    candidate_parts = parts[1:] if skip_first_chunk else parts
+    needle = filter_keyword.lower() if filter_keyword else None
     chunks: list[tuple[Optional[str], str]] = []
-    for chunk_html in parts[1:]:
+    for chunk_html in candidate_parts:
         text = _html_to_text(chunk_html)
         if not text:
             continue
-        date_matches = list(re.finditer(r"^\s*(20\d{2}-\d{2}-\d{2})\s*$", text, re.M))
+        if needle:
+            if filter_in_title:
+                h2 = re.search(r"<h2[^>]*>([^<]+)</h2>", chunk_html, re.IGNORECASE)
+                haystack = (h2.group(1) if h2 else "").lower()
+            else:
+                haystack = text.lower()
+            if needle not in haystack:
+                continue
+        date_matches = list(_DATE_LINE_RE.finditer(text))
         if date_matches:
-            date = date_matches[-1].group(1)
-            text_no_date = re.sub(
-                r"^\s*20\d{2}-\d{2}-\d{2}\s*$\n?", "", text, flags=re.M
-            ).strip()
+            y, m, d = date_matches[-1].groups()
+            date = f"{y}-{m}-{d}"
+            text_no_date = _DATE_LINE_RE.sub("", text).strip()
             chunks.append((date, text_no_date))
         else:
             chunks.append((None, text))
@@ -182,9 +208,20 @@ def ensure_local(item: dict) -> Optional[Path]:
         local_path.unlink()
     if local_path.exists():
         return local_path
-    if download_file(item["url"], str(local_path)):
+    url = item.get("url")
+    if not url:
+        return None
+    if download_file(url, str(local_path)):
         return local_path
     return None
+
+
+def extract_image_text(local_path: Path) -> str:
+    """OCR a screenshot/photo. Swedish-optimised."""
+    import pytesseract
+    from PIL import Image
+
+    return pytesseract.image_to_string(Image.open(local_path), lang="swe").strip()
 
 
 def build_entries(items: list[dict]) -> list[dict]:
@@ -203,15 +240,27 @@ def build_entries(items: list[dict]) -> list[dict]:
 
         meta_base = {
             "source_title": title,
-            "source_url": item["url"],
+            "source_url": item.get("url") or "",
             "source_local_path": item["local_path"],
+            "source_type": item.get("source_type") or "",
             "looks_scanned": looks_scanned,
         }
 
         if item.get("split_by_date"):
             if ext not in {".html", ".htm"}:
                 print(f"  ⚠️  split_by_date is only supported for HTML; got {ext}")
-            chunks = split_html_into_dated_posts(local_path)
+            split_kwargs = {}
+            if "separator_pattern" in item:
+                split_kwargs["separator_pattern"] = item["separator_pattern"]
+            if "end_marker" in item:
+                split_kwargs["end_marker"] = item["end_marker"]
+            if "filter_keyword" in item:
+                split_kwargs["filter_keyword"] = item["filter_keyword"]
+            if "filter_in_title" in item:
+                split_kwargs["filter_in_title"] = item["filter_in_title"]
+            if "skip_first_chunk" in item:
+                split_kwargs["skip_first_chunk"] = item["skip_first_chunk"]
+            chunks = split_html_into_dated_posts(local_path, **split_kwargs)
             dated = [(d, c) for d, c in chunks if d]
             undated_chunks = [c for d, c in chunks if not d]
             for i, (date, chunk) in enumerate(dated, start=1):
@@ -234,11 +283,17 @@ def build_entries(items: list[dict]) -> list[dict]:
                 print("  ⚠️  Low text density — likely scanned. Output included as-is.")
         elif ext in {".html", ".htm"}:
             text = extract_html_text(local_path)
+        elif ext in {".png", ".jpg", ".jpeg", ".webp"}:
+            text = extract_image_text(local_path)
+            print(f"  🔤 OCR'd ({len(text)} chars)")
         else:
             print(f"  ⚠️  Unknown extension {ext}; reading as plain text")
             text = local_path.read_text(encoding="utf-8", errors="replace")
 
-        entries.append({**meta_base, "date": item.get("document_date"), "text": text.strip(), "post_index": None})
+        entry = {**meta_base, "date": item.get("document_date"), "text": text.strip(), "post_index": None}
+        if item.get("note"):
+            entry["note"] = item["note"]
+        entries.append(entry)
         if not item.get("document_date"):
             print("  ⚠️  No document_date set — entry will be marked undated")
     return entries
@@ -261,6 +316,9 @@ def render_html(entries: list[dict]) -> str:
         "article h2{margin:0 0 0.3em;font-size:1.2em}"
         "time{font-family:ui-monospace,monospace;background:#222;color:#fff;"
         "padding:2px 8px;border-radius:3px;font-size:0.95em}"
+        ".stype{display:inline-block;background:#e6efff;color:#234;"
+        "border:1px solid #b8cdee;padding:1px 7px;border-radius:3px;"
+        "font-size:0.85em;margin:0 0.4em}"
         ".source-meta{color:#666;font-size:0.9em;margin:0.4em 0 1em}"
         ".toc{column-count:2;column-gap:2em}"
         ".toc li{margin:0.15em 0;break-inside:avoid}"
@@ -278,9 +336,31 @@ def render_html(entries: list[dict]) -> str:
         "</head>",
         "<body>",
         "<h1>Stambyte – kronologisk sammanställning</h1>",
-        f"<p>Auto-generated from <code>sources.yaml</code> by "
-        f"<code>generate_stambyte_text.py</code>. {len(entries_sorted)} entries, "
-        "sorted newest first.</p>",
+        "<section>",
+        "<p>This page consolidates the full timeline of communication "
+        "around the stambyte (pipe replacement) project at BRF Sjötungan, "
+        "drawing from multiple channels into a single chronological feed "
+        "(newest first). The goal is to make the project history easy to "
+        "follow at a glance and convenient for LLMs to consume.</p>",
+        "<p>Sources combined:</p>",
+        "<ol>",
+        "<li>Extra stämma — kallelse and protokoll for the extraordinary "
+        "general meeting where the stambyte was formally decided.</li>",
+        "<li>Web site main news — announcements posted to the front page "
+        "of sjotungan.se.</li>",
+        "<li>Web site &ldquo;port information&rdquo; — digital archive of "
+        "the Portinfo bulletins published online.</li>",
+        "<li>Web site stambyte feed — the running status page at "
+        "<code>aktuellt/aktuellaArbeten-stambyte.html</code>, split here "
+        "into one entry per dated post.</li>",
+        "<li>Printed port information — the physical Portinfo bulletins "
+        "posted at building entrances (same content as the digital "
+        "archive, surfaced for readers who only see the printed copy).</li>",
+        "</ol>",
+        f"<p class=\"source-meta\">Auto-generated from <code>sources.yaml</code> "
+        f"by <code>generate_stambyte_text.py</code> · "
+        f"{len(entries_sorted)} entries.</p>",
+        "</section>",
         "<h2>Innehåll</h2>",
         '<ul class="toc">',
     ]
@@ -291,9 +371,14 @@ def render_html(entries: list[dict]) -> str:
         title_label = e["source_title"]
         if e.get("post_index"):
             title_label = f"{title_label} (post {e['post_index']})"
+        type_label = (
+            f' <span class="stype">{html.escape(e["source_type"])}</span>'
+            if e.get("source_type")
+            else ""
+        )
         parts.append(
-            f'<li><a href="#{anchor}"><time>{html.escape(date_label)}</time> '
-            f"{html.escape(title_label)}</a></li>"
+            f'<li><a href="#{anchor}"><time>{html.escape(date_label)}</time>'
+            f"{type_label} {html.escape(title_label)}</a></li>"
         )
     parts.append("</ul>")
 
@@ -315,12 +400,21 @@ def render_html(entries: list[dict]) -> str:
             if e.get("note")
             else ""
         )
+        source_line = (
+            f'Source: <a href="{html.escape(e["source_url"])}">{html.escape(e["source_url"])}</a>'
+            if e["source_url"]
+            else "Source: <em>local-only (no URL)</em>"
+        )
+        type_badge = (
+            f' <span class="stype">{html.escape(e["source_type"])}</span> &middot;'
+            if e.get("source_type")
+            else " &middot;"
+        )
         parts.extend(
             [
                 f'<article id="{e["_anchor"]}">',
-                f"<h2>{date_html} &middot; {html.escape(e['source_title'])}{html.escape(post_suffix)}</h2>",
-                '<p class="source-meta">'
-                f'Source: <a href="{html.escape(e["source_url"])}">{html.escape(e["source_url"])}</a>'
+                f"<h2>{date_html}{type_badge} {html.escape(e['source_title'])}{html.escape(post_suffix)}</h2>",
+                f'<p class="source-meta">{source_line}'
                 f"<br>Local: <code>{html.escape(e['source_local_path'])}</code>{warn}{note}</p>",
                 f"<pre>{html.escape(e['text'])}</pre>",
                 "</article>",
