@@ -263,6 +263,7 @@ def build_entries(items: list[dict]) -> list[dict]:
             chunks = split_html_into_dated_posts(local_path, **split_kwargs)
             dated = [(d, c) for d, c in chunks if d]
             undated_chunks = [c for d, c in chunks if not d]
+            dated.sort(key=lambda dc: dc[0])
             for i, (date, chunk) in enumerate(dated, start=1):
                 entries.append({**meta_base, "date": date, "text": chunk, "post_index": i})
             if undated_chunks:
