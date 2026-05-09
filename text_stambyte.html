@@ -1,25 +1,157 @@
 <!DOCTYPE html>
+<!--
+    AUTO-GENERATED — do not edit by hand.
+    Regenerate with: python3 generate_text_stambyte.py
+    Source data:     sources.yaml (stambyte section)
+    Generator:       generate_text_stambyte.py
+-->
 <html lang="sv">
 <head>
-<meta charset="utf-8">
-<title>Stambyte – kronologisk sammanställning</title>
-<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2em auto;padding:0 1em;line-height:1.4}pre{white-space:pre-wrap;word-wrap:break-word;background:#f7f7f7;padding:1em;border-radius:4px;font-size:13px}article{margin:2em 0;padding-top:1em;border-top:2px solid #333}article h2{margin:0 0 0.3em;font-size:1.2em}time{font-family:ui-monospace,monospace;background:#222;color:#fff;padding:2px 8px;border-radius:3px;font-size:0.95em}.stype{display:inline-block;background:#e6efff;color:#234;border:1px solid #b8cdee;padding:1px 7px;border-radius:3px;font-size:0.85em;margin:0 0.4em}.source-meta{color:#666;font-size:0.9em;margin:0.4em 0 1em}.toc{column-count:2;column-gap:2em}.toc li{margin:0.15em 0;break-inside:avoid}.warn{color:#a40000}.undated{color:#999}</style>
+    <meta charset="UTF-8">
+    <meta name="generator" content="generate_text_stambyte.py">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stambyte – kronologisk sammanställning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }
+
+        body {
+            font-size: 1rem;
+            background: #f0f4fa;
+            color: var(--vm-text);
+        }
+
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem !important; }
+        }
+
+        h1 { font-size: 2.25rem; }
+
+        .source-list {
+            list-style: decimal;
+            padding-left: 1.4em;
+            margin: 0;
+        }
+        .source-list li {
+            margin: 0.3em 0;
+        }
+        .source-meta {
+            color: var(--vm-muted);
+            font-size: 0.9em;
+            margin: 0.4em 0 1em;
+        }
+
+        .toc {
+            column-count: 2;
+            column-gap: 2em;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .toc li {
+            margin: 0.2em 0;
+            break-inside: avoid;
+        }
+        .toc a {
+            color: var(--vm-blue);
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        article {
+            margin: 1.5em 0;
+            padding-top: 1em;
+            border-top: 2px solid var(--vm-border);
+        }
+        article h2 {
+            margin: 0 0 0.4em;
+            font-size: 1.15em;
+            color: var(--vm-blue);
+        }
+
+        time {
+            font-family: ui-monospace, monospace;
+            background: var(--vm-blue);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        time.undated {
+            background: #888;
+        }
+
+        .stype {
+            display: inline-block;
+            background: var(--vm-card);
+            color: var(--vm-blue);
+            border: 1px solid var(--vm-border);
+            padding: 1px 7px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            margin: 0 0.4em;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            padding: 1em;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .doc-url {
+            color: var(--vm-blue);
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .doc-url:hover {
+            text-decoration: underline;
+        }
+
+        .warn { color: #a40000; }
+    </style>
 </head>
-<body>
-<h1>Stambyte – kronologisk sammanställning</h1>
-<section>
-<p>Denna sida samlar hela tidslinjen för kommunikation kring stambytet i BRF Sjötungan från flera olika kanaler till ett enda kronologiskt flöde (nyaste först). Syftet är att göra projektets historik lätt att överblicka och bekvämt för språkmodeller (LLM) att läsa.</p>
-<p>Sammanställda källor:</p>
-<ol>
+<body class="bg-gray-100 text-gray-800">
+    <header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+        <nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+            <button onclick="location.href='https://visionmyggan.se/#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+            <button onclick="location.href='https://visionmyggan.se/#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+            <button onclick="location.href='https://visionmyggan.se/#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+            <button onclick="location.href='https://visionmyggan.se/#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto mt-8 p-4">
+        <section class="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+            <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Stambyte – kronologisk sammanställning</h1>
+            <p class="mb-6" style="color: var(--vm-muted);">
+                Hela tidslinjen för kommunikation kring stambytet i BRF Sjötungan, från flera olika kanaler samlade till ett kronologiskt flöde (nyaste först). Syftet är att göra projektets historik lätt att överblicka och bekvämt för språkmodeller (LLM) att läsa.
+            </p>
+<section class="mb-10" aria-labelledby="sources-heading">
+<h2 id="sources-heading" class="text-xl font-bold text-blue-900 mb-3">Sammanställda källor</h2>
+<ol class="source-list text-sm">
 <li>Extra stämma — kallelse och protokoll från den extra föreningsstämma där stambytet formellt beslutades.</li>
 <li>Webbplatsens nyheter — inlägg publicerade på <em>Aktuell information</em> på sjotungan.se.</li>
 <li>Webbplatsens portinformation — det digitala arkivet av Portinfo-bladen som publiceras på webbplatsen.</li>
 <li>Webbplatsens stambyte-flöde — den löpande statussidan <code>aktuellt/aktuellaArbeten-stambyte.html</code>, här uppdelad i ett inlägg per daterad post.</li>
 <li>Tryckt portinformation — de fysiska Portinfo-bladen som sätts upp i porten (samma innehåll som det digitala arkivet, medtaget för läsare som bara ser den tryckta versionen).</li>
 </ol>
-<p class="source-meta">Automatiskt genererad från <code>sources.yaml</code> av <code>generate_stambyte_text.py</code> · 25 poster.</p>
+<p class="source-meta mt-3">Automatiskt genererad från <code>sources.yaml</code> av <code>generate_text_stambyte.py</code> · 25 poster.</p>
 </section>
-<h2>Innehåll</h2>
+<section class="mb-10" aria-labelledby="toc-heading">
+<h2 id="toc-heading" class="text-xl font-bold text-blue-900 mb-3">Innehåll</h2>
 <ul class="toc">
 <li><a href="#e000"><time>2026-05-07</time> <span class="stype">Webbplats · nyheter</span> Aktuell information (huvudnyheter) (post 1)</a></li>
 <li><a href="#e001"><time>2026-05-06</time> <span class="stype">Webbplats · nyheter</span> Uppdaterad tidplan stambyte 2026-05-06</a></li>
@@ -47,16 +179,19 @@
 <li><a href="#e023"><time>odaterat</time> <span class="stype">Webbplats · stambyte-flöde</span> Aktuella arbeten – stambyte (statussida)</a></li>
 <li><a href="#e024"><time>odaterat</time> <span class="stype">Webbplats · nyheter</span> Aktuell information (huvudnyheter)</a></li>
 </ul>
+</section>
+<section aria-labelledby="entries-heading">
+<h2 id="entries-heading" class="text-xl font-bold text-blue-900 mb-3">Tidslinje</h2>
 <article id="e000">
 <h2><time>2026-05-07</time> <span class="stype">Webbplats · nyheter</span> &middot; Aktuell information (huvudnyheter) (post 1)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code></p>
 <pre>Förtydligande avseende tidplan och indelning av stambytet
 
 Läs mer här - pdf-fil</pre>
 </article>
 <article id="e001">
 <h2><time>2026-05-06</time> <span class="stype">Webbplats · nyheter</span> &middot; Uppdaterad tidplan stambyte 2026-05-06</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/uppdateradtidplan-20260506.pdf">https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/uppdateradtidplan-20260506.pdf</a><br>Lokalt: <code>data/stambyte/uppdateradtidplan-20260506.pdf</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/uppdateradtidplan-20260506.pdf">https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/uppdateradtidplan-20260506.pdf</a><br>Lokalt: <code>data/stambyte/uppdateradtidplan-20260506.pdf</code></p>
 <pre>--- Page 1 ---
 Förtydligande avseende tidplan och indelning av stambytet
 Som ett förtydligande till den information som placerats i era portar avseende tidplaner för
@@ -105,7 +240,7 @@ stambyte@sjotungan.se</pre>
 </article>
 <article id="e003">
 <h2><time>2026-03-24</time> <span class="stype">Webbplats · portinformation</span> &middot; Portinfo nr 2 2026</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2026/Portinfo-2-2026.pdf">https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2026/Portinfo-2-2026.pdf</a><br>Lokalt: <code>data/stambyte/Portinfo-2-2026.pdf</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2026/Portinfo-2-2026.pdf">https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2026/Portinfo-2-2026.pdf</a><br>Lokalt: <code>data/stambyte/Portinfo-2-2026.pdf</code></p>
 <pre>--- Page 1 ---
 Låt portinformationen sitta kvar. Då kan även dina grannar läsa den.
 Vill du ha ett eget exemplar så går det att skriva ut via hemsidan.
@@ -138,7 +273,7 @@ Info om föreningen finns också på www.sjotungan.se</pre>
 </article>
 <article id="e004">
 <h2><time>2026-03-23</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 1)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Vi är glada att kunna meddela att fas 1 i huvuddel 1 av
 stambytet nu är färdigställd. Från och med den 20 mars
 kan berörda medlemmar åter ta sina våtrum i bruk.
@@ -196,7 +331,7 @@ framförhållning och medlemmarnas bästa i fokus.
 </article>
 <article id="e006">
 <h2><time>2025-09-30</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 2)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Entreprenören som ska utföra stambytet blir Stambytesgruppen
 AB.
 
@@ -232,7 +367,7 @@ stambyte@sjotungan.se</pre>
 </article>
 <article id="e007">
 <h2><time>2025-09-30</time> <span class="stype">Webbplats · portinformation</span> &middot; Portinfo nr 4 2025</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2025/Portinfo-4-2025.pdf">https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2025/Portinfo-4-2025.pdf</a><br>Lokalt: <code>data/stambyte/Portinfo-4-2025.pdf</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2025/Portinfo-4-2025.pdf">https://www.sjotungan.se/public_html/new2016/images/information/tidning2/pdfer/2025/Portinfo-4-2025.pdf</a><br>Lokalt: <code>data/stambyte/Portinfo-4-2025.pdf</code></p>
 <pre>--- Page 1 ---
 Låt portinformationen sitta kvar. Då kan även dina grannar läsa den.
 Vill du ha ett eget exemplar så går det att skriva ut via hemsidan.
@@ -258,7 +393,7 @@ Info om föreningen finns också på www.sjotungan.se</pre>
 </article>
 <article id="e008">
 <h2><time>2025-06-27</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 3)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Informationsbrev till medlemmarna i BRF Sjötungan
 
 Till: Medlemmarna i BRF Sjötungan
@@ -288,7 +423,7 @@ Med vänliga hälsningar, Styrelsen och projektledningen</pre>
 </article>
 <article id="e009">
 <h2><time>2025-05-05</time> <span class="stype">Extra stämma</span> &middot; Protokoll extra föreningsstämma 5 maj 2025 (stambyte-beslut)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/ExtraForeningsstamma5maj2025.pdf">https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/ExtraForeningsstamma5maj2025.pdf</a><br>Lokalt: <code>data/stamma_protocols/ExtraForeningsstamma5maj2025.pdf</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/ExtraForeningsstamma5maj2025.pdf">https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/ExtraForeningsstamma5maj2025.pdf</a><br>Lokalt: <code>data/stamma_protocols/ExtraForeningsstamma5maj2025.pdf</code></p>
 <pre>--- Page 1 ---
 Docusign Envelope ID: F7CA83F1-4EA3-4130-9344-1ED601E67683
 BRF SJÖTUNGAN
@@ -395,7 +530,7 @@ Mötessekreterare Mötesordförande Justeras</pre>
 </article>
 <article id="e010">
 <h2><time>2025-04-16</time> <span class="stype">Extra stämma</span> &middot; Kallelse till extra föreningsstämma 5 maj 2025 (stambyte-beslut)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/Kallelse-Extra-Stamma.pdf">https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/Kallelse-Extra-Stamma.pdf</a><br>Lokalt: <code>data/stambyte/Kallelse-Extra-Stamma-2025.pdf</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/Kallelse-Extra-Stamma.pdf">https://www.sjotungan.se/public_html/new2016/images/information/arsmotes_handlingar/2025/Kallelse-Extra-Stamma.pdf</a><br>Lokalt: <code>data/stambyte/Kallelse-Extra-Stamma-2025.pdf</code></p>
 <pre>--- Page 1 ---
 KALLELSE TILL EXTRA FÖRENINGSSTÄMMA 5 MAJ 2025
 FÖR HSB BOSTADSRÄTTSFÖRENINGEN SJÖTUNGAN I TYRESÖ
@@ -1594,7 +1729,7 @@ Sida 16 av 16</pre>
 </article>
 <article id="e011">
 <h2><time>2025-04-16</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 4)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Välkommen till generellt informationsmöte om
 stambyte!
 
@@ -1602,14 +1737,14 @@ Läs mer här. Pdf-fil</pre>
 </article>
 <article id="e012">
 <h2><time>2025-04-16</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 5)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Kallelse till extra föreningsstämma
 
 Läs mer här. Pdf-fil</pre>
 </article>
 <article id="e013">
 <h2><time>2025-04-10</time> <span class="stype">Extra stämma</span> &middot; Kallelse-Info – generellt informationsmöte om stambyte</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/Kallelse-Info.pdf">https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/Kallelse-Info.pdf</a><br>Lokalt: <code>data/stambyte/Kallelse-Info.pdf</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/Kallelse-Info.pdf">https://www.sjotungan.se/public_html/new2016/aktuellt/stambyte/Kallelse-Info.pdf</a><br>Lokalt: <code>data/stambyte/Kallelse-Info.pdf</code></p>
 <pre>--- Page 1 ---
 BRF Sjötungan 2025-04-10
 Myggdalsvägen 102
@@ -1901,7 +2036,7 @@ BRF Sjötungan</pre>
 </article>
 <article id="e014">
 <h2><time>2025-03-13</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 6)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Informationsmöte om stambytet
 
 Onsdag 23 april
@@ -1919,7 +2054,7 @@ stambyte@sjotungan.se vid minsta lilla fråga.</pre>
 </article>
 <article id="e015">
 <h2><time>2025-03-13</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 7)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Extrastämma om stambytet
 
 Måndag 5 maj
@@ -1938,7 +2073,7 @@ för föreningen.</pre>
 </article>
 <article id="e016">
 <h2><time>2024-09-13</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 8)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Tvättstugan i M64, stäng under stambytet
 
 Under stambytet på Myggdalsvägen 64 kommer tvättstugan i den
@@ -1951,7 +2086,7 @@ Med vänliga hälsningar, Fastighetsägarna Service</pre>
 </article>
 <article id="e017">
 <h2><time>2024-09-09</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 9)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Information om referensstambyte i M28 &amp; M64
 
 Provstambytet startar nu i produktion från och med den 16e
@@ -1967,7 +2102,7 @@ verktygsbod att upprättas</pre>
 </article>
 <article id="e018">
 <h2><time>2024-05-20</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 10)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Stambytet startar i början av september
 
 Vi vill informera er om att BRF Sjötungan kommer att påbörja
@@ -2015,14 +2150,14 @@ Med vänliga hälsningar, Styrelsen för BRF Sjötungan</pre>
 </article>
 <article id="e019">
 <h2><time>2024-05-20</time> <span class="stype">Webbplats · nyheter</span> &middot; Aktuell information (huvudnyheter) (post 2)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code></p>
 <pre>Stambytet startar i början av september
 
 Här kan du läsa mer</pre>
 </article>
 <article id="e020">
 <h2><time>2024-02-17</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 11)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Stambytet – träffa projektledningen på
 måndagsträffen
 
@@ -2033,7 +2168,7 @@ funderingar. Välkomna!</pre>
 </article>
 <article id="e021">
 <h2><time>2023-12-17</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida) (post 12)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code></p>
 <pre>Varför behöver stambytet genomföras?
 
 Pga. att avlopp och vatten uppnått sin tekniska livslängd
@@ -2088,7 +2223,7 @@ under 2024. Aviseringar kommer gå ut.</pre>
 </article>
 <article id="e022">
 <h2><time>2023-11-15</time> <span class="stype">Webbplats · nyheter</span> &middot; Aktuell information (huvudnyheter) (post 3)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code></p>
 <pre>Möte om stambytet
 
 Tyvärr är det ökad spridning av covid-19 i samhället. De
@@ -2100,7 +2235,7 @@ hemsidan, portinfo och information i din brevlåda</pre>
 </article>
 <article id="e023">
 <h2><time class="undated">odaterat</time> <span class="stype">Webbplats · stambyte-flöde</span> &middot; Aktuella arbeten – stambyte (statussida)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code><br><em>Static / undated content from the same page (intro, contact info).</em></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html">https://www.sjotungan.se/public_html/new2016/aktuellt/aktuellaArbeten-stambyte.html</a><br>Lokalt: <code>data/stambyte/aktuellaArbeten-stambyte.html</code><br><em>Static / undated content from the same page (intro, contact info).</em></p>
 <pre>Har du frågor eller funderingar skicker du ett mail
 till:
 
@@ -2108,7 +2243,7 @@ stambyte@sjotungan.se</pre>
 </article>
 <article id="e024">
 <h2><time class="undated">odaterat</time> <span class="stype">Webbplats · nyheter</span> &middot; Aktuell information (huvudnyheter)</h2>
-<p class="source-meta">Källa: <a href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code><br><em>Static / undated content from the same page (intro, contact info).</em></p>
+<p class="source-meta">Källa: <a class="doc-url" href="https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html">https://www.sjotungan.se/public_html/new2016/aktuellt/_texternaTillAktuellInformation.html</a><br>Lokalt: <code>data/stambyte/_texternaTillAktuellInformation.html</code><br><em>Static / undated content from the same page (intro, contact info).</em></p>
 <pre>Informationsmöte och extrastämma om stambyte uppskjutet till
 2023
 
@@ -2125,4 +2260,8 @@ Tack för tålamodet och förståelsen i dessa osäkra tider!
 
 2022-09</pre>
 </article>
-</body></html>
+</section>
+        </section>
+    </main>
+</body>
+</html>

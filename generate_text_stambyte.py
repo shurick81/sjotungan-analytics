@@ -299,6 +299,155 @@ def build_entries(items: list[dict]) -> list[dict]:
     return entries
 
 
+PAGE_TEMPLATE = """<!DOCTYPE html>
+<!--
+    AUTO-GENERATED — do not edit by hand.
+    Regenerate with: python3 generate_text_stambyte.py
+    Source data:     sources.yaml (stambyte section)
+    Generator:       generate_text_stambyte.py
+-->
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="generator" content="generate_text_stambyte.py">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stambyte – kronologisk sammanställning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {{
+            --vm-blue: #1f3f95;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+        }}
+
+        body {{
+            font-size: 1rem;
+            background: #f0f4fa;
+            color: var(--vm-text);
+        }}
+
+        @media (max-width: 640px) {{
+            body {{ font-size: 0.875rem; }}
+            h1 {{ font-size: 1.5rem !important; }}
+        }}
+
+        h1 {{ font-size: 2.25rem; }}
+
+        .source-list {{
+            list-style: decimal;
+            padding-left: 1.4em;
+            margin: 0;
+        }}
+        .source-list li {{
+            margin: 0.3em 0;
+        }}
+        .source-meta {{
+            color: var(--vm-muted);
+            font-size: 0.9em;
+            margin: 0.4em 0 1em;
+        }}
+
+        .toc {{
+            column-count: 2;
+            column-gap: 2em;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }}
+        .toc li {{
+            margin: 0.2em 0;
+            break-inside: avoid;
+        }}
+        .toc a {{
+            color: var(--vm-blue);
+            text-decoration: none;
+        }}
+        .toc a:hover {{
+            text-decoration: underline;
+        }}
+
+        article {{
+            margin: 1.5em 0;
+            padding-top: 1em;
+            border-top: 2px solid var(--vm-border);
+        }}
+        article h2 {{
+            margin: 0 0 0.4em;
+            font-size: 1.15em;
+            color: var(--vm-blue);
+        }}
+
+        time {{
+            font-family: ui-monospace, monospace;
+            background: var(--vm-blue);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }}
+        time.undated {{
+            background: #888;
+        }}
+
+        .stype {{
+            display: inline-block;
+            background: var(--vm-card);
+            color: var(--vm-blue);
+            border: 1px solid var(--vm-border);
+            padding: 1px 7px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            margin: 0 0.4em;
+        }}
+
+        pre {{
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            padding: 1em;
+            border-radius: 8px;
+            font-size: 13px;
+        }}
+
+        .doc-url {{
+            color: var(--vm-blue);
+            text-decoration: none;
+            word-break: break-all;
+        }}
+        .doc-url:hover {{
+            text-decoration: underline;
+        }}
+
+        .warn {{ color: #a40000; }}
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+        <nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+            <button onclick="location.href='https://visionmyggan.se/#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+            <button onclick="location.href='https://visionmyggan.se/#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+            <button onclick="location.href='https://visionmyggan.se/#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+            <button onclick="location.href='https://visionmyggan.se/#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto mt-8 p-4">
+        <section class="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+            <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Stambyte – kronologisk sammanställning</h1>
+            <p class="mb-6" style="color: var(--vm-muted);">
+                Hela tidslinjen för kommunikation kring stambytet i BRF Sjötungan, från flera olika kanaler samlade till ett kronologiskt flöde (nyaste först). Syftet är att göra projektets historik lätt att överblicka och bekvämt för språkmodeller (LLM) att läsa.
+            </p>
+{content_html}
+        </section>
+    </main>
+</body>
+</html>
+"""
+
+
 def render_html(entries: list[dict]) -> str:
     # Sort newest-first; undated entries sink to the bottom.
     entries_sorted = sorted(
@@ -306,68 +455,31 @@ def render_html(entries: list[dict]) -> str:
         key=lambda e: (e["date"] or UNDATED_SORT_KEY),
         reverse=True,
     )
-
-    style = (
-        "body{font-family:system-ui,sans-serif;max-width:900px;margin:2em auto;"
-        "padding:0 1em;line-height:1.4}"
-        "pre{white-space:pre-wrap;word-wrap:break-word;background:#f7f7f7;"
-        "padding:1em;border-radius:4px;font-size:13px}"
-        "article{margin:2em 0;padding-top:1em;border-top:2px solid #333}"
-        "article h2{margin:0 0 0.3em;font-size:1.2em}"
-        "time{font-family:ui-monospace,monospace;background:#222;color:#fff;"
-        "padding:2px 8px;border-radius:3px;font-size:0.95em}"
-        ".stype{display:inline-block;background:#e6efff;color:#234;"
-        "border:1px solid #b8cdee;padding:1px 7px;border-radius:3px;"
-        "font-size:0.85em;margin:0 0.4em}"
-        ".source-meta{color:#666;font-size:0.9em;margin:0.4em 0 1em}"
-        ".toc{column-count:2;column-gap:2em}"
-        ".toc li{margin:0.15em 0;break-inside:avoid}"
-        ".warn{color:#a40000}"
-        ".undated{color:#999}"
-    )
-
-    parts = [
-        "<!DOCTYPE html>",
-        '<html lang="sv">',
-        "<head>",
-        '<meta charset="utf-8">',
-        "<title>Stambyte – kronologisk sammanställning</title>",
-        f"<style>{style}</style>",
-        "</head>",
-        "<body>",
-        "<h1>Stambyte – kronologisk sammanställning</h1>",
-        "<section>",
-        "<p>Denna sida samlar hela tidslinjen för kommunikation kring "
-        "stambytet i BRF Sjötungan från flera olika kanaler till ett enda "
-        "kronologiskt flöde (nyaste först). Syftet är att göra projektets "
-        "historik lätt att överblicka och bekvämt för språkmodeller (LLM) "
-        "att läsa.</p>",
-        "<p>Sammanställda källor:</p>",
-        "<ol>",
-        "<li>Extra stämma — kallelse och protokoll från den extra "
-        "föreningsstämma där stambytet formellt beslutades.</li>",
-        "<li>Webbplatsens nyheter — inlägg publicerade på "
-        "<em>Aktuell information</em> på sjotungan.se.</li>",
-        "<li>Webbplatsens portinformation — det digitala arkivet av "
-        "Portinfo-bladen som publiceras på webbplatsen.</li>",
-        "<li>Webbplatsens stambyte-flöde — den löpande statussidan "
-        "<code>aktuellt/aktuellaArbeten-stambyte.html</code>, här "
-        "uppdelad i ett inlägg per daterad post.</li>",
-        "<li>Tryckt portinformation — de fysiska Portinfo-bladen som "
-        "sätts upp i porten (samma innehåll som det digitala arkivet, "
-        "medtaget för läsare som bara ser den tryckta versionen).</li>",
-        "</ol>",
-        f"<p class=\"source-meta\">Automatiskt genererad från "
-        f"<code>sources.yaml</code> av "
-        f"<code>generate_stambyte_text.py</code> · "
-        f"{len(entries_sorted)} poster.</p>",
-        "</section>",
-        "<h2>Innehåll</h2>",
-        '<ul class="toc">',
-    ]
     for i, e in enumerate(entries_sorted):
-        anchor = f"e{i:03d}"
-        e["_anchor"] = anchor
+        e["_anchor"] = f"e{i:03d}"
+
+    parts: list[str] = []
+
+    parts.append('<section class="mb-10" aria-labelledby="sources-heading">')
+    parts.append('<h2 id="sources-heading" class="text-xl font-bold text-blue-900 mb-3">Sammanställda källor</h2>')
+    parts.append('<ol class="source-list text-sm">')
+    parts.append('<li>Extra stämma — kallelse och protokoll från den extra föreningsstämma där stambytet formellt beslutades.</li>')
+    parts.append('<li>Webbplatsens nyheter — inlägg publicerade på <em>Aktuell information</em> på sjotungan.se.</li>')
+    parts.append('<li>Webbplatsens portinformation — det digitala arkivet av Portinfo-bladen som publiceras på webbplatsen.</li>')
+    parts.append('<li>Webbplatsens stambyte-flöde — den löpande statussidan <code>aktuellt/aktuellaArbeten-stambyte.html</code>, här uppdelad i ett inlägg per daterad post.</li>')
+    parts.append('<li>Tryckt portinformation — de fysiska Portinfo-bladen som sätts upp i porten (samma innehåll som det digitala arkivet, medtaget för läsare som bara ser den tryckta versionen).</li>')
+    parts.append('</ol>')
+    parts.append(
+        f'<p class="source-meta mt-3">Automatiskt genererad från '
+        f'<code>sources.yaml</code> av <code>generate_text_stambyte.py</code> · '
+        f'{len(entries_sorted)} poster.</p>'
+    )
+    parts.append('</section>')
+
+    parts.append('<section class="mb-10" aria-labelledby="toc-heading">')
+    parts.append('<h2 id="toc-heading" class="text-xl font-bold text-blue-900 mb-3">Innehåll</h2>')
+    parts.append('<ul class="toc">')
+    for e in entries_sorted:
         date_label = e["date"] or "odaterat"
         title_label = e["source_title"]
         if e.get("post_index"):
@@ -378,11 +490,14 @@ def render_html(entries: list[dict]) -> str:
             else ""
         )
         parts.append(
-            f'<li><a href="#{anchor}"><time>{html.escape(date_label)}</time>'
+            f'<li><a href="#{e["_anchor"]}"><time>{html.escape(date_label)}</time>'
             f"{type_label} {html.escape(title_label)}</a></li>"
         )
-    parts.append("</ul>")
+    parts.append('</ul>')
+    parts.append('</section>')
 
+    parts.append('<section aria-labelledby="entries-heading">')
+    parts.append('<h2 id="entries-heading" class="text-xl font-bold text-blue-900 mb-3">Tidslinje</h2>')
     for e in entries_sorted:
         date_html = (
             f"<time>{html.escape(e['date'])}</time>"
@@ -402,7 +517,7 @@ def render_html(entries: list[dict]) -> str:
             else ""
         )
         source_line = (
-            f'Källa: <a href="{html.escape(e["source_url"])}">{html.escape(e["source_url"])}</a>'
+            f'Källa: <a class="doc-url" href="{html.escape(e["source_url"])}">{html.escape(e["source_url"])}</a>'
             if e["source_url"]
             else "Källa: <em>endast lokal (ingen URL)</em>"
         )
@@ -421,8 +536,10 @@ def render_html(entries: list[dict]) -> str:
                 "</article>",
             ]
         )
-    parts.append("</body></html>")
-    return "\n".join(parts)
+    parts.append('</section>')
+
+    content_html = "\n".join(parts)
+    return PAGE_TEMPLATE.format(content_html=content_html)
 
 
 def main() -> int:
