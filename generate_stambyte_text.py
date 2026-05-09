@@ -337,29 +337,30 @@ def render_html(entries: list[dict]) -> str:
         "<body>",
         "<h1>Stambyte – kronologisk sammanställning</h1>",
         "<section>",
-        "<p>This page consolidates the full timeline of communication "
-        "around the stambyte (pipe replacement) project at BRF Sjötungan, "
-        "drawing from multiple channels into a single chronological feed "
-        "(newest first). The goal is to make the project history easy to "
-        "follow at a glance and convenient for LLMs to consume.</p>",
-        "<p>Sources combined:</p>",
+        "<p>Denna sida samlar hela tidslinjen för kommunikation kring "
+        "stambytet i BRF Sjötungan från flera olika kanaler till ett enda "
+        "kronologiskt flöde (nyaste först). Syftet är att göra projektets "
+        "historik lätt att överblicka och bekvämt för språkmodeller (LLM) "
+        "att läsa.</p>",
+        "<p>Sammanställda källor:</p>",
         "<ol>",
-        "<li>Extra stämma — kallelse and protokoll for the extraordinary "
-        "general meeting where the stambyte was formally decided.</li>",
-        "<li>Web site main news — announcements posted to the front page "
-        "of sjotungan.se.</li>",
-        "<li>Web site &ldquo;port information&rdquo; — digital archive of "
-        "the Portinfo bulletins published online.</li>",
-        "<li>Web site stambyte feed — the running status page at "
-        "<code>aktuellt/aktuellaArbeten-stambyte.html</code>, split here "
-        "into one entry per dated post.</li>",
-        "<li>Printed port information — the physical Portinfo bulletins "
-        "posted at building entrances (same content as the digital "
-        "archive, surfaced for readers who only see the printed copy).</li>",
+        "<li>Extra stämma — kallelse och protokoll från den extra "
+        "föreningsstämma där stambytet formellt beslutades.</li>",
+        "<li>Webbplatsens nyheter — inlägg publicerade på "
+        "<em>Aktuell information</em> på sjotungan.se.</li>",
+        "<li>Webbplatsens portinformation — det digitala arkivet av "
+        "Portinfo-bladen som publiceras på webbplatsen.</li>",
+        "<li>Webbplatsens stambyte-flöde — den löpande statussidan "
+        "<code>aktuellt/aktuellaArbeten-stambyte.html</code>, här "
+        "uppdelad i ett inlägg per daterad post.</li>",
+        "<li>Tryckt portinformation — de fysiska Portinfo-bladen som "
+        "sätts upp i porten (samma innehåll som det digitala arkivet, "
+        "medtaget för läsare som bara ser den tryckta versionen).</li>",
         "</ol>",
-        f"<p class=\"source-meta\">Auto-generated from <code>sources.yaml</code> "
-        f"by <code>generate_stambyte_text.py</code> · "
-        f"{len(entries_sorted)} entries.</p>",
+        f"<p class=\"source-meta\">Automatiskt genererad från "
+        f"<code>sources.yaml</code> av "
+        f"<code>generate_stambyte_text.py</code> · "
+        f"{len(entries_sorted)} poster.</p>",
         "</section>",
         "<h2>Innehåll</h2>",
         '<ul class="toc">',
@@ -390,8 +391,8 @@ def render_html(entries: list[dict]) -> str:
         )
         post_suffix = f" (post {e['post_index']})" if e.get("post_index") else ""
         warn = (
-            ' <span class="warn">— WARNING: low extracted text density, '
-            "likely scanned (OCR needed).</span>"
+            ' <span class="warn">— VARNING: låg textextraktion, '
+            "troligen inskannad (OCR krävs).</span>"
             if e["looks_scanned"]
             else ""
         )
@@ -401,9 +402,9 @@ def render_html(entries: list[dict]) -> str:
             else ""
         )
         source_line = (
-            f'Source: <a href="{html.escape(e["source_url"])}">{html.escape(e["source_url"])}</a>'
+            f'Källa: <a href="{html.escape(e["source_url"])}">{html.escape(e["source_url"])}</a>'
             if e["source_url"]
-            else "Source: <em>local-only (no URL)</em>"
+            else "Källa: <em>endast lokal (ingen URL)</em>"
         )
         type_badge = (
             f' <span class="stype">{html.escape(e["source_type"])}</span> &middot;'
@@ -415,7 +416,7 @@ def render_html(entries: list[dict]) -> str:
                 f'<article id="{e["_anchor"]}">',
                 f"<h2>{date_html}{type_badge} {html.escape(e['source_title'])}{html.escape(post_suffix)}</h2>",
                 f'<p class="source-meta">{source_line}'
-                f"<br>Local: <code>{html.escape(e['source_local_path'])}</code>{warn}{note}</p>",
+                f"<br>Lokalt: <code>{html.escape(e['source_local_path'])}</code>{warn}{note}</p>",
                 f"<pre>{html.escape(e['text'])}</pre>",
                 "</article>",
             ]
