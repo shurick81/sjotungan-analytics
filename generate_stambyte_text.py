@@ -129,10 +129,43 @@ def extract_pdf_text(local_path: Path) -> tuple[str, bool]:
                 text = (page.extract_text() or "").strip()
             except Exception as e:
                 text = f"[Error extracting page {i}: {e}]"
+            text = _collapse_doubled_lines(text)
             total_chars += len(text)
             pages.append(f"--- Page {i} ---\n{text}")
     looks_scanned = page_count > 0 and total_chars < page_count * MIN_CHARS_PER_PAGE
     return "\n\n".join(pages), looks_scanned
+
+
+def _collapse_doubled_lines(text: str) -> str:
+    """Undo the 'fake bold by drawing each glyph twice' trick used in some
+    PDFs (e.g. Portinfo headers render 'BBrrff SSjjööttuunnggaann' instead of
+    'Brf Sjötungan'). Only collapses lines whose entire visible content is
+    character-doubled, leaving normal text alone.
+    """
+    return "\n".join(_maybe_collapse(line) for line in text.splitlines())
+
+
+def _maybe_collapse(line: str) -> str:
+    visible = [c for c in line if not c.isspace()]
+    if len(visible) < 4 or len(visible) % 2 != 0:
+        return line
+    if len(set(visible)) == 1:
+        # Signature/divider lines like '____...' or '----...' satisfy the
+        # all-pairs-match check trivially but aren't doubled glyphs.
+        return line
+    if not all(visible[i] == visible[i + 1] for i in range(0, len(visible), 2)):
+        return line
+    out: list[str] = []
+    i = 0
+    while i < len(line):
+        ch = line[i]
+        if ch.isspace():
+            out.append(ch)
+            i += 1
+        else:
+            out.append(ch)
+            i += 2
+    return "".join(out)
 
 
 def slugify(text: str) -> str:
