@@ -289,10 +289,15 @@ def scrape_one_shard(session: requests.Session, location_id: int,
         page_new = 0
         for card in cards:
             lid = card.get("listingId")
-            if lid and lid in seen_ids:
+            # Hemnet occasionally emits phantom SaleCards with no listingId and
+            # most structured fields stripped (rooms/area/kr-per-m² null). They
+            # duplicate a real listing at the same date/address/price and
+            # bypass listingId-keyed dedup. Drop them at the source.
+            if not lid:
                 continue
-            if lid:
-                seen_ids.add(lid)
+            if lid in seen_ids:
+                continue
+            seen_ids.add(lid)
             new_cards.append(card)
             page_new += 1
 
@@ -494,6 +499,7 @@ def main():
         print(f"Re-parsing from cached {args.output_raw}…")
         with open(args.output_raw, encoding="utf-8") as f:
             raw_cards = json.load(f)
+        raw_cards = [c for c in raw_cards if c.get("listingId")]
     else:
         print(f"Scraping Hemnet slutpriser for {args.street_name} (location_id={args.location_id})…")
         raw_cards = scrape_all(args.location_id, shard_by_rooms=args.shard_by_rooms,

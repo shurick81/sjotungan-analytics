@@ -2,6 +2,51 @@
   "data": {
     "sold": [
       {
+        "id": "6082791",
+        "booliId": "6082791",
+        "url": "/bostad/678138",
+        "soldPrice": {
+          "formatted": "2 295 000 kr",
+          "raw": 2295000,
+          "__typename": "FormattedValue"
+        },
+        "soldSqmPrice": {
+          "raw": 25500,
+          "formatted": "25 500 kr/m²",
+          "__typename": "FormattedValue"
+        },
+        "objectType": "Lägenhet",
+        "livingArea": {
+          "formatted": "90 m²",
+          "__typename": "FormattedValue"
+        },
+        "rooms": {
+          "formatted": "4 rum",
+          "raw": 4,
+          "__typename": "FormattedValue"
+        },
+        "soldDate": "2026-05-10",
+        "agency": {
+          "id": "32",
+          "name": "SkandiaMäklarna",
+          "__typename": "Agency"
+        },
+        "latitude": 59.24216767,
+        "longitude": 18.2357153,
+        "location": {
+          "address": {
+            "streetAddress": "Myggdalsvägen 64",
+            "__typename": "Address"
+          },
+          "__typename": "Location"
+        },
+        "apartmentNumber": {
+          "formatted": "Lgh 1201",
+          "__typename": "FormattedValue"
+        },
+        "__typename": "SoldProperty"
+      },
+      {
         "id": "6091237",
         "booliId": "6091237",
         "url": "/bostad/677610",

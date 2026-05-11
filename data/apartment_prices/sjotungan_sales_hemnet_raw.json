@@ -1,6 +1,53 @@
 [
   {
     "__typename": "SaleCard",
+    "id": "9050946543561105935",
+    "listingId": "21705647",
+    "slug": "lagenhet-4rum-centrala-tyreso-tyreso-kommun-myggdalsvagen-64-9050946543561105935",
+    "streetAddress": "Myggdalsvägen 64",
+    "soldAt": "1778371200.0",
+    "soldAtLabel": "Såld 10 maj. 2026",
+    "askingPrice": "2 295 000 kr",
+    "finalPrice": "2 295 000 kr",
+    "image": {
+      "__typename": "CardImage",
+      "filename": "45/00/4500af53f889e749d1ae72b15597cc08.jpg",
+      "lqipBase64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAMklEQVR4nAEnANj/AP78+e7t6c/HvbuolwC0q5+flIOAaVeUbE4AcFVBkoN1OCIVKwAA5B8TcTQ++6EAAAAASUVORK5CYII="
+    },
+    "livingArea": "90 m²",
+    "locationDescription": "Centrala Tyresö, Tyresö kommun",
+    "fee": "7 694 kr/mån",
+    "squareMeterPrice": "25 500 kr/m²",
+    "housingForm": {
+      "__typename": "HousingForm",
+      "symbol": "APARTMENT",
+      "name": "Lägenhet"
+    },
+    "rooms": "4 rum",
+    "landArea": null,
+    "priceChange": "±0 %",
+    "coordinates": {
+      "__typename": "GeometryPoint",
+      "lat": 59.2422226,
+      "long": 18.2357575
+    },
+    "brokerAgencyName": "SkandiaMäklarna Tyresö/Älta",
+    "brokerAgencyThumbnail": "https://bilder.hemnet.se/images/broker_logo_1_2x/e4/a8/e4a8b297b623f7722a8bd7c15f8fa4e7.png",
+    "labels": [
+      {
+        "__typename": "Label",
+        "text": "Hiss",
+        "identifier": "ELEVATOR",
+        "category": "FEATURE"
+      }
+    ],
+    "product": "NONE",
+    "thumbnail({\"format\":\"ITEMGALLERY_CUT\"})": "https://bilder.hemnet.se/images/itemgallery_cut/45/00/4500af53f889e749d1ae72b15597cc08.jpg",
+    "mapThumbnail({\"format\":\"ITEMGALLERY_CUT\"})": null,
+    "recordType": "COMMON"
+  },
+  {
+    "__typename": "SaleCard",
     "id": "1359701496484993074",
     "listingId": "21712397",
     "slug": "lagenhet-3rum-centrala-tyreso-tyreso-kommun-myggdalsvagen-38-1359701496484993074",
