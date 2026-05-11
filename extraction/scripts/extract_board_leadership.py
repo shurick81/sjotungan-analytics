@@ -68,6 +68,7 @@ YEAR_SOURCES: Sequence[YearSource] = [
     YearSource(2022, "stamma-2023.pdf"),
     YearSource(2023, "stamma-2024.pdf"),
     YearSource(2024, "stamma2025.pdf"),
+    YearSource(2025, "stamma2026.pdf"),
 ]
 
 
@@ -214,6 +215,14 @@ def extract_revisor_signers(lines: Sequence[str]) -> List[str]:
         if "digitalt signerad av" in normalize_text(line):
             start_idx = idx + 1
             break
+
+    # Modern annual reports place revisor names right after the
+    # "Vår revisionsberättelse har lämnats..." marker on the Underskrifter page.
+    if start_idx is None:
+        for idx, line in enumerate(lines):
+            if "var revisionsberattelse har lamnats" in normalize_text(line):
+                start_idx = idx + 1
+                break
 
     # Digital-sign pages place names right after the marker, while scanned
     # reports usually put signatures near the bottom of the page.
@@ -776,7 +785,9 @@ def choose_signed_revisor_page(pdf_path: Path) -> Tuple[Optional[int], str]:
     best_text = ""
     best_score = -1
 
-    start_page = max(1, page_count - 30)
+    # Modern annual reports embed the signatures page mid-document (e.g. before
+    # the brf-economy-guide appendix), so we can't restrict to last N pages.
+    start_page = max(1, min(10, page_count - 30) if page_count > 30 else 1)
     for page in range(start_page, page_count + 1):
         text = extract_page_text(pdf_path, page)
         n = normalize_text(text)
@@ -795,6 +806,13 @@ def choose_signed_revisor_page(pdf_path: Path) -> Tuple[Optional[int], str]:
             score += 2
         if "stockholm" in n:
             score += 1
+        # Modern annual reports use a separate "Underskrifter" page where the
+        # revisor signatures live alongside the role labels. This anchor phrase
+        # only appears on the actual signing page, so weight it heavily.
+        if "var revisionsberattelse har lamnats" in n:
+            score += 12
+        if "underskrifter" in n and ("internrevisor" in n or "kungsbron" in n or "borevision" in n):
+            score += 4
         if score > best_score or (score == best_score and best_page is not None and page > best_page):
             best_score = score
             best_page = page
@@ -985,6 +1003,156 @@ def extract_tabular_roles(layout_text: str, year: int) -> Optional[Dict[str, obj
         "chair_bbox_names": [item["name"] for item in chair_entries],
         "vice_bbox_names": [item["name"] for item in vice_entries],
         "member_bbox_names": [item["name"] for item in member_entries],
+    }
+
+
+def extract_utgjorts_av_roles(layout_text: str) -> Optional[Dict[str, object]]:
+    """Parse the modern 'Styrelsen har utgjorts av: / Namn / Roll' two-column block.
+
+    Used by stamma2026.pdf and later annual reports that switched away from the
+    'Styrelsens sammansättning' tabular layout. Also picks up the trailing
+    'Revisor har varit ...' and 'Valberedningen har utgjorts av ...' sentences
+    that live just below the board table on the same page.
+    """
+    lines = split_layout_lines(layout_text)
+    if not lines:
+        return None
+
+    anchor_idx = next(
+        (
+            i
+            for i, line in enumerate(lines)
+            if "styrelsen har utgjorts av" in normalize_text(line)
+        ),
+        None,
+    )
+    if anchor_idx is None:
+        return None
+
+    header_idx = next(
+        (
+            i
+            for i in range(anchor_idx + 1, min(anchor_idx + 8, len(lines)))
+            if re.match(r"\s*Namn\s+Roll\b", lines[i])
+        ),
+        None,
+    )
+    if header_idx is None:
+        return None
+
+    role_pattern = re.compile(
+        r"^(.+?)\s{2,}(Ordförande|Ledamot.*|Vice\s*ordförande.*|Suppleant.*)\s*$",
+        flags=re.IGNORECASE,
+    )
+
+    parsed_rows: List[Dict[str, str]] = []
+    for line in lines[header_idx + 1 :]:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        normalized = normalize_text(stripped)
+        if any(
+            stop in normalized
+            for stop in [
+                "foreningens firma",
+                "styrelsen har under verksamhets",
+                "revisor har varit",
+                "valberedningen har",
+                "foreningen har en aktuell",
+                "ordinarie foreningsstamma",
+            ]
+        ):
+            break
+        match = role_pattern.match(line)
+        if not match:
+            continue
+        name = clean_name(match.group(1))
+        role_raw = match.group(2).strip()
+        if not name or not is_probable_name(name):
+            continue
+        parsed_rows.append({"name": name, "role": role_raw})
+
+    if not parsed_rows:
+        return None
+
+    chair_name = ""
+    vice_name = ""
+    members: List[str] = []
+    suppleanter: List[str] = []
+    external_hsb: List[str] = []
+
+    for row in parsed_rows:
+        role_norm = normalize_text(row["role"])
+        if "vice ordforande" in role_norm:
+            if not vice_name:
+                vice_name = row["name"]
+            continue
+        if "ordforande" in role_norm and "vice" not in role_norm:
+            if not chair_name:
+                chair_name = row["name"]
+            continue
+        if "suppleant" in role_norm:
+            suppleanter.append(row["name"])
+            continue
+        if "ledamot" in role_norm:
+            if "hsb" in role_norm:
+                external_hsb.append(row["name"])
+            else:
+                members.append(row["name"])
+
+    # Trailing sentences below the board table (may span the next page).
+    tail = "\n".join(lines[header_idx + 1 :])
+    board_revisors: List[str] = []
+    valberedning: List[str] = []
+
+    rev_match = re.search(
+        r"revisor\s+har\s+varit\s+(.+?)(?:\.\s|$)",
+        tail,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if rev_match:
+        rev_fragment = rev_match.group(1)
+        elected_match = re.match(
+            r"\s*([A-ZÅÄÖ][A-Za-zÅÄÖåäöÉé\-]+(?:\s+[A-ZÅÄÖ][A-Za-zÅÄÖåäöÉé\-]+){1,3})\s+vald\s+av\s+f[oö]reningen",
+            rev_fragment,
+        )
+        if elected_match:
+            board_revisors.append(clean_name(elected_match.group(1)))
+        hsb_match = re.search(
+            r"HSB\s+Riksf[oö]rbund\s+utsedd\s+revisor\s+hos\s+([^.\n]+)",
+            rev_fragment,
+            flags=re.IGNORECASE,
+        )
+        if hsb_match:
+            firm = normalize_firm_name(hsb_match.group(1))
+            firm = re.sub(r"(?i)\s+i\s+sverige\b.*$", "", firm).strip()
+            if firm:
+                board_revisors.append(firm)
+
+    val_match = re.search(
+        r"valberedningen\s+har\s+utgjorts\s+av\s+(.+?)(?:\.\s|$)",
+        tail,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if val_match:
+        val_fragment = val_match.group(1)
+        val_fragment = re.sub(r"\(sammankallande\)", "", val_fragment, flags=re.IGNORECASE)
+        for part in re.split(r"\s+och\s+|,", val_fragment):
+            candidate = clean_name(part)
+            if candidate and is_probable_name(candidate):
+                valberedning.append(candidate)
+
+    return {
+        "chair": chair_name,
+        "vice": vice_name,
+        "members": members,
+        "suppleanter": suppleanter,
+        "external_hsb_ledamoter": external_hsb,
+        "board_revisors": board_revisors,
+        "valberedning": valberedning,
+        "chair_bbox_names": [chair_name] if chair_name else [],
+        "vice_bbox_names": [vice_name] if vice_name else [],
+        "member_bbox_names": list(members),
     }
 
 
@@ -1556,7 +1724,36 @@ def extract_year(source: YearSource) -> Dict[str, object]:
             "vice_bbox_names": tabular_roles.get("vice_bbox_names", []),
             "member_bbox_names": tabular_roles.get("member_bbox_names", []),
         })
+
+    extended_layout_text = layout_text
+    try:
+        page_count = get_page_count(pdf_path)
+    except subprocess.CalledProcessError:
+        page_count = page
+    for follow in (page + 1, page + 2):
+        if follow > page_count:
+            break
+        try:
+            extended_layout_text += "\n" + extract_page_text_layout(pdf_path, follow)
+        except subprocess.CalledProcessError:
+            break
+    modern_roles = extract_utgjorts_av_roles(extended_layout_text) if extended_layout_text else None
+    if modern_roles:
+        parsed.update({
+            "chair": modern_roles.get("chair", parsed.get("chair", "")) or parsed.get("chair", ""),
+            "vice": modern_roles.get("vice", parsed.get("vice", "")) or parsed.get("vice", ""),
+            "members": modern_roles.get("members", parsed.get("members", [])) or parsed.get("members", []),
+            "suppleanter": modern_roles.get("suppleanter", parsed.get("suppleanter", [])) or parsed.get("suppleanter", []),
+            "external_hsb_ledamoter": modern_roles.get("external_hsb_ledamoter", parsed.get("external_hsb_ledamoter", [])) or parsed.get("external_hsb_ledamoter", []),
+            "valberedning": modern_roles.get("valberedning", parsed.get("valberedning", [])) or parsed.get("valberedning", []),
+            "chair_bbox_names": modern_roles.get("chair_bbox_names", []),
+            "vice_bbox_names": modern_roles.get("vice_bbox_names", []),
+            "member_bbox_names": modern_roles.get("member_bbox_names", []),
+        })
+
     board_revisors = extract_board_revisors(lines)
+    if modern_roles and modern_roles.get("board_revisors"):
+        board_revisors = list(modern_roles["board_revisors"])
     words = extract_page_words_bbox(pdf_path, page)
 
     signed_page, signed_text = choose_signed_revisor_page(pdf_path)
@@ -1659,6 +1856,7 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "suppleanter": suppleanter_box,
         "external_hsb_ledamoter": external_hsb_box,
         "revisorer_signed": signed_revisor_box,
+        "board_revisorer": board_revisor_box,
     }
     parsed["board_revisorer"] = board_revisors
     parsed["revisorer_signed"] = signed_revisors
@@ -1675,6 +1873,7 @@ def extract_year(source: YearSource) -> Dict[str, object]:
         "valberedning": valberedning,
         "suppleanter": suppleanter,
         "external_hsb_ledamoter": external_hsb_ledamoter,
+        "board_revisorer": board_revisors,
         "revisorer_signed": signed_revisors,
         "revisorer_signed_page": signed_page,
         "boxes": parsed.get("boxes", {}),
@@ -1767,6 +1966,10 @@ def main() -> int:
                 upsert_row(rows, year, 3, ";".join(members), pdf, page, members_box)
             if valberedning:
                 upsert_row(rows, year, 4, ";".join(valberedning), pdf, page, valberedning_box)
+            board_revisorer = item.get("board_revisorer") if isinstance(item.get("board_revisorer"), list) else []
+            board_revisor_box = boxes.get("board_revisorer")
+            if board_revisorer:
+                upsert_row(rows, year, 5, ";".join(board_revisorer), pdf, page, board_revisor_box)
             if isinstance(revisorer_signed_page, int) and not revisorer_signed:
                 raise RuntimeError(
                     "Refusing to write stale category 9 data: "

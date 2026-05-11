@@ -1,0 +1,92 @@
+{
+  "year": 2025,
+  "pdf": "stamma2026.pdf",
+  "page": 8,
+  "parsed": {
+    "chair": "Lukas Sveman",
+    "vice": "Jessica Bolonassos",
+    "members": [
+      "Bertil Neij",
+      "Olof Gränström",
+      "Anne-Lie Adolfsson",
+      "Joachim Holmberg",
+      "Madelene Lundin",
+      "Ronald Nordlund",
+      "Inna Danishevska"
+    ],
+    "external_hsb_ledamoter": [
+      "Jan-Stefan Dahlgren"
+    ],
+    "valberedning": [
+      "Odd Viking",
+      "Chris Hager"
+    ],
+    "suppleanter": [],
+    "chair_bbox_names": [
+      "Lukas Sveman"
+    ],
+    "vice_bbox_names": [
+      "Jessica Bolonassos"
+    ],
+    "member_bbox_names": [
+      "Bertil Neij",
+      "Olof Gränström",
+      "Anne-Lie Adolfsson",
+      "Joachim Holmberg",
+      "Madelene Lundin",
+      "Ronald Nordlund",
+      "Inna Danishevska"
+    ],
+    "boxes": {
+      "year": [
+        70.8238,
+        70.35936,
+        111.660085,
+        82.76952
+      ],
+      "chair": [
+        71.9039,
+        555.94936,
+        133.825275,
+        568.35952
+      ],
+      "vice": [
+        71.9039,
+        569.38936,
+        153.834943,
+        581.79952
+      ],
+      "members": [
+        71.9039,
+        582.82936,
+        156.01901,
+        689.34952
+      ],
+      "valberedning": null,
+      "suppleanter": null,
+      "external_hsb_ledamoter": [
+        71.9039,
+        609.73936,
+        162.23778,
+        622.14952
+      ],
+      "revisorer_signed": [
+        85.0508,
+        636.598,
+        370.3208,
+        647.528
+      ],
+      "board_revisorer": null
+    },
+    "board_revisorer": [
+      "Mattias Matti",
+      "Kungsbron Borevision"
+    ],
+    "revisorer_signed": [
+      "Joakim Häll",
+      "Mattias Matti"
+    ],
+    "revisorer_signed_page": 23
+  },
+  "line_count": 60
+}

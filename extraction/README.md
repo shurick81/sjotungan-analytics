@@ -20,6 +20,8 @@ This folder groups reusable data-extraction assets in one place.
 - Script: `scripts/extract_legacy_events_candidates.py`
 - Script: `scripts/extract_pre2009_states_events.py`
 - Method doc: `methods/financial_states_events_legacy.md`
+- Script: `scripts/extract_modern_financials.py`
+- Method doc: `methods/modern_financials.md` (modern annual reports, with hierarchy + state/event reconciliation checks built in)
 - Script: `scripts/check_soliditet_readiness.py`
 - Script: `scripts/calculate_soliditet.py`
 - Script: `scripts/extract_soliditet_states_candidates.py`
