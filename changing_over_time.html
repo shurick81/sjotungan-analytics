@@ -998,9 +998,10 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                 }
             }
 
-            // Synthetic aggregation: cat 2 = cat 2 (residual) + cats 50-55
+            // Cat 2 reports parent total directly some years, per-child breakdown others — never both as residual + components.
             const cat2Subcats = [50, 51, 52, 53, 54, 55];
             for (const yd of Object.values(flowsData)) {
+                const subcatSources = [];
                 let subcatTotal = 0;
                 let hasSubcats = false;
                 let firstSubcatSource = null;
@@ -1009,18 +1010,14 @@ const isEmbedded = new URLSearchParams(window.location.search).get('embedded') =
                         subcatTotal += yd.cats[sid].amount;
                         hasSubcats = true;
                         if (!firstSubcatSource) firstSubcatSource = yd.cats[sid].source;
+                        if (yd.cats[sid].source) subcatSources.push(yd.cats[sid].source);
                     }
                 }
-                if (hasSubcats) {
-                    const existing = yd.cats[2] ? yd.cats[2].amount : 0;
-                    const existingSource = yd.cats[2] ? yd.cats[2].source : firstSubcatSource;
-                    // Collect all component sources for multi-highlight
-                    const allSources = [];
-                    if (yd.cats[2] && yd.cats[2].source) allSources.push(yd.cats[2].source);
-                    for (const sid of cat2Subcats) {
-                        if (yd.cats[sid] && yd.cats[sid].source) allSources.push(yd.cats[sid].source);
-                    }
-                    yd.cats[2] = { amount: existing + subcatTotal, source: existingSource, sources: allSources };
+                if (yd.cats[2]) {
+                    const allSources = [yd.cats[2].source, ...subcatSources].filter(Boolean);
+                    yd.cats[2] = { amount: yd.cats[2].amount, source: yd.cats[2].source, sources: allSources };
+                } else if (hasSubcats) {
+                    yd.cats[2] = { amount: subcatTotal, source: firstSubcatSource, sources: subcatSources };
                 }
             }
 
