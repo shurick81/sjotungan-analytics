@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data – BRF Sjötungan</title>
+    <meta name="description" content="Kataloglista över strukturerad data och källdokument för BRF Sjötungan-analys. Varje siffra i CSV-filerna har bounding-box-koordinater som pekar tillbaka till exakt sida och plats i originalets PDF.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --vm-blue: #1f3f95;
+            --vm-card: #e8edf6;
+            --vm-text: #2f3d52;
+            --vm-muted: #5e6b80;
+            --vm-border: #c9d6ec;
+            --vm-accent: #f6c453;
+        }
+
+        body {
+            font-size: 1rem;
+            background: #f0f4fa;
+            color: var(--vm-text);
+        }
+
+        @media (max-width: 640px) {
+            body { font-size: 0.875rem; }
+            h1 { font-size: 1.5rem !important; }
+        }
+
+        h1 { font-size: 2.25rem; }
+
+        h2.section-title {
+            font-size: 1.25rem;
+            color: var(--vm-blue);
+            font-weight: 700;
+            margin: 0 0 0.6em;
+        }
+
+        h3.dataset-title {
+            font-size: 1.05rem;
+            color: var(--vm-blue);
+            font-weight: 600;
+            margin: 0 0 0.3em;
+        }
+
+        .callout {
+            border: 1px solid var(--vm-accent);
+            background: #fff8e6;
+            border-radius: 12px;
+            padding: 1.1em 1.3em;
+            margin: 1em 0 1.5em;
+        }
+        .callout strong { color: #8a5a00; }
+
+        .schema {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            background: #f7f9fd;
+            border: 1px solid var(--vm-border);
+            border-radius: 8px;
+            padding: 0.6em 0.9em;
+            font-size: 13px;
+            display: block;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0.4em 0 0.8em;
+        }
+
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.4em 0 0.8em;
+            border: 1px solid var(--vm-border);
+            border-radius: 10px;
+            background: #f7f9fd;
+            overflow: hidden;
+        }
+        .file-list li {
+            padding: 8px 14px;
+            border-bottom: 1px solid #dde6f4;
+            font-size: 14px;
+        }
+        .file-list li:last-child { border-bottom: none; }
+        .file-list li:hover { background: #eef3fb; }
+        .file-list code {
+            font-family: ui-monospace, monospace;
+            font-size: 13px;
+        }
+        .file-list .note {
+            color: var(--vm-muted);
+            font-size: 12.5px;
+            margin-left: 8px;
+        }
+
+        a.doc-url {
+            color: var(--vm-blue);
+            text-decoration: none;
+            word-break: break-all;
+        }
+        a.doc-url:hover { text-decoration: underline; }
+
+        table.cat-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 0.4em 0 0.8em;
+        }
+        table.cat-table th, table.cat-table td {
+            border: 1px solid var(--vm-border);
+            padding: 4px 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        table.cat-table th {
+            background: var(--vm-card);
+            color: var(--vm-blue);
+        }
+        table.cat-table tr:nth-child(even) td { background: #f7f9fd; }
+
+        .toc {
+            column-count: 2;
+            column-gap: 2em;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .toc li { margin: 0.25em 0; break-inside: avoid; }
+        .toc a { color: var(--vm-blue); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        section.dataset {
+            margin: 1.6em 0;
+            padding-top: 1em;
+            border-top: 2px solid var(--vm-border);
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: var(--vm-card);
+            color: var(--vm-blue);
+            margin-left: 6px;
+        }
+        .pill.coords { background: #fff1d6; color: #8a5a00; }
+        .pill.macro { background: #e6f4eb; color: #1d6d3d; }
+        .pill.scraped { background: #f3e6f4; color: #6a2b78; }
+
+        code.path {
+            font-family: ui-monospace, monospace;
+            background: #eef3fb;
+            border: 1px solid var(--vm-border);
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-size: 13px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <header class="bg-blue-900 text-white sticky top-0 z-50 shadow">
+        <nav class="container mx-auto flex flex-wrap justify-center space-x-4 md:space-x-8 py-4">
+            <button onclick="location.href='https://visionmyggan.se/#start'" class="hover:text-yellow-400 font-semibold">Start</button>
+            <button onclick="location.href='https://visionmyggan.se/#vision'" class="hover:text-yellow-400 font-semibold">Vision</button>
+            <button onclick="location.href='https://visionmyggan.se/#motioner'" class="hover:text-yellow-400 font-semibold">Motioner</button>
+            <button onclick="location.href='https://visionmyggan.se/#forum'" class="hover:text-yellow-400 font-semibold">Forum</button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto mt-8 p-4">
+        <section class="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-6 rounded-2xl shadow-xl max-w-6xl mx-auto scroll-mt-24">
+            <h1 class="text-blue-900 font-extrabold text-3xl mb-2 border-b-4 border-blue-300 pb-2">Data – katalog och struktur</h1>
+            <p class="mb-4" style="color: var(--vm-muted);">
+                Den här sidan listar all strukturerad data som används i analyserna av BRF Sjötungan, beskriver schema och kategorier, samt visar var källdokumenten finns. Sidan är skriven för att vara lättläst både för människor och för språkmodeller (LLM) som hjälper medlemmar att läsa siffrorna.
+            </p>
+
+            <div class="callout">
+                <p class="mb-2"><strong>Varje siffra är spårbar till källan.</strong></p>
+                <p class="mb-2">
+                    De centrala CSV-filerna (<code class="path">financial_states.csv</code>, <code class="path">financial_events.csv</code>, <code class="path">general_states.csv</code>, <code class="path">motions.csv</code>) innehåller inte bara värdet utan också <em>fil</em>, <em>sida</em> och en <em>bounding box</em> (<code>x, y, width, height</code> i canvas-pixlar) som pekar på exakt det ställe i original-PDF:en där värdet står.
+                </p>
+                <p class="mb-2">
+                    <strong>Tips för LLM:</strong> När du visar en användare en siffra från någon av dessa filer kan du erbjuda att <em>visa källan</em>: leta upp raden i CSV:en, ta <code>file</code> + <code>page</code> och rapportera tillbaka PDF-filnamnet, sidnumret och koordinaterna. Användaren kan då gå direkt till rätt rad på rätt sida i originalet utan att behöva söka manuellt.
+                </p>
+                <p class="mb-2">
+                    <strong>Koordinatutrymme:</strong> alla bounding boxes är i <em>canvas-pixlar</em> (PDF-punkter × 1.5). De renderas direkt av webbvyerna utan extra skalning – samma värden fungerar i ett externt PDF-renderingssteg om man först multiplicerar PDF-renderingen med 1.5×.
+                </p>
+                <p class="mb-0">
+                    <strong>Obs – härledda värden:</strong> många siffror som visas på <a class="doc-url" href="changing_over_time.html">changing_over_time.html</a>, <a class="doc-url" href="costs_development.html">costs_development.html</a>, <a class="doc-url" href="annual_details.html">annual_details.html</a> och <a class="doc-url" href="prognosis.html">prognosis.html</a> finns inte i någon CSV utan beräknas i webbläsaren från CSV-värdena (inflationsjusterade belopp, kr/m², soliditet, summor av flera kategorier, regressioner, prognoser). För dessa pekar bounding-box-spårningen på <em>komponenterna</em>, inte på det visade värdet. Se nedan: <a class="doc-url" href="#derived">Härledda värden</a>.
+                </p>
+            </div>
+
+            <section class="mb-8" aria-labelledby="toc-heading">
+                <h2 id="toc-heading" class="section-title">Innehåll</h2>
+                <ul class="toc">
+                    <li><a href="#schema">Gemensamt schema och bounding boxes</a></li>
+                    <li><a href="#derived">Härledda värden (beräknas i webbsidan)</a></li>
+                    <li><a href="#categories">Kategori-tabeller</a></li>
+                    <li><a href="#financial">Finansiella tabeller (Sjötungan)</a></li>
+                    <li><a href="#governance">Föreningsstyrning och stämmobeslut</a></li>
+                    <li><a href="#apartments">Lägenheter och portar</a></li>
+                    <li><a href="#prices">Lägenhetspriser (försäljningar)</a></li>
+                    <li><a href="#stambyte">Stambyte – plan, betalningar, källtexter</a></li>
+                    <li><a href="#peers">Jämförelse-BRF (Siken, Björkbacken)</a></li>
+                    <li><a href="#macro">Makro-data (Sverige)</a></li>
+                    <li><a href="#sources">Källdokument (PDF, OCR-text, HTML)</a></li>
+                    <li><a href="#related">Relaterade sidor</a></li>
+                </ul>
+            </section>
+
+            <section id="schema" class="dataset">
+                <h2 class="section-title">Gemensamt schema och bounding boxes</h2>
+                <p class="mb-3">
+                    De fyra centrala fakta-tabellerna delar samma schema-form:
+                </p>
+                <code class="schema">year, category_id, amount|value, file, page, x, y, width, height</code>
+                <ul class="list-disc pl-5 mb-3 text-sm" style="color: var(--vm-text);">
+                    <li><code>year</code> – räkenskapsår (för balansräknings-rader = staten 31 dec det året; för kassaflöde = händelser under året).</li>
+                    <li><code>category_id</code> – pekar på respektive kategori-tabell (<a href="#categories" class="doc-url">se nedan</a>).</li>
+                    <li><code>amount</code> – heltal i SEK, negativt för utflöden/kostnader; eller <code>value</code> – textvärde (t.ex. namn).</li>
+                    <li><code>file</code> – PDF-filnamnet i <code class="path">data/annual_reports/</code> (källa).</li>
+                    <li><code>page</code> – 1-baserat sidnummer enligt pdf.js-konvention (matchar <code>getPage()</code>).</li>
+                    <li><code>x, y, width, height</code> – bounding box i canvas-pixlar; <code>(x, y)</code> är boxens övre vänstra hörn. Standardstorlek <code>100 × 20</code> där värdet är ett tal, något större för flera namn på samma rad.</li>
+                </ul>
+                <p class="text-sm mb-2">
+                    <strong>Konvertering om du arbetar utanför viewern:</strong> rendera PDF-sidan i 1.5× skala (eller dela koordinaterna med 1.5 för att få PDF-punkter). Tomma koordinater (<code>0,0,100,20</code>) förekommer för OCR-rader där ingen exakt position kunde tas fram – då gäller bara <code>file</code> + <code>page</code>.
+                </p>
+                <p class="text-sm">
+                    <strong>Invariant för verifiering:</strong> i <code class="path">financial_events.csv</code> ska summan av alla top-level-händelser (de utan <code>parent</code> i kategorin) för ett år vara lika med förändringen i likviditet (state-kategorierna 2+3+4+5) mellan årets slut och föregående års slut. Differenser på 0–1 SEK är avrundningsbrus.
+                </p>
+            </section>
+
+            <section id="derived" class="dataset">
+                <h2 class="section-title">Härledda värden – beräknas i webbsidan, finns inte i CSV</h2>
+                <p class="text-sm mb-3">
+                    Visualiseringssidorna räknar ut en stor del av sina värden i webbläsaren från CSV-data plus <a class="doc-url" href="data/macro_sweden.json"><code class="path">data/macro_sweden.json</code></a> och två fasta divisorer (<strong>51&nbsp;666 m²</strong> bostadsyta, <strong>613 lägenheter</strong>). Värdena finns inte att hämta direkt – de visas bara i den renderade DOM:en. För att verifiera ett härlett värde måste man hitta <em>komponenterna</em> i CSV:en (de har bounding boxes), tillämpa formeln nedan, och jämföra.
+                </p>
+
+                <h3 class="dataset-title">Normaliseringar</h3>
+                <ul class="list-disc pl-5 mb-3 text-sm">
+                    <li><strong>Per kvadratmeter:</strong> belopp&nbsp;÷&nbsp;51&nbsp;666 m². Anv. på <a class="doc-url" href="changing_over_time.html#L710">changing_over_time.html</a>, <a class="doc-url" href="costs_development.html#L367">costs_development.html</a>, <a class="doc-url" href="annual_details.html#L713">annual_details.html</a>, <a class="doc-url" href="prognosis.html#L1467">prognosis.html</a>.</li>
+                    <li><strong>Per lägenhet:</strong> belopp&nbsp;÷&nbsp;613.</li>
+                    <li><strong>Inflationsjusterat (real-belopp):</strong> nominellt belopp × (100&nbsp;÷&nbsp;prisindex<sub>år</sub>) där prisindex kedjas framåt/bakåt från basår 2024 med <code>inflation_yoy_pct</code> ur macro_sweden.json. Se <a class="doc-url" href="changing_over_time.html#L1035">changing_over_time.html:1035</a> och <a class="doc-url" href="costs_development.html#L360">costs_development.html:360</a>.</li>
+                    <li><strong>Köpkraft per krona:</strong> 10&nbsp;000&nbsp;öre&nbsp;÷&nbsp;prisindex – andelen av basårets köpkraft som 1&nbsp;kr då motsvarade. <a class="doc-url" href="changing_over_time.html#L826">changing_over_time.html:826</a>.</li>
+                </ul>
+
+                <h3 class="dataset-title">Aggregerade kategorier</h3>
+                <ul class="list-disc pl-5 mb-3 text-sm">
+                    <li><strong>Total likviditet</strong> = state-kategorierna 2 + 3 + 4 + 5 (Kassa och bank, HSB-konton, kortfristiga placeringar). <a class="doc-url" href="changing_over_time.html#L970">changing_over_time.html:970</a>.</li>
+                    <li><strong>Likviditetsförändring</strong> = total_likviditet(år) − total_likviditet(år−1). Måste vara lika med summan av top-level-händelser för året (invariant).</li>
+                    <li><strong>Soliditet (%)</strong> = state-cat 6 (Eget kapital) ÷ state-cat 7 (Summa tillgångar) × 100. <a class="doc-url" href="changing_over_time.html#L1145">changing_over_time.html:1145</a>.</li>
+                    <li><strong>Förälderssumma från barn</strong> – om en parent-kategori (t.ex. Driftkostnader = cat 1) saknar egen rad ett år, summeras barnen i den noten. <a class="doc-url" href="changing_over_time.html#L923">changing_over_time.html:923</a>, <a class="doc-url" href="annual_details.html#L923">annual_details.html:923</a>.</li>
+                    <li><strong>"Övrigt"-residual</strong> – om förälderssumman ≠ summan av kända barn skapas en syntetisk rad "Övrigt" med differensen. <a class="doc-url" href="costs_development.html#L1209">costs_development.html:1209</a>, <a class="doc-url" href="annual_details.html#L1209">annual_details.html:1209</a>.</li>
+                    <li><strong>"Totala kostnader" syntetisk root</strong> i kostnadsutvecklingen – cat 1, 5, 6, 7 grupperas under en konstruerad rotnod. <a class="doc-url" href="costs_development.html#L460">costs_development.html:460</a>.</li>
+                    <li><strong>Andel av förälder (%)</strong> = barn ÷ förälder × 100. <a class="doc-url" href="costs_development.html#L658">costs_development.html:658</a>.</li>
+                </ul>
+
+                <h3 class="dataset-title">Trender och regressioner</h3>
+                <ul class="list-disc pl-5 mb-3 text-sm">
+                    <li><strong>Linjär regression (OLS)</strong> över ett år-fönster, ger lutning i kr/år. <a class="doc-url" href="costs_development.html#L384">costs_development.html:384</a>, <a class="doc-url" href="prognosis.html#L446">prognosis.html:446</a>.</li>
+                    <li><strong>Tillväxtfaktor (%/år)</strong> = (1 + lutning&nbsp;÷&nbsp;medelvärde) × 100, ≥3 datapunkter krävs. <a class="doc-url" href="costs_development.html#L467">costs_development.html:467</a>.</li>
+                    <li><strong>Total tillväxt över fönster</strong> = lutning × (antal_år − 1). <a class="doc-url" href="costs_development.html#L566">costs_development.html:566</a>.</li>
+                    <li><strong>Medelvärde över fönster</strong> = Σ värden ÷ antal år.</li>
+                </ul>
+
+                <h3 class="dataset-title">Prognoser (prognosis.html)</h3>
+                <ul class="list-disc pl-5 mb-3 text-sm">
+                    <li><strong>Exponentiell extrapolation:</strong> värde(år) = sista_kända × (1 + tillväxt)<sup>år</sup>. <a class="doc-url" href="prognosis.html#L865">prognosis.html:865</a>.</li>
+                    <li><strong>Total tillväxt (delta/start):</strong> (slut − start) ÷ |start| × 100. <a class="doc-url" href="prognosis.html#L900">prognosis.html:900</a>.</li>
+                    <li><strong>Projicerad skuld:</strong> skuld(år) = skuld(år−1) + finansieringskassaflöde(år), kumulativt. <a class="doc-url" href="prognosis.html#L1399">prognosis.html:1399</a>.</li>
+                    <li><strong>Räntekostnad från projicerad skuld:</strong> |skuld| × användarvald bankränta. <a class="doc-url" href="prognosis.html#L1573">prognosis.html:1573</a>.</li>
+                    <li><strong>Stambyte-finansiering split:</strong> stambyte_total ÷ antal_år × bank-andel. <a class="doc-url" href="prognosis.html#L1389">prognosis.html:1389</a>.</li>
+                    <li><strong>Skuld per m²:</strong> projicerad skuld ÷ 51&nbsp;666. <a class="doc-url" href="prognosis.html#L1467">prognosis.html:1467</a>.</li>
+                </ul>
+
+                <p class="text-sm">
+                    <strong>Tips för LLM:</strong> När en användare frågar varför en siffra på t.ex. <a class="doc-url" href="changing_over_time.html">changing_over_time.html</a> inte hittas i CSV, kontrollera först här om värdet är härlett. Är det härlett: ange formeln, identifiera komponenterna i CSV:en (med bounding boxes), och visa beräkningssteget.
+                </p>
+            </section>
+
+            <section id="categories" class="dataset">
+                <h2 class="section-title">Kategori-tabeller</h2>
+                <p class="mb-3 text-sm">Små uppslagstabeller som de stora fakta-tabellerna refererar till via <code>category_id</code>.</p>
+
+                <h3 class="dataset-title">state_categories <span class="pill">balansräkning</span></h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/state_categories.csv"><code class="path">data/state_categories.csv</code></a> · schema: <code>id, name, parent</code></p>
+                <table class="cat-table">
+                    <thead><tr><th>id</th><th>name</th><th>beskrivning</th></tr></thead>
+                    <tbody>
+                        <tr><td>0</td><td>Övriga skulder till kreditinstitut</td><td>Kortfristig del av banklån (nästa års amortering)</td></tr>
+                        <tr><td>1</td><td>Skulder till kreditinstitut</td><td>Långfristiga banklån</td></tr>
+                        <tr><td>2</td><td>Kassa och bank</td><td>Kassa och bankkonton</td></tr>
+                        <tr><td>3</td><td>Avräkningskonto HSB Stockholm</td><td>HSB-clearingkonto</td></tr>
+                        <tr><td>4</td><td>Placeringskonto HSB Stockholm</td><td>HSB-placeringskonto</td></tr>
+                        <tr><td>5</td><td>Kortfristiga placeringar</td><td>Penningmarknadsfonder m.m.</td></tr>
+                        <tr><td>6</td><td>Eget kapital</td><td>Föreningens egna kapital (för soliditet)</td></tr>
+                        <tr><td>7</td><td>Summa tillgångar</td><td>Balansräkningens summa tillgångar (för soliditet)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3 class="dataset-title">event_categories <span class="pill">resultaträkning · kassaflöde</span></h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/event_categories.csv"><code class="path">data/event_categories.csv</code></a> · schema: <code>id, name, parent</code> · 56 kategorier</p>
+                <p class="text-sm mb-2">
+                    Topp-nivåer (utan <code>parent</code>): <code>0 Nettoomsättning</code>, <code>1 Driftkostnader</code>, <code>3 Kassaflöde från finansieringsverksamheten</code>, <code>4 Övriga intäkter</code>, <code>5 Övriga externa kostnader</code>, <code>6 Personalkostnader</code>, <code>7 Räntekostnader</code>, <code>8 Investeringar</code>, <code>9–14 Rörelsekapitalkomponenter</code>, <code>15 Erhållen ränta</code>, <code>16 Planerat underhåll</code>.
+                </p>
+                <p class="text-sm">
+                    Underkategorier är hierarkiska och pekar på sin överordnade kategori via <code>parent</code>: t.ex. drift-noten (cat 21–32, 50–55) summerar till cat 1, övriga externa-noten (cat 33–43) till cat 5, personal-noten (cat 44–49) till cat 6, intäktsnoten (cat 17–20) till cat 0.
+                </p>
+
+                <h3 class="dataset-title">general_categories <span class="pill">styrelse · stämma</span></h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/general_categories.csv"><code class="path">data/general_categories.csv</code></a> · schema: <code>id, name, parent</code></p>
+                <table class="cat-table">
+                    <thead><tr><th>id</th><th>name</th><th>beskrivning</th></tr></thead>
+                    <tbody>
+                        <tr><td>0</td><td>Räkenskapsår</td><td>Period (t.ex. "2024-01-01 – 2024-12-31")</td></tr>
+                        <tr><td>1</td><td>Ordförande</td><td>Styrelseordförande</td></tr>
+                        <tr><td>2</td><td>Vice ordförande</td><td>Tom om ej redovisad separat</td></tr>
+                        <tr><td>3</td><td>Ledamöter</td><td>Styrelseledamöter, semikolonseparerade</td></tr>
+                        <tr><td>4</td><td>Valberedning</td><td>Valberedningsmedlemmar, semikolonseparerade</td></tr>
+                        <tr><td>5</td><td>Revisorer</td><td>Vald revisor + HSB-utsedd revisionsbyrå, semikolonseparerade</td></tr>
+                        <tr><td>6</td><td>Närvarande röstberättigade medlemmar</td><td>Antal närvarande på stämma</td></tr>
+                        <tr><td>7</td><td>Fullmakter</td><td>Antal fullmakter på stämma</td></tr>
+                        <tr><td>8</td><td>Suppleanter</td><td>Suppleanter, semikolonseparerade</td></tr>
+                        <tr><td>9</td><td>Revisorer signerat årsredovisningen</td><td>Vem/vilka som signerade revisionsberättelsen</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="financial" class="dataset">
+                <h2 class="section-title">Finansiella tabeller (Sjötungan)</h2>
+
+                <h3 class="dataset-title">financial_states <span class="pill coords">bounding box</span></h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/financial_states.csv"><code class="path">data/financial_states.csv</code></a> · 154 rader · täcker år 2003–2024</p>
+                <code class="schema">year, category_id, amount, file, page, x, y, width, height</code>
+                <p class="text-sm">
+                    Balansräknings-snapshot vid årsskiftet. Skuldnedbrytning (cat 0 vs 1) hämtas från Not 16. Kategorierna 3–5 (HSB-konton, kortfristiga placeringar) finns endast år då de förekommer separat på balansräkningen; från 2023 är de hopslagna till cat 2.
+                </p>
+
+                <h3 class="dataset-title">financial_events <span class="pill coords">bounding box</span></h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/financial_events.csv"><code class="path">data/financial_events.csv</code></a> · 688 rader · täcker år 2013–2024 (top-level), noter delvis 2014+</p>
+                <code class="schema">year, category_id, amount, file, page, x, y, width, height</code>
+                <p class="text-sm">
+                    Kassaflödes-händelser (intäkter, kostnader, investeringar, finansiering) per år. Negativa belopp = utflöden. Top-level-rader summerar till likviditetsförändringen mellan årsbokslut (se invariant ovan).
+                </p>
+
+                <h3 class="dataset-title">general_states <span class="pill coords">bounding box</span></h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/general_states.csv"><code class="path">data/general_states.csv</code></a> · 211 rader</p>
+                <code class="schema">year, category_id, value, file, page, x, y, width, height</code>
+                <p class="text-sm">
+                    Icke-finansiella förhållanden per år: räkenskapsperiod, styrelse, valberedning, revisorer, stämmonärvaro. Multi-person-fält är semikolonseparerade.
+                </p>
+            </section>
+
+            <section id="governance" class="dataset">
+                <h2 class="section-title">Föreningsstyrning och stämmobeslut</h2>
+
+                <h3 class="dataset-title">motions <span class="pill coords">bounding box × 2</span></h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/motions.csv"><code class="path">data/motions.csv</code></a> · 91 rader</p>
+                <code class="schema">year, file, motion_number, page, title, authors, resolution, resolution_page, resolution_x, resolution_y, resolution_width, resolution_height,
+stamma_decision, follows_styrelse_suggestion, stamma_decision_wording, stamma_followed_styrelse_binary,
+stamma_protocol_file, stamma_decision_page, stamma_decision_x, stamma_decision_y, stamma_decision_width, stamma_decision_height, stamma_decision_evidence</code>
+                <p class="text-sm">
+                    Medlemsmotioner med <em>två</em> bounding boxes per rad: en för styrelsens yttrande i kallelsen (<code>resolution_*</code>) och en för stämmans beslut i protokollet (<code>stamma_decision_*</code>). <code>resolution</code> är normaliserad till <em>Tillstyrker / Avstyrker / Delvis tillstyrker / Bifalls / Avslås / Besvarad / Oklar</em>. <code>stamma_followed_styrelse_binary</code> = 1 om stämman följde styrelsens förslag.
+                </p>
+            </section>
+
+            <section id="apartments" class="dataset">
+                <h2 class="section-title">Lägenheter och portar</h2>
+
+                <h3 class="dataset-title">apartments</h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="data/apartments.csv"><code class="path">data/apartments.csv</code></a> · 604 lägenheter</p>
+                <code class="schema">apartment, port</code>
+                <p class="text-sm">Lägenhetsnummer mappade till portnummer (Myggdalsvägen 6–122).</p>
+
+                <h3 class="dataset-title">ports (geografiska koordinater)</h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="maps/ports.csv"><code class="path">maps/ports.csv</code></a></p>
+                <code class="schema">number, x_pct, y_pct</code>
+                <p class="text-sm">
+                    Portens position på flygfotot/linjekartan i procent av bildens bredd/höjd. Används av kartvyerna (<a class="doc-url" href="map-calibration.html">map-calibration.html</a>, <a class="doc-url" href="engagement.html">engagement.html</a>) för att placera prickar. Bildkällor: <code class="path">maps/sjotungan-aerial.png</code>, <code class="path">maps/sjotungan-linear.png</code>.
+                </p>
+            </section>
+
+            <section id="prices" class="dataset">
+                <h2 class="section-title">Lägenhetspriser (försäljningar)</h2>
+                <p class="text-sm mb-3">
+                    Skrapad försäljningsdata för Sjötungan plus jämförelse-BRF:er och kommun-/läns-/rikssnitt. Per-objekt-data för Sjötungan; aggregerade årsmedianer för övriga (av integritetsskäl).
+                </p>
+
+                <h3 class="dataset-title">Sjötungan – per objekt <span class="pill scraped">scraped</span></h3>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="data/apartment_prices/sjotungan_sales_hemnet.csv"><code class="path">data/apartment_prices/sjotungan_sales_hemnet.csv</code></a> <span class="note">337 rader · Hemnet slutpriser, filtrerade till Myggdalsvägen 6–122</span></li>
+                    <li><a class="doc-url" href="data/apartment_prices/sjotungan_sales_booli.csv"><code class="path">data/apartment_prices/sjotungan_sales_booli.csv</code></a> <span class="note">373 rader · Booli getHousingCoopSold för Sjötungan</span></li>
+                    <li><code class="path">data/apartment_prices/sjotungan_sales_hemnet_raw.json</code> <span class="note">cachad rå-payload (Hemnet)</span></li>
+                    <li><code class="path">data/apartment_prices/sjotungan_sales_booli_raw.json</code> <span class="note">cachad GraphQL-payload (Booli)</span></li>
+                </ul>
+                <code class="schema">sold_date, address, street_number, rooms, living_area_m2, final_price_kr, asking_price_kr, kr_per_m2, monthly_fee_kr, price_change_pct, broker_agency, listing_id, hemnet_url|booli_url[, apartment_number]</code>
+
+                <h3 class="dataset-title">Jämförelse-BRF – årsmedianer <span class="pill scraped">scraped</span></h3>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="data/apartment_prices/bjorkbacken_annual_medians_hemnet.csv"><code class="path">bjorkbacken_annual_medians_hemnet.csv</code></a> · <a class="doc-url" href="data/apartment_prices/bjorkbacken_annual_medians_booli.csv"><code class="path">..._booli.csv</code></a> <span class="note">HSB BRF Björkbacken (Björkbacksvägen 9–83 + Bollmoravägen 36–58)</span></li>
+                    <li><a class="doc-url" href="data/apartment_prices/gaddan_annual_medians_hemnet.csv"><code class="path">gaddan_annual_medians_hemnet.csv</code></a> · <a class="doc-url" href="data/apartment_prices/gaddan_annual_medians_booli.csv"><code class="path">..._booli.csv</code></a> <span class="note">HSB BRF Gäddan (Sikvägen 29–59, jämna sidan-konstruktion enligt allowlist)</span></li>
+                    <li><a class="doc-url" href="data/apartment_prices/siken_annual_medians_hemnet.csv"><code class="path">siken_annual_medians_hemnet.csv</code></a> · <a class="doc-url" href="data/apartment_prices/siken_annual_medians_booli.csv"><code class="path">..._booli.csv</code></a> <span class="note">HSB BRF Siken (Sikvägen 1–27)</span></li>
+                </ul>
+
+                <h3 class="dataset-title">Marknadsreferenser <span class="pill scraped">scraped</span></h3>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="data/apartment_prices/tyreso_kommun_annual_medians_hemnet.csv"><code class="path">tyreso_kommun_annual_medians_hemnet.csv</code></a> <span class="note">Tyresö kommun, Hemnet, shard-by-rooms (~4 100 listings, 2013–2026)</span></li>
+                    <li><a class="doc-url" href="data/apartment_prices/maklarstatistik_sverige_brf_annual.csv"><code class="path">maklarstatistik_sverige_brf_annual.csv</code></a> · <a class="doc-url" href="data/apartment_prices/maklarstatistik_sverige_brf_rolling12.csv"><code class="path">..._rolling12.csv</code></a> <span class="note">Mäklarstatistik kr/m² Sverige</span></li>
+                    <li><a class="doc-url" href="data/apartment_prices/maklarstatistik_stockholms_lan_brf_annual.csv"><code class="path">maklarstatistik_stockholms_lan_brf_annual.csv</code></a> · <a class="doc-url" href="data/apartment_prices/maklarstatistik_stockholms_lan_brf_rolling12.csv"><code class="path">..._rolling12.csv</code></a> <span class="note">Mäklarstatistik kr/m² Stockholms län</span></li>
+                    <li><a class="doc-url" href="data/apartment_prices/sweden_brf_annual.csv"><code class="path">sweden_brf_annual.csv</code></a> <span class="note">SCB BRF totalpris Sverige (2000–2024)</span></li>
+                </ul>
+            </section>
+
+            <section id="stambyte" class="dataset">
+                <h2 class="section-title">Stambyte – plan, betalningar, källtexter</h2>
+
+                <h3 class="dataset-title">Plan- och progressdata</h3>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="data/stambyte/parts.csv"><code class="path">data/stambyte/parts.csv</code></a> <span class="note">port → huvuddel + etapp (5 huvuddelar)</span></li>
+                    <li><a class="doc-url" href="data/stambyte/plan.csv"><code class="path">data/stambyte/plan.csv</code></a> <span class="note">planerade händelser (datum, port, event-kod)</span></li>
+                    <li><a class="doc-url" href="data/stambyte/progress.csv"><code class="path">data/stambyte/progress.csv</code></a> <span class="note">faktiska händelser (datum, port, event-kod)</span></li>
+                    <li><a class="doc-url" href="data/stambyte/payments.csv"><code class="path">data/stambyte/payments.csv</code></a> <span class="note">betalningsplan till entreprenör (datum, belopp)</span></li>
+                </ul>
+
+                <h3 class="dataset-title">Källdokument</h3>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="data/stambyte/Kallelse-Extra-Stamma-2025.pdf"><code class="path">Kallelse-Extra-Stamma-2025.pdf</code></a> <span class="note">extra stämma 5 maj 2025 (stambyte-beslut)</span></li>
+                    <li><a class="doc-url" href="data/stambyte/Kallelse-Info.pdf"><code class="path">Kallelse-Info.pdf</code></a> <span class="note">informationsmöte före extrastämman</span></li>
+                    <li><a class="doc-url" href="data/stambyte/Portinfo-2-2026.pdf"><code class="path">Portinfo-2-2026.pdf</code></a>, <a class="doc-url" href="data/stambyte/Portinfo-4-2025.pdf"><code class="path">Portinfo-4-2025.pdf</code></a> <span class="note">portinformation</span></li>
+                    <li><a class="doc-url" href="data/stambyte/uppdateradtidplan-20260506.pdf"><code class="path">uppdateradtidplan-20260506.pdf</code></a> <span class="note">förtydligad tidplan, 2026-05-06</span></li>
+                    <li><a class="doc-url" href="data/stambyte/extraprice-2026-03-16.pdf"><code class="path">extraprice-2026-03-16.pdf</code></a> <span class="note">tilläggsprislista, 2026-03-16</span></li>
+                    <li><a class="doc-url" href="data/stambyte/port_paper_2026-04-30.pdf"><code class="path">port_paper_2026-04-30.pdf</code></a> <span class="note">tryckt portinformation 30 apr 2026</span></li>
+                    <li><a class="doc-url" href="data/stambyte/_texternaTillAktuellInformation.html"><code class="path">_texternaTillAktuellInformation.html</code></a> <span class="note">webbplatsens nyhetsflöde, lokal kopia</span></li>
+                    <li><a class="doc-url" href="data/stambyte/aktuellaArbeten-stambyte.html"><code class="path">aktuellaArbeten-stambyte.html</code></a> <span class="note">webbplatsens stambyte-flöde, lokal kopia</span></li>
+                    <li><a class="doc-url" href="data/stambyte/stambyte_announce_2026-03-21.png"><code class="path">stambyte_announce_2026-03-21.png</code></a> <span class="note">skärmdump av tidigare version (senare redigerad)</span></li>
+                </ul>
+
+                <p class="text-sm">
+                    En kronologisk samling av all stambyte-kommunikation finns på <a class="doc-url" href="text_stambyte.html">text_stambyte.html</a>; filöversikten genereras från <code class="path">sources.yaml</code>.
+                </p>
+            </section>
+
+            <section id="peers" class="dataset">
+                <h2 class="section-title">Jämförelse-BRF (Siken, Björkbacken)</h2>
+                <p class="text-sm mb-2">
+                    Bredvid Sjötungan finns extraherade finansiella tidsserier för två närliggande HSB-föreningar, för jämförande analyser av soliditet, drift och avgift.
+                </p>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="data/financial_states_siken.csv"><code class="path">data/financial_states_siken.csv</code></a> <span class="note">balansräkning HSB BRF Siken/Björkbacken</span></li>
+                    <li><a class="doc-url" href="data/financial_events_siken.csv"><code class="path">data/financial_events_siken.csv</code></a> <span class="note">kassaflöde HSB BRF Siken</span></li>
+                    <li><a class="doc-url" href="data/financial_events_bjorkbacken.csv"><code class="path">data/financial_events_bjorkbacken.csv</code></a> <span class="note">kassaflöde HSB BRF Björkbacken</span></li>
+                </ul>
+                <p class="text-sm">Samma schema som Sjötungans tabeller, inklusive bounding boxes till respektive förenings årsredovisning.</p>
+            </section>
+
+            <section id="macro" class="dataset">
+                <h2 class="section-title">Makro-data (Sverige)</h2>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="data/macro_sweden.json"><code class="path">data/macro_sweden.json</code></a> <span class="pill macro">manuellt snapshot</span> <span class="note">årsvis KPI-inflation och Riksbankens styrränta, 1980–2024</span></li>
+                </ul>
+                <p class="text-sm">
+                    Lokal snapshot för reproducerbar visualisering. Källa: SCB KPI och Riksbankens dagsnoteringar (årssnitt). Schema är självbeskrivande JSON med <code>series_name</code>, <code>base_year</code>, <code>updated_at</code>, källattribution och <code>data: { år: { inflation_yoy_pct, riksbank_policy_rate_pct } }</code>.
+                </p>
+            </section>
+
+            <section id="sources" class="dataset">
+                <h2 class="section-title">Källdokument (PDF, OCR-text, HTML)</h2>
+                <p class="text-sm mb-3">
+                    Alla siffror i fakta-tabellerna ovan kan spåras till en källfil i någon av dessa kataloger. Bounding-box-koordinaterna (<code>page, x, y, width, height</code>) gäller original-PDF:en under <code class="path">data/annual_reports/</code> – inte OCR-textversionen.
+                </p>
+
+                <h3 class="dataset-title">Årsredovisningar och kallelser</h3>
+                <p class="text-sm mb-1"><code class="path">data/annual_reports/</code> – PDF:er 2003–2025 plus parade <code>*_OCR_text.pdf</code> / <code>*_text.pdf</code> för sökbar text.</p>
+                <p class="text-sm">Se den fullständiga indexerade listan på <a class="doc-url" href="text_documents.html">text_documents.html</a>.</p>
+
+                <h3 class="dataset-title">Stämmoprotokoll</h3>
+                <p class="text-sm mb-1"><code class="path">data/stamma_protocols/</code> – ordinarie och extra stämmor från 2007 framåt; OCR-textfiler (<code>*_ocr.txt</code>) finns för scannade protokoll.</p>
+
+                <h3 class="dataset-title">Sources.yaml</h3>
+                <p class="text-sm mb-1"><a class="doc-url" href="sources.yaml"><code class="path">sources.yaml</code></a> – maskinläsbar mapping av varje årsredovisning + kallelse till URL, lokalt PDF-namn, motsvarande OCR-textfil och vilket räkenskapsår dokumentet täcker. Identisk struktur för stämmoprotokoll, stadgar och stambyte-dokument.</p>
+                <p class="text-sm"><strong>För LLM:</strong> börja med <code>sources.yaml</code> när du behöver översätta ett <em>räkenskapsår</em> till rätt PDF-filnamn (kolumnen <code>file</code> i fakta-tabellerna).</p>
+
+                <h3 class="dataset-title">Övriga källor</h3>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="SFS2018672_fulltext_konsoliderad.pdf"><code class="path">SFS2018672_fulltext_konsoliderad.pdf</code></a> <span class="note">Lag (2018:672) om ekonomiska föreningar – konsoliderad fulltext</span></li>
+                    <li><a class="doc-url" href="brf-economy-guide.pdf"><code class="path">brf-economy-guide.pdf</code></a> · <a class="doc-url" href="brf-economy-guide.html"><code class="path">brf-economy-guide.html</code></a> <span class="note">guide till BRF-ekonomi (förklarande text + figurer)</span></li>
+                </ul>
+            </section>
+
+            <section id="related" class="dataset">
+                <h2 class="section-title">Relaterade sidor</h2>
+                <ul class="file-list">
+                    <li><a class="doc-url" href="text_documents.html">text_documents.html</a> <span class="note">indexerad lista över årsredovisningar, stämmoprotokoll, stadgar och regler</span></li>
+                    <li><a class="doc-url" href="text_stambyte.html">text_stambyte.html</a> <span class="note">kronologisk sammanställning av all stambyte-kommunikation</span></li>
+                    <li><a class="doc-url" href="changing_over_time.html">changing_over_time.html</a> <span class="note">ekonomisk utveckling över tid (visualisering)</span></li>
+                    <li><a class="doc-url" href="annual_details.html">annual_details.html</a> <span class="note">kassaflödesdetaljer per år</span></li>
+                    <li><a class="doc-url" href="costs_development.html">costs_development.html</a>, <a class="doc-url" href="prognosis.html">prognosis.html</a>, <a class="doc-url" href="savings.html">savings.html</a>, <a class="doc-url" href="sales.html">sales.html</a>, <a class="doc-url" href="sales_hemnet.html">sales_hemnet.html</a>, <a class="doc-url" href="engagement.html">engagement.html</a>, <a class="doc-url" href="stambyte.html">stambyte.html</a> <span class="note">övriga visualiseringar</span></li>
+                </ul>
+                <p class="text-sm mt-3">
+                    Sidorna laddar CSV-data och PDF-källor via <code>fetch()</code> – kör <code>python3 -m http.server 8000</code> från projekt-roten och öppna t.ex. <code>http://localhost:8000/changing_over_time.html</code> för att kunna klicka på en siffra och se exakt bounding box i original-PDF:en.
+                </p>
+            </section>
+        </section>
+    </main>
+</body>
+</html>
